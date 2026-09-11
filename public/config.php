@@ -8,7 +8,7 @@ return [
     'pass' => 'كلمة_مرور_قاعدة_البيانات',
 
     'admin_username' => 'aymen',
-    'admin_password' => 'ay120012',
+    'admin_password' => 'aymen72874722',
 
     'gemini_api_key' => '',
 ];

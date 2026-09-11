@@ -1,0 +1,8 @@
+{
+  "name": "Youmi - منصة ومتجر المتاجر والتسوق الإلكتروني",
+  "description": "Youmi - Tout ce dont vous avez besoin - منصة المتاجر والتسوق الإلكتروني وشحن الطلبات.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

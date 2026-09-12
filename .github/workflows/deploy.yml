@@ -1,23 +1,77 @@
-name: Youmi Build and Deploy
+name: Deploy Youmi to InfinityFree
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout Youmi
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
-      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Youmi
+        run: npm run build
+
+      - name: Create production config.php
+        env:
+          DB_HOST: ${{ secrets.YOUMI_DB_HOST }}
+          DB_NAME: ${{ secrets.YOUMI_DB_NAME }}
+          DB_USER: ${{ secrets.YOUMI_DB_USER }}
+          DB_PASSWORD: ${{ secrets.YOUMI_DB_PASSWORD }}
+          ADMIN_USERNAME: ${{ secrets.YOUMI_ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.YOUMI_ADMIN_PASSWORD }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const php = `<?php
+
+          return [
+              'host' => ${JSON.stringify(process.env.DB_HOST)},
+              'dbname' => ${JSON.stringify(process.env.DB_NAME)},
+              'user' => ${JSON.stringify(process.env.DB_USER)},
+              'pass' => ${JSON.stringify(process.env.DB_PASSWORD)},
+
+              'admin_username' => ${JSON.stringify(process.env.ADMIN_USERNAME)},
+              'admin_password' => ${JSON.stringify(process.env.ADMIN_PASSWORD)},
+
+              'gemini_api_key' => '',
+          ];
+          `;
+
+          fs.writeFileSync('dist/config.php', php);
+          console.log('config.php created successfully');
+          NODE
+
+      - name: Verify production files
+        run: |
+          test -f dist/index.html
+          test -f dist/api.php
+          test -f dist/config.php
+          echo "Youmi production files are ready."
+
+      - name: Deploy to InfinityFree
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.INFINITYFREE_FTP_SERVER }}
           username: ${{ secrets.INFINITYFREE_FTP_USERNAME }}
           password: ${{ secrets.INFINITYFREE_FTP_PASSWORD }}
-          server-dir: /htdocs/
+          protocol: ftp
+          port: ${{ secrets.INFINITYFREE_FTP_PORT }}
           local-dir: ./dist/
+          server-dir: /htdocs/
+          dangerous-clean-slate: false

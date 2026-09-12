@@ -144,14 +144,6 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
           {/* Quick Actions */}
           <div className="flex items-center gap-2.5">
             <button
-              onClick={onOpenInfinityFreeModal}
-              className="px-3.5 py-2 text-xs font-bold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition flex items-center gap-1.5 shadow-xs"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">دليل الرفع على InfinityFree</span>
-            </button>
-
-            <button
               onClick={() => onOpenStorefront(currentStore)}
               className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition flex items-center gap-1.5 shadow-sm"
             >

@@ -214,14 +214,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
           <div className="flex items-center gap-3 text-xs font-semibold">
 
-            <button
-              onClick={onOpenInfinityFreeModal}
-              className="flex items-center gap-1.5 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-lg transition hidden md:flex"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>InfinityFree Ready 🌐</span>
-            </button>
-
             <div className="flex items-center gap-1.5 text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-lg">
               <Gift className="w-3.5 h-3.5" />
               <span>30 يوماً تجربة مجانية للمتاجر</span>
@@ -1029,12 +1021,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-white font-['Cairo']">روابط الاستضافة والدعم</h4>
+              <h4 className="text-xs font-bold text-white font-['Cairo']">روابط سريعة والدعم</h4>
               <ul className="space-y-1.5 text-slate-400">
                 <li><button onClick={() => onNavigate('CREATE_STORE')} className="hover:text-amber-400 transition">أنشئ متجر جملة (30 يوماً مجاناً)</button></li>
                 <li><a href="#suppliers" className="hover:text-amber-400 transition">دليل الموردين والمصانع</a></li>
                 <li><button onClick={onOpenLoginModal} className="hover:text-amber-400 transition">لوحة تحكم التجّار</button></li>
-                <li><button onClick={onOpenInfinityFreeModal} className="text-emerald-400 font-bold hover:underline transition flex items-center gap-1">🌐 دليل الرفع على InfinityFree</button></li>
               </ul>
             </div>
 

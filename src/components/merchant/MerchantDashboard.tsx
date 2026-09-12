@@ -6,6 +6,7 @@ import { OrdersTab } from './OrdersTab';
 import { CustomizerTab } from './CustomizerTab';
 import { CouponsTab } from './CouponsTab';
 import { AiAssistantTab } from './AiAssistantTab';
+import { MerchantAdsTab } from './MerchantAdsTab';
 import { SubscriptionModal } from './SubscriptionModal';
 import { getAdminBaridimob, getMerchantNotifications, MerchantNotification, markNotificationAsRead } from '../../lib/adminSettings';
 import { 
@@ -47,7 +48,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   onOpenStorefront = (_store: Store) => {},
   onOpenInfinityFreeModal = () => {},
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customizer' | 'coupons' | 'ai'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customizer' | 'coupons' | 'ai' | 'ads'>('overview');
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showAdminNotifsModal, setShowAdminNotifsModal] = useState(false);
@@ -271,6 +272,18 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('ads')}
+            className={`w-full px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center gap-3 ${
+              activeTab === 'ads'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-amber-700 hover:bg-white hover:text-amber-900'
+            }`}
+          >
+            <Megaphone className="w-4 h-4 text-amber-600" />
+            <span>إعلاناتي والترويج 📣</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('ai')}
             className={`w-full px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center gap-3 ${
               activeTab === 'ai'
@@ -329,6 +342,10 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
 
           {activeTab === 'coupons' && (
             <CouponsTab store={currentStore} onUpdateStore={onUpdateStore} />
+          )}
+
+          {activeTab === 'ads' && (
+            <MerchantAdsTab store={currentStore} />
           )}
 
           {activeTab === 'ai' && <AiAssistantTab store={currentStore} />}

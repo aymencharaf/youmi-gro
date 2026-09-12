@@ -59,6 +59,8 @@ import {
 } from 'lucide-react';
 import { B2BMember } from './MemberAuthModal';
 import { getPlatformAnnouncements, PlatformAnnouncement } from '../lib/adminSettings';
+import { AdPlacement } from './ads/AdPlacement';
+import { GoogleAd } from './ads/GoogleAd';
 
 interface PlatformLandingProps {
   stores: Store[];
@@ -459,6 +461,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         </div>
       </nav>
 
+      {/* TOP SPONSORED BANNER AD */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-4">
+        <AdPlacement
+          placement="homepage_top"
+          stores={stores}
+          onSelectStore={(s) => onSelectStore(s, 'STORE_FRONT')}
+        />
+      </div>
+
       {/* 4. MAIN HERO SECTION (B2B WHOLESALE BANNER + SUPPLIER QUICK CARDS) */}
       <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -596,6 +607,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         </div>
       </section>
 
+      {/* FEATURED STORES SPONSORED ADS */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-2">
+        <AdPlacement
+          placement="featured_store_section"
+          stores={stores}
+          onSelectStore={(s) => onSelectStore(s, 'STORE_FRONT')}
+        />
+      </div>
+
       {/* 5. VERIFIED SUPPLIERS & STORES SECTION */}
       <section id="suppliers" className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -677,6 +697,25 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           ))}
         </div>
       </section>
+
+      {/* SPONSORED PRODUCTS ADS GRID */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-2">
+        <AdPlacement
+          placement="sponsored_grid"
+          stores={stores}
+          onSelectStore={(s) => onSelectStore(s, 'STORE_FRONT')}
+          onAddToCart={(p, s) => handleAddToCart(p, s)}
+        />
+      </div>
+
+      {/* MID-PAGE BANNER AD */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-2">
+        <AdPlacement
+          placement="homepage_middle"
+          stores={stores}
+          onSelectStore={(s) => onSelectStore(s, 'STORE_FRONT')}
+        />
+      </div>
 
       {/* 6. FEATURED WHOLESALE PRODUCTS GRID */}
       <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 space-y-6">
@@ -886,6 +925,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
         </div>
       </section>
+
+      {/* GOOGLE ADSENSE BANNER BEFORE FOOTER */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-4">
+        <GoogleAd slot="homepage_footer_banner" format="horizontal" responsive={true} />
+      </div>
 
       {/* 8. PRODUCT QUICK VIEW MODAL */}
       {selectedProduct && (

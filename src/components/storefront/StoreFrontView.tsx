@@ -4,6 +4,8 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { CheckoutModal } from './CheckoutModal';
 import { OrderSuccessModal } from './OrderSuccessModal';
 import { OrderTrackerModal } from './OrderTrackerModal';
+import { AdPlacement } from '../ads/AdPlacement';
+import { GoogleAd } from '../ads/GoogleAd';
 import { 
   ShoppingBag, 
   Search, 
@@ -256,6 +258,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             عرض {filteredProducts.length} منتج
           </span>
         </div>
+
+        {/* SPONSORED ADVERTISEMENT BANNER FOR STORE / CATEGORY */}
+        <AdPlacement
+          placement="category_header"
+          category={selectedCategory !== 'الكل' ? selectedCategory : store.category}
+          stores={[store]}
+        />
 
         {/* Product Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -47,6 +47,7 @@ import {
   saveMerchantNotifications,
   sendNotificationToMerchants,
 } from '../../lib/adminSettings';
+import { AdminAdsManager } from './AdminAdsManager';
 
 interface AdminDashboardProps {
   stores: Store[];
@@ -57,7 +58,7 @@ interface AdminDashboardProps {
   onOpenInfinityFreeModal: () => void;
 }
 
-type Tab = 'overview' | 'merchants' | 'stores' | 'products' | 'orders' | 'subscriptions' | 'announcements' | 'baridimob' | 'notifications';
+type Tab = 'overview' | 'ads' | 'merchants' | 'stores' | 'products' | 'orders' | 'subscriptions' | 'announcements' | 'baridimob' | 'notifications';
 const statuses = ['جديد', 'قيد المعالجة', 'تم الشحن', 'تم التوصيل', 'ملغي'];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -366,7 +367,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Navigation Tabs Bar */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {nav('overview', 'نظرة عامة', <TrendingUp className="w-4 h-4" />)}
-          {nav('announcements', 'إعلانات المنصة 📢', <Megaphone className="w-4 h-4 text-amber-500" />)}
+          {nav('ads', 'إدارة الإعلانات 📣', <Megaphone className="w-4 h-4 text-amber-500 font-bold" />)}
+          {nav('announcements', 'شريط المنصة 📢', <Megaphone className="w-4 h-4 text-amber-500" />)}
           {nav('baridimob', 'بريدي موب المدير 💳', <CreditCard className="w-4 h-4 text-emerald-500" />)}
           {nav('notifications', 'إشعارات البائعين 🚀', <Bell className="w-4 h-4 text-indigo-500" />)}
           {nav('merchants', 'البائعون', <Users className="w-4 h-4" />)}
@@ -376,7 +378,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {nav('subscriptions', 'الاشتراكات', <CreditCard className="w-4 h-4" />)}
         </div>
 
-        {tab !== 'overview' && tab !== 'baridimob' && tab !== 'announcements' && tab !== 'notifications' && (
+        {tab !== 'overview' && tab !== 'baridimob' && tab !== 'announcements' && tab !== 'notifications' && tab !== 'ads' && (
           <div className="relative">
             <Search className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
             <input
@@ -460,6 +462,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </>
         )}
+
+        {/* ADS SYSTEM TAB */}
+        {tab === 'ads' && <AdminAdsManager stores={adminStores} />}
 
         {/* 2. PLATFORM ANNOUNCEMENTS TAB */}
         {tab === 'announcements' && (

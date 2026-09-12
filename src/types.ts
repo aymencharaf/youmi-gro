@@ -153,3 +153,82 @@ export interface Store {
 
 export type AppView = 'PLATFORM_HOME' | 'CREATE_STORE' | 'MERCHANT_DASHBOARD' | 'STORE_FRONT' | 'ADMIN_DASHBOARD';
 
+// ==========================================
+// ADVERTISING SYSTEM TYPES (نظام الإعلانات)
+// ==========================================
+
+export type AdType = 
+  | 'featured_product'    // منتج مميز
+  | 'sponsored_product'   // منتج ممول يظهر في أماكن بارزة
+  | 'featured_store'     // متجر مميز
+  | 'homepage_banner'    // Banner في الصفحة الرئيسية
+  | 'category_banner';   // Banner داخل تصنيف محدد
+
+export type AdPlacement = 
+  | 'homepage_top'            // أعلى الصفحة الرئيسية
+  | 'homepage_middle'         // بين الأقسام
+  | 'sponsored_grid'          // شبكة المنتجات الممولة
+  | 'category_header'         // أعلى التصنيف
+  | 'featured_store_section'; // قسم المتاجر المميزة
+
+export type AdStatus = 'pending_approval' | 'approved' | 'rejected' | 'paused' | 'expired';
+export type AdPaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export interface AdPackage {
+  id: string;
+  nameAr: string;
+  nameFr: string;
+  priceDzd: number;
+  durationDays: number;
+  adType: AdType;
+  placement: AdPlacement;
+  priority: number;
+  descriptionAr: string;
+  descriptionFr: string;
+  maxImpressions?: number;
+  active: boolean;
+}
+
+export interface Advertisement {
+  id: string;
+  merchantUserId: string;
+  merchantName: string;
+  storeId: string;
+  storeSlug: string;
+  storeName: string;
+  productId?: string;
+  productTitle?: string;
+  adType: AdType;
+  placement: AdPlacement;
+  category?: string;
+  imageUrl?: string;
+  titleAr: string;
+  titleFr?: string;
+  descriptionAr?: string;
+  descriptionFr?: string;
+  targetUrl?: string;
+  startDate: string;
+  endDate: string;
+  priceDzd: number;
+  packageId?: string;
+  status: AdStatus;
+  paymentStatus: AdPaymentStatus;
+  paymentTxId?: string;
+  paymentMethod?: string;
+  priority: number;
+  impressions: number;
+  clicks: number;
+  createdAt: string;
+  rejectionReason?: string;
+}
+
+export interface AdSettings {
+  googleAdsenseEnabled: boolean;
+  googleAdsenseClientId: string;
+  sellerAdvertisingEnabled: boolean;
+  requireAdminApproval: boolean;
+  maxAdsPerPosition: number;
+  defaultAdDurationDays: number;
+}
+
+

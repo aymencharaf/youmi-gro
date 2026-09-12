@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Store } from '../types';
-import { createNewStore, createStoreOnApi } from '../lib/storage';
+import { createNewStore, createStoreOnApi, loadMyStoresFromApi } from '../lib/storage';
 import { B2BMember } from './MemberAuthModal';
 import { BUSINESS_CATEGORIES } from '../data/algeriaData';
 import { 
@@ -13,7 +13,8 @@ import {
   Mail, 
   Phone, 
   Check,
-  ShoppingBag
+  ShoppingBag,
+  AlertTriangle
 } from 'lucide-react';
 
 interface CreateStoreWizardProps {
@@ -34,20 +35,48 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
     else onBackToHome();
   };
   const [step, setStep] = useState<number>(1);
+  const [existingStore, setExistingStore] = useState<Store | null>(null);
+  const [isCheckingStore, setIsCheckingStore] = useState(true);
   
   // Form State
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [category, setCategory] = useState<string>(BUSINESS_CATEGORIES[0]);
-  const [merchantName, setMerchantName] = useState('');
+  const [merchantName, setMerchantName] = useState(currentMember?.name || '');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(currentMember?.phone || '');
   const [slogan, setSlogan] = useState('');
   const [theme, setTheme] = useState<Store['theme']>('modern');
   const [primaryColor, setPrimaryColor] = useState('#4F46E5');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (currentMember) {
+      if (currentMember.name && !merchantName) setMerchantName(currentMember.name);
+      if (currentMember.phone && !phone) setPhone(currentMember.phone);
+    }
+  }, [currentMember]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkExisting() {
+      if (currentMember?.role === 'merchant') {
+        try {
+          const myStores = await loadMyStoresFromApi();
+          if (!cancelled && myStores && myStores.length > 0) {
+            setExistingStore(myStores[0]);
+          }
+        } catch (e) {
+          console.warn('تعذر التحقق من متاجر البائع:', e);
+        }
+      }
+      if (!cancelled) setIsCheckingStore(false);
+    }
+    checkExisting();
+    return () => { cancelled = true; };
+  }, [currentMember]);
 
   const categories = BUSINESS_CATEGORIES;
 
@@ -75,7 +104,7 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
     if (!name) return;
     setIsGeneratingAi(true);
     try {
-      const res = await fetch('/api.php?action=gemini_generate', {
+      const res = await fetch('/api/gemini/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,6 +128,10 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
   const handleFinishWizard = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (existingStore) {
+      setError('لديك متجر بالفعل. يُسمح بإنشاء متجر واحد فقط لكل حساب بائع.');
+      return;
+    }
     if (!name || !merchantName || !email) return;
     if (!currentMember || currentMember.role !== 'merchant') { setError('يجب تسجيل الدخول بحساب بائع قبل إنشاء متجر.'); return; }
     setIsSaving(true);
@@ -113,6 +146,43 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
     } catch (err) { setError(err instanceof Error ? err.message : 'تعذر إنشاء المتجر على الخادم.'); }
     finally { setIsSaving(false); }
   };
+
+  if (existingStore) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FB] text-slate-800 flex flex-col dir-rtl items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-lg w-full text-center shadow-xl space-y-6">
+          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-amber-200">
+            <StoreIcon className="w-8 h-8" />
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-xl font-bold text-slate-900 font-['Cairo']">لديك متجر بالفعل 🏪</h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              وفقاً لنظام منصة Youmi، يُسمح بمتجر واحد فقط لكل حساب بائع لتركيز إدارة منتجاتك وطلباتك بفعالية أعلى.
+            </p>
+            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl text-xs text-amber-900 font-semibold text-right space-y-1">
+              <div>متجرك المسجل: <span className="font-bold text-slate-900">{existingStore.name}</span></div>
+              <div className="text-[11px] text-slate-500 dir-ltr text-right">slug: {existingStore.slug}</div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              onClick={() => onStoreCreated(existingStore)}
+              className="flex-1 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-md flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>الانتقال إلى لوحة تحكم متجرك</span>
+            </button>
+            <button
+              onClick={handleBack}
+              className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+            >
+              العودة للمنصة
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] text-slate-800 flex flex-col dir-rtl">

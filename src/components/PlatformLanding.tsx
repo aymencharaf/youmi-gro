@@ -315,7 +315,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 <div className="flex flex-col text-right hidden sm:flex">
                   <span className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[120px]">{currentMember?.name || 'عضو مسجل'}</span>
                   <span className="text-[9px] text-emerald-700 font-semibold">
-                    {currentMember?.role === 'merchant' ? 'حساب تاجر ومورد 🏪' : 'أسعار الجملة مفعلة 🔓'}
+                    {currentMember?.role === 'admin' ? 'مدير المنصة 🛡️' : currentMember?.role === 'merchant' ? 'حساب تاجر ومورد 🏪' : 'أسعار الجملة مفعلة 🔓'}
                   </span>
                 </div>
                 <button
@@ -338,7 +338,16 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             )}
 
             {/* Merchant Access / Dashboard Button */}
-            {currentMember?.role === 'merchant' ? (
+            {currentMember?.role === 'admin' ? (
+              <button
+                onClick={onOpenAdminLoginModal}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-md border border-slate-700"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">لوحة التحكم المركزية 🛡️</span>
+                <span className="sm:hidden">الإدارة</span>
+              </button>
+            ) : currentMember?.role === 'merchant' ? (
               <button
                 onClick={onOpenLoginModal}
                 className="px-3.5 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 border border-amber-300 ring-2 ring-amber-400/40 animate-pulse hover:animate-none"

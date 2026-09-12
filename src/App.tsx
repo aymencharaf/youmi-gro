@@ -62,7 +62,7 @@ export function App() {
   const [showMemberAuthModal, setShowMemberAuthModal] = useState(false);
   const [authModalDefaultRole, setAuthModalDefaultRole] = useState<'buyer' | 'merchant'>('buyer');
 
-  const isLoggedIn = !!currentMember && (currentMember.role === 'buyer' || currentMember.role === 'merchant');
+  const isLoggedIn = isSuperAdminLoggedIn || (!!currentMember && (currentMember.role === 'buyer' || currentMember.role === 'merchant' || currentMember.role === 'admin'));
 
   // Unified Authentication & Navigation Handler
   const handleAuthSuccess = async (member: B2BMember) => {
@@ -70,6 +70,7 @@ export function App() {
     localStorage.setItem('youmi_member_user', JSON.stringify(member));
     setShowMemberAuthModal(false);
     setShowLoginModal(false);
+    setShowAdminLoginModal(false);
 
     if (member.role === 'admin') {
       setIsSuperAdminLoggedIn(true);
@@ -112,8 +113,13 @@ export function App() {
   const handleMemberLogout = async () => {
     await logoutApi();
     setCurrentMember(null);
+    setIsSuperAdminLoggedIn(false);
+    setAdminUser(null);
     localStorage.removeItem('youmi_member_user');
-    if (currentView === 'MERCHANT_DASHBOARD' || currentView === 'CREATE_STORE') {
+    localStorage.removeItem('youmi_admin_session');
+    setShowMemberAuthModal(false);
+    setShowAdminLoginModal(false);
+    if (currentView === 'MERCHANT_DASHBOARD' || currentView === 'CREATE_STORE' || currentView === 'ADMIN_DASHBOARD') {
       setCurrentView('PLATFORM_HOME');
     }
   };
@@ -122,7 +128,11 @@ export function App() {
     await logoutApi();
     setIsSuperAdminLoggedIn(false);
     setAdminUser(null);
+    setCurrentMember(null);
     localStorage.removeItem('youmi_admin_session');
+    localStorage.removeItem('youmi_member_user');
+    setShowMemberAuthModal(false);
+    setShowAdminLoginModal(false);
     setCurrentView('PLATFORM_HOME');
     if (window.location.pathname === '/admin') {
       window.history.replaceState({}, '', '/');
@@ -130,6 +140,10 @@ export function App() {
   };
 
   const handleOpenMerchantAuth = async () => {
+    if (isSuperAdminLoggedIn || currentMember?.role === 'admin') {
+      setCurrentView('ADMIN_DASHBOARD');
+      return;
+    }
     if (currentMember?.role === 'merchant') {
       try {
         const myStores = await loadMyStoresFromApi();
@@ -161,6 +175,8 @@ export function App() {
         const u = r.ok && r.data?.user ? (r.data.user as B2BMember) : null;
 
         if (u) {
+          setCurrentMember(u);
+          localStorage.setItem('youmi_member_user', JSON.stringify(u));
           if (u.role === 'admin') {
             setIsSuperAdminLoggedIn(true);
             setAdminUser(u);
@@ -169,9 +185,6 @@ export function App() {
               setCurrentView('ADMIN_DASHBOARD');
             }
           } else {
-            setCurrentMember(u);
-            localStorage.setItem('youmi_member_user', JSON.stringify(u));
-
             if (u.role === 'merchant') {
               try {
                 const myStores = await loadMyStoresFromApi();
@@ -189,7 +202,9 @@ export function App() {
         } else {
           setIsSuperAdminLoggedIn(false);
           setAdminUser(null);
+          setCurrentMember(null);
           localStorage.removeItem('youmi_admin_session');
+          localStorage.removeItem('youmi_member_user');
           if (currentView === 'ADMIN_DASHBOARD' || currentView === 'MERCHANT_DASHBOARD' || currentView === 'CREATE_STORE') {
             setCurrentView('PLATFORM_HOME');
           }
@@ -208,9 +223,14 @@ export function App() {
   const openAdminPanel = async () => {
     const r = await api.me();
     if (r.ok && r.data?.user?.role === 'admin') {
+      const u = r.data.user as B2BMember;
       setIsSuperAdminLoggedIn(true);
-      setAdminUser(r.data.user);
-      localStorage.setItem('youmi_admin_session', JSON.stringify(r.data.user));
+      setAdminUser(u);
+      setCurrentMember(u);
+      localStorage.setItem('youmi_admin_session', JSON.stringify(u));
+      localStorage.setItem('youmi_member_user', JSON.stringify(u));
+      setShowAdminLoginModal(false);
+      setShowMemberAuthModal(false);
       setCurrentView('ADMIN_DASHBOARD');
       if (window.location.pathname !== '/admin') window.history.pushState({}, '', '/admin');
       return;
@@ -292,7 +312,19 @@ export function App() {
           onNavigate={(view) => {
             if ((view as string) === 'create_wizard' || view === 'CREATE_STORE') {
               if (currentMember?.role === 'merchant') {
-                setCurrentView('CREATE_STORE');
+                loadMyStoresFromApi().then((myStores) => {
+                  if (myStores && myStores.length > 0) {
+                    const active = getActiveStore();
+                    const matched = myStores.find((s) => s.id === active?.id) || myStores[0];
+                    setCurrentStoreState(matched);
+                    setActiveStore(matched);
+                    setCurrentView('MERCHANT_DASHBOARD');
+                  } else {
+                    setCurrentView('CREATE_STORE');
+                  }
+                }).catch(() => {
+                  setCurrentView('CREATE_STORE');
+                });
               } else {
                 setAuthModalDefaultRole('merchant');
                 setShowMemberAuthModal(true);
@@ -406,8 +438,11 @@ export function App() {
           }
           setIsSuperAdminLoggedIn(true);
           setAdminUser(user);
+          setCurrentMember(user);
           localStorage.setItem('youmi_admin_session', JSON.stringify(user));
+          localStorage.setItem('youmi_member_user', JSON.stringify(user));
           setShowAdminLoginModal(false);
+          setShowMemberAuthModal(false);
           setCurrentView('ADMIN_DASHBOARD');
           if (window.location.pathname !== '/admin') window.history.pushState({}, '', '/admin');
         }}

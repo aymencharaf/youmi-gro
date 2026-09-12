@@ -72,7 +72,6 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
   const remainingForFreeShipping = Math.max(0, store.settings.freeShippingThreshold - cartSubtotal);
 
   const handleAddToCart = (product: Product, quantity = 1, selectedVariant?: string) => {
-    if (!isLoggedIn) { onOpenMemberAuthModal(); return; }
     setCart((prev) => {
       const existingIndex = prev.findIndex(
         (i) => i.product.id === product.id && i.selectedVariant === selectedVariant
@@ -302,26 +301,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
               {/* Price & Add to Cart Button */}
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <div>
-                  {isLoggedIn ? (
-                    <>
-                      <div className="text-base font-black text-emerald-700 font-['Cairo']">
-                        {product.price} <span className="text-xs">{store.currency}</span>
-                      </div>
-                      {product.compareAtPrice && (
-                        <div className="text-[11px] text-slate-400 line-through">
-                          {product.compareAtPrice} {store.currency}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <button
-                      onClick={onOpenMemberAuthModal}
-                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 text-amber-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-2xs group"
-                      title="انقر لتسجيل الدخول ورؤية سعر الجملة"
-                    >
-                      <Lock className="w-3 h-3 text-amber-600 group-hover:scale-110 transition" />
-                      <span>الأسعار للمسجلين فقط 🔐</span>
-                    </button>
+                  <div className="text-base font-black text-emerald-700 font-['Cairo']">
+                    {product.price} <span className="text-xs">{store.currency}</span>
+                  </div>
+                  {product.compareAtPrice && (
+                    <div className="text-[11px] text-slate-400 line-through">
+                      {product.compareAtPrice} {store.currency}
+                    </div>
                   )}
                 </div>
 

@@ -61,8 +61,6 @@ function syncStore($s,$merchantId=null){
  return $s;
 }
 function publicStore($s){if(!is_array($s))return $s;$s['orders']=[];if(isset($s['stats']))$s['stats']['totalSales']=0;$s['email']='';$s['phone']='';if(isset($s['settings']['shippingApiSettings']['apiKey']))$s['settings']['shippingApiSettings']['apiKey']='';
- // B2B price access: wholesale prices are returned only to authenticated members.
- if(!user()){ foreach(($s['products']??[]) as &$product){ $product['price']=0; unset($product['compareAtPrice'],$product['costPrice']); } unset($product); }
  return $s;}
 function allStores($public=true){$r=db()->query('SELECT data FROM stores ORDER BY created_at DESC')->fetchAll();return array_map(fn($x)=>$public?publicStore(decodeStore($x)):decodeStore($x),$r);}
 function admin(){return requireUser(['admin']);}

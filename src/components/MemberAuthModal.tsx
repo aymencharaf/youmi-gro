@@ -23,14 +23,18 @@ export interface B2BMember {
 }
 
 interface MemberAuthModalProps {
+  isOpen?: boolean;
   onClose: () => void;
   onLoginSuccess: (member: B2BMember) => void;
 }
 
 export const MemberAuthModal: React.FC<MemberAuthModalProps> = ({
+  isOpen = false,
   onClose,
   onLoginSuccess,
 }) => {
+  if (!isOpen) return null;
+
   const [activeMode, setActiveMode] = useState<'login' | 'register'>('register');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -102,13 +106,13 @@ export const MemberAuthModal: React.FC<MemberAuthModalProps> = ({
             {/* Header */}
             <div className="space-y-2 text-center">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white flex items-center justify-center mx-auto shadow-md">
-                <Lock className="w-6 h-6" />
+                <UserCheck className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-black text-slate-900 font-['Cairo']">
-                عرض أسعار الجملة للأعضاء المسجلين فقط 🔐
+                حساب التجار والمشترين 👤
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-                وفقاً لسياسة تجارة الجملة (B2B)، يتم إظهار كشوف الأسعار والخصومات المباشرة حصرياً للتجار والمؤسسات المسجلة في المنصة.
+                قم بتسجيل الدخول أو إنشاء حساب جديد لإدارة المتاجر أو الاستفادة من مزايا المنصة.
               </p>
             </div>
 

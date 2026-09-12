@@ -174,7 +174,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
   // Handle Add to Cart
   const handleAddToCart = (product: Product, store: Store, qtyToAdd?: number) => {
-    if (!isLoggedIn) { onOpenMemberAuthModal(); return; }
     const minQty = qtyToAdd || product.minOrderQuantity || 1;
     setCartItems((prev) => {
       const existingIndex = prev.findIndex((item) => item.product.id === product.id);
@@ -335,11 +334,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             ) : (
               <button
                 onClick={onOpenMemberAuthModal}
-                className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm border border-amber-300 animate-pulse"
+                className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-xs border border-indigo-200"
               >
-                <Lock className="w-4 h-4 text-slate-950" />
-                <span className="hidden sm:inline">عرض أسعار الجملة 🔓</span>
-                <span className="sm:hidden">تسجيل B2B</span>
+                <UserCheck className="w-4 h-4 text-indigo-600" />
+                <span className="hidden sm:inline">دخول / تسجيل المشتري</span>
+                <span className="sm:hidden">دخول</span>
               </button>
             )}
 
@@ -757,27 +756,16 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                     {/* Price & Add to Cart */}
                     <div className="space-y-2 pt-2 border-t border-slate-200">
                       <div className="flex items-center justify-between">
-                        {canViewWholesalePrices ? (
-                          <div>
-                            <span className="text-sm font-black text-rose-600 block leading-none font-mono">
-                              {product.price.toLocaleString()} دج
+                        <div>
+                          <span className="text-sm font-black text-rose-600 block leading-none font-mono">
+                            {product.price.toLocaleString()} دج
+                          </span>
+                          {product.compareAtPrice && product.compareAtPrice > product.price && (
+                            <span className="text-[10px] text-slate-400 line-through font-mono">
+                              {product.compareAtPrice.toLocaleString()} دج
                             </span>
-                            {product.compareAtPrice && product.compareAtPrice > product.price && (
-                              <span className="text-[10px] text-slate-400 line-through font-mono">
-                                {product.compareAtPrice.toLocaleString()} دج
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={onOpenMemberAuthModal}
-                            className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 text-amber-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-2xs group"
-                            title="انقر لتسجيل الدخول ورؤية سعر الجملة"
-                          >
-                            <Lock className="w-3 h-3 text-amber-600 group-hover:scale-110 transition" />
-                            <span>الأسعار للمسجلين فقط 🔐</span>
-                          </button>
-                        )}
+                          )}
+                        </div>
 
                         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                           دفع عند الاستلام
@@ -903,27 +891,12 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 </div>
 
                 <div>
-                  {isLoggedIn ? (
-                    <div>
-                      <span className="text-2xl font-black text-rose-600 font-mono">
-                        {selectedProduct.product.price.toLocaleString()} دج
-                      </span>
-                      <span className="text-xs text-slate-400 mr-2">للقطعة / العلبة</span>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                        <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>سعر الجملة محمي: يظهر للأعضاء المسجلين فقط</span>
-                      </div>
-                      <button
-                        onClick={onOpenMemberAuthModal}
-                        className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition shadow-xs"
-                      >
-                        دخول / تسجيل
-                      </button>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-2xl font-black text-rose-600 font-mono">
+                      {selectedProduct.product.price.toLocaleString()} دج
+                    </span>
+                    <span className="text-xs text-slate-400 mr-2">للقطعة / العلبة</span>
+                  </div>
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed">

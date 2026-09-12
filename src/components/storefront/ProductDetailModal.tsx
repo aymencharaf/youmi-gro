@@ -105,31 +105,16 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <span className="text-xs text-slate-400">({product.ratings.count} تقييمات من المشتريين)</span>
               </div>
 
-              {isLoggedIn ? (
-                <div className="pt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-emerald-700 font-['Cairo']">
-                    {product.price} {store.currency}
+              <div className="pt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-emerald-700 font-['Cairo']">
+                  {product.price} {store.currency}
+                </span>
+                {product.compareAtPrice && (
+                  <span className="text-xs text-slate-400 line-through">
+                    {product.compareAtPrice} {store.currency}
                   </span>
-                  {product.compareAtPrice && (
-                    <span className="text-xs text-slate-400 line-through">
-                      {product.compareAtPrice} {store.currency}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-2 my-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>الأسعار محميّة: تظهر للأعضاء المسجلين فقط 🔐</span>
-                  </div>
-                  <button
-                    onClick={onOpenMemberAuthModal}
-                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition shadow-xs"
-                  >
-                    دخول / تسجيل
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
 
               <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
                 {product.description}

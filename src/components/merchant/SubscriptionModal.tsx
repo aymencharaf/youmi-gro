@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Store } from '../../types';
 import { saveStore } from '../../lib/storage';
+import { getAdminBaridimob } from '../../lib/adminSettings';
 import { 
   X, 
   Gift, 
@@ -25,6 +26,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   onClose,
   onUpdateStore,
 }) => {
+  const adminBaridimob = getAdminBaridimob();
   const [txId, setTxId] = useState('');
   const [notes, setNotes] = useState('');
   const [isCopiedRip, setIsCopiedRip] = useState(false);
@@ -40,9 +42,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     status: 'active_trial' as const,
     monthlyFeeDzd: 3500,
     baridimobPaymentDetails: {
-      ripNumber: '0079999900238129038201',
-      ccpAccount: '002381290 مفتاح 88',
-      accountHolder: 'مؤسسة منصة يومي للتجارة والحلول الرقمية (Youmi Market DZ)',
+      ripNumber: adminBaridimob.ripNumber,
+      ccpAccount: adminBaridimob.ccpAccount,
+      accountHolder: adminBaridimob.accountHolder,
     },
   };
 

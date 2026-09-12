@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Store, Order } from '../../types';
 import { OverviewTab } from './OverviewTab';
 import { ProductsTab } from './ProductsTab';
@@ -7,6 +7,7 @@ import { CustomizerTab } from './CustomizerTab';
 import { CouponsTab } from './CouponsTab';
 import { AiAssistantTab } from './AiAssistantTab';
 import { SubscriptionModal } from './SubscriptionModal';
+import { getAdminBaridimob, getMerchantNotifications, MerchantNotification, markNotificationAsRead } from '../../lib/adminSettings';
 import { 
   LayoutDashboard, 
   Package, 
@@ -20,7 +21,11 @@ import {
   Gift,
   CreditCard,
   Clock,
-  Globe
+  Globe,
+  Bell,
+  X,
+  Megaphone,
+  CheckCircle2
 } from 'lucide-react';
 
 interface MerchantDashboardProps {
@@ -45,6 +50,29 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customizer' | 'coupons' | 'ai'>('overview');
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showAdminNotifsModal, setShowAdminNotifsModal] = useState(false);
+
+  const [adminBaridimob, setAdminBaridimob] = useState(getAdminBaridimob());
+  const [adminNotifications, setAdminNotifications] = useState<MerchantNotification[]>(() =>
+    getMerchantNotifications().filter((n) => n.targetMerchantId === 'all' || n.targetMerchantId === currentStore.id)
+  );
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      setAdminBaridimob(getAdminBaridimob());
+      setAdminNotifications(
+        getMerchantNotifications().filter((n) => n.targetMerchantId === 'all' || n.targetMerchantId === currentStore.id)
+      );
+    };
+    window.addEventListener('youmi_settings_updated', handleSettingsUpdate);
+    window.addEventListener('youmi_new_admin_notification', handleSettingsUpdate);
+    return () => {
+      window.removeEventListener('youmi_settings_updated', handleSettingsUpdate);
+      window.removeEventListener('youmi_new_admin_notification', handleSettingsUpdate);
+    };
+  }, [currentStore.id]);
+
+  const unreadNotifsCount = adminNotifications.filter((n) => !n.readBy.includes(currentStore.id)).length;
 
   const sub = currentStore.subscription || {
     planName: 'خطة تجار الجملة - Youmi B2B Pro',
@@ -55,9 +83,9 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     status: 'active_trial' as const,
     monthlyFeeDzd: 3500,
     baridimobPaymentDetails: {
-      ripNumber: '0079999900238129038201',
-      ccpAccount: '002381290 مفتاح 88',
-      accountHolder: 'مؤسسة منصة يومي للتجارة والحلول الرقمية (Youmi Market DZ)',
+      ripNumber: adminBaridimob.ripNumber,
+      ccpAccount: adminBaridimob.ccpAccount,
+      accountHolder: adminBaridimob.accountHolder,
     },
   };
 
@@ -143,6 +171,20 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
 
           {/* Quick Actions */}
           <div className="flex items-center gap-2.5">
+            {/* Admin Notifications Bell Button */}
+            <button
+              onClick={() => setShowAdminNotifsModal(true)}
+              className="relative p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition border border-indigo-200"
+              title="إشعارات إدارة المنصة"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                  {unreadNotifsCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => onOpenStorefront(currentStore)}
               className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition flex items-center gap-1.5 shadow-sm"
@@ -299,6 +341,73 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
           onClose={() => setShowSubscriptionModal(false)}
           onUpdateStore={onUpdateStore}
         />
+      )}
+
+      {/* Admin Notifications Modal */}
+      {showAdminNotifsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center pb-3 border-b">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-black text-slate-900 text-base font-['Cairo']">إشعارات وتنبيهات إدارة المنصة</h3>
+              </div>
+              <button onClick={() => setShowAdminNotifsModal(false)}>
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+              {adminNotifications.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 text-xs">لا توجد إشعارات جديدة من إدارة المنصة حالياً.</div>
+              ) : (
+                adminNotifications.map((notif) => {
+                  const isRead = notif.readBy.includes(currentStore.id);
+                  return (
+                    <div
+                      key={notif.id}
+                      className={`p-4 rounded-2xl border space-y-2 transition ${
+                        !isRead ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-slate-900">{notif.title}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(notif.createdAt).toLocaleDateString('ar-DZ')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed">{notif.message}</p>
+
+                      {!isRead && (
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            onClick={() => {
+                              markNotificationAsRead(notif.id, currentStore.id);
+                              setAdminNotifications((x) =>
+                                x.map((n) => (n.id === notif.id ? { ...n, readBy: [...n.readBy, currentStore.id] } : n))
+                              );
+                            }}
+                            className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-bold flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>تعليم كتم قراءة</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowAdminNotifsModal(false)}
+              className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-2xl transition"
+            >
+              إغلاق النافذة
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -53,9 +53,12 @@ import {
   Lock,
   UserCheck,
   LogOut,
-  Globe
+  Globe,
+  Megaphone,
+  Bell
 } from 'lucide-react';
 import { B2BMember } from './MemberAuthModal';
+import { getPlatformAnnouncements, PlatformAnnouncement } from '../lib/adminSettings';
 
 interface PlatformLandingProps {
   stores: Store[];
@@ -94,6 +97,21 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   const [cartItems, setCartItems] = useState<{ product: Product; store: Store; qty: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
+
+  // Dynamic Platform Announcements from Admin
+  const [platformAnnouncements, setPlatformAnnouncements] = useState<PlatformAnnouncement[]>(() =>
+    getPlatformAnnouncements().filter((a) => a.active && (a.targetAudience === 'all' || a.targetAudience === 'buyers'))
+  );
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      setPlatformAnnouncements(
+        getPlatformAnnouncements().filter((a) => a.active && (a.targetAudience === 'all' || a.targetAudience === 'buyers'))
+      );
+    };
+    window.addEventListener('youmi_settings_updated', handleUpdate);
+    return () => window.removeEventListener('youmi_settings_updated', handleUpdate);
+  }, []);
 
   // Hero B2B Slides
   const heroSlides = [
@@ -203,17 +221,21 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white text-xs py-2 px-4 lg:px-8 border-b border-indigo-900/50 shadow-inner">
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
           
-          <div className="flex items-center gap-2 text-center sm:text-right">
+          <div className="flex items-center gap-2 text-center sm:text-right overflow-hidden">
             <span className="px-2 py-0.5 bg-amber-400 text-slate-950 font-black text-[10px] rounded-md shadow-sm flex items-center gap-1 shrink-0">
-              <Building2 className="w-3 h-3" />
-              <span>منصة جملة B2B</span>
+              <Megaphone className="w-3 h-3 text-slate-950" />
+              <span>{platformAnnouncements[0]?.badge || 'إعلان المنصة'}</span>
             </span>
-            <span className="text-slate-200 font-medium">
-              🇩🇿 المنصة الجزائرية الأولى لتجارة الجملة والربط المباشر بين المصنعين والموردين وتجار التجزئة.
+            <span className="text-slate-200 font-bold truncate max-w-xl">
+              {platformAnnouncements[0] ? (
+                <span><strong>{platformAnnouncements[0].title}:</strong> {platformAnnouncements[0].content}</span>
+              ) : (
+                <span>🇩🇿 المنصة الجزائرية الأولى لتجارة الجملة والربط المباشر بين المصنعين والموردين وتجار التجزئة.</span>
+              )}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-semibold">
+          <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
 
             <div className="flex items-center gap-1.5 text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-lg">
               <Gift className="w-3.5 h-3.5" />

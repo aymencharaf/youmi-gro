@@ -26,4 +26,6 @@ export const api = {
   createOrder:(storeSlug:string,order:any)=>post('create_order',{storeSlug,order}), trackOrder:(query:string)=>post('track_order',{query}),
   dashboard:()=>request('admin_dashboard'), merchants:()=>request('admin_merchants'), stores:()=>request('admin_stores'), orders:()=>request('admin_orders'),
   merchantStatus:(id:string,status:'active'|'suspended')=>post('admin_set_merchant_status',{id,status}), orderStatus:(id:string,status:string)=>post('admin_set_order_status',{id,status}), adminSubscription:(storeId:string,subscription:any)=>post('admin_update_subscription',{storeId,subscription}), adminSaveProduct:(storeId:string,product:any)=>post('admin_save_product',{storeId,product}), adminDeleteProduct:(storeId:string,productId:string)=>post('admin_delete_product',{storeId,productId}),
+  getPlatformSettings: () => request('get_platform_settings'),
+  savePlatformSettings: (payload: any) => post('admin_save_platform_settings', payload),
 };

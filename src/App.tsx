@@ -276,6 +276,7 @@ export function App() {
     <div className="min-h-screen bg-[#F5F7FB] font-['Tajawal'] text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
       {/* Global Real-time Order Notification System */}
       <NotificationSystem
+        hideFloatingButton={currentView === 'PLATFORM_HOME' || (currentView as string) === 'landing'}
         onSelectStoreOrder={(storeSlug) => {
           const matched = stores.find((s) => s.slug === storeSlug);
           if (matched) {

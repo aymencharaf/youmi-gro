@@ -13,6 +13,7 @@ export interface OrderNotification {
 
 interface NotificationSystemProps {
   onSelectStoreOrder?: (storeSlug: string, orderId: string) => void;
+  hideFloatingButton?: boolean;
 }
 
 // Simple Web Audio API Synthesizer Chime for New Order alert
@@ -52,7 +53,7 @@ function playNewOrderChime() {
   }
 }
 
-export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onSelectStoreOrder }) => {
+export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onSelectStoreOrder, hideFloatingButton = false }) => {
   const [notifications, setNotifications] = useState<OrderNotification[]>([]);
   const [activeToast, setActiveToast] = useState<OrderNotification | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -249,7 +250,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onSelect
       )}
 
       {/* Floating Bell Trigger Button & Dropdown */}
-      <div className="relative" ref={dropdownRef}>
+      {!hideFloatingButton && (
+        <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => {
             setIsOpen(!isOpen);
@@ -354,6 +356,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onSelect
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

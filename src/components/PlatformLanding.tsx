@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Headphones,
   User,
+  LayoutDashboard,
   MapPin,
   ChevronRight,
   ChevronLeft,
@@ -313,7 +314,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div className="flex flex-col text-right hidden sm:flex">
                   <span className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[120px]">{currentMember?.name || 'عضو مسجل'}</span>
-                  <span className="text-[9px] text-emerald-700 font-semibold">أسعار الجملة مفعلة 🔓</span>
+                  <span className="text-[9px] text-emerald-700 font-semibold">
+                    {currentMember?.role === 'merchant' ? 'حساب تاجر ومورد 🏪' : 'أسعار الجملة مفعلة 🔓'}
+                  </span>
                 </div>
                 <button
                   onClick={onLogoutMember}
@@ -334,15 +337,26 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               </button>
             )}
 
-            {/* Merchant Access Button */}
-            <button
-              onClick={onOpenLoginModal}
-              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm border border-slate-800"
-            >
-              <User className="w-4 h-4 text-amber-400" />
-              <span className="hidden lg:inline">دخول الموردين</span>
-              <span className="lg:hidden">التُجار</span>
-            </button>
+            {/* Merchant Access / Dashboard Button */}
+            {currentMember?.role === 'merchant' ? (
+              <button
+                onClick={onOpenLoginModal}
+                className="px-3.5 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 border border-amber-300 ring-2 ring-amber-400/40 animate-pulse hover:animate-none"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-950 shrink-0" />
+                <span className="hidden sm:inline">لوحة تحكم المتجر 🏪</span>
+                <span className="sm:hidden">لوحة المتجر</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenLoginModal}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm border border-slate-800"
+              >
+                <User className="w-4 h-4 text-amber-400" />
+                <span className="hidden lg:inline">دخول الموردين</span>
+                <span className="lg:hidden">التُجار</span>
+              </button>
+            )}
 
             {/* Create Wholesale Store CTA */}
             <button
@@ -568,7 +582,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             onClick={onOpenLoginModal}
             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition"
           >
-            <span>دخول لوحة تحكم التاجر ←</span>
+            <span>{currentMember?.role === 'merchant' ? 'الذهاب إلى لوحة تحكم متجرك 🏪 ←' : 'دخول لوحة تحكم التاجر ←'}</span>
           </button>
         </div>
 
@@ -1025,7 +1039,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               <ul className="space-y-1.5 text-slate-400">
                 <li><button onClick={() => onNavigate('CREATE_STORE')} className="hover:text-amber-400 transition">أنشئ متجر جملة (30 يوماً مجاناً)</button></li>
                 <li><a href="#suppliers" className="hover:text-amber-400 transition">دليل الموردين والمصانع</a></li>
-                <li><button onClick={onOpenLoginModal} className="hover:text-amber-400 transition">لوحة تحكم التجّار</button></li>
+                <li><button onClick={onOpenLoginModal} className="hover:text-amber-400 transition font-bold">{currentMember?.role === 'merchant' ? 'لوحة تحكم متجرك 🏪' : 'لوحة تحكم التجّار'}</button></li>
               </ul>
             </div>
 

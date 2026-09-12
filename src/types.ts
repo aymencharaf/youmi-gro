@@ -151,5 +151,5 @@ export interface Store {
   };
 }
 
-export type AppView = 'PLATFORM_HOME' | 'CREATE_STORE' | 'MERCHANT_DASHBOARD' | 'STORE_FRONT';
+export type AppView = 'PLATFORM_HOME' | 'CREATE_STORE' | 'MERCHANT_DASHBOARD' | 'STORE_FRONT' | 'ADMIN_DASHBOARD';
 

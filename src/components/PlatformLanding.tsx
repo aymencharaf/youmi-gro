@@ -757,7 +757,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                     {/* Price & Add to Cart */}
                     <div className="space-y-2 pt-2 border-t border-slate-200">
                       <div className="flex items-center justify-between">
-                        {isLoggedIn ? (
+                        {canViewWholesalePrices ? (
                           <div>
                             <span className="text-sm font-black text-rose-600 block leading-none font-mono">
                               {product.price.toLocaleString()} دج

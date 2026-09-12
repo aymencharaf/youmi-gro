@@ -62,6 +62,7 @@ interface PlatformLandingProps {
   onSelectStore?: (store: Store, view: 'MERCHANT_DASHBOARD' | 'STORE_FRONT') => void;
   onOpenLoginModal?: () => void;
   isLoggedIn?: boolean;
+  isAdminLoggedIn?: boolean;
   currentMember?: B2BMember | null;
   onOpenMemberAuthModal?: () => void;
   onLogoutMember?: () => void;

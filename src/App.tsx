@@ -36,8 +36,9 @@ export function App() {
   });
   const [showMemberAuthModal, setShowMemberAuthModal] = useState(false);
 
-  const isLoggedIn = !!currentMember?.isLoggedIn;
-
+  const isLoggedIn =
+  !!currentMember?.isLoggedIn ||
+  currentMember?.role === 'admin';
   const handleMemberLoginSuccess = async (member: B2BMember) => {
     setCurrentMember(member);
     localStorage.setItem('youmi_member_user', JSON.stringify(member));

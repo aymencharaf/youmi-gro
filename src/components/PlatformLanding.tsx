@@ -76,12 +76,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   onSelectStore = (_store: Store, _view: 'MERCHANT_DASHBOARD' | 'STORE_FRONT') => {},
   onOpenLoginModal = () => {},
   isLoggedIn = false,
+  isAdminLoggedIn = false,
   currentMember = null,
   onOpenMemberAuthModal = () => {},
   onLogoutMember = () => {},
   onOpenInfinityFreeModal = () => {},
   onOpenAdminLoginModal = () => {},
 }) => {
+  const canViewWholesalePrices = isLoggedIn || isAdminLoggedIn;
   const [lang, setLang] = useState<'AR' | 'FR'>('AR');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('جميع التصنيفات');

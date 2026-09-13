@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store } from '../types';
+import { YoumiLogo } from './YoumiLogo';
 import { createNewStore, createStoreOnApi, loadMyStoresFromApi } from '../lib/storage';
 import { B2BMember } from './MemberAuthModal';
 import { BUSINESS_CATEGORIES } from '../data/algeriaData';
@@ -198,10 +199,7 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-slate-900 font-['Cairo'] text-sm">Youmi Seller</span>
+            <YoumiLogo variant="header" size="sm" />
           </div>
         </div>
       </header>

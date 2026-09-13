@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { YoumiLogo } from './YoumiLogo';
 import { 
   X, 
   Lock, 
@@ -151,8 +152,8 @@ export const MemberAuthModal: React.FC<MemberAuthModalProps> = ({
 
         {/* Header */}
         <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white flex items-center justify-center mx-auto shadow-md">
-            <UserCheck className="w-6 h-6" />
+          <div className="flex justify-center">
+            <YoumiLogo variant="full" size="md" />
           </div>
           <h2 className="text-xl font-black text-slate-900 font-['Cairo']">
             حساب التجار والمشترين 👤

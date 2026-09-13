@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store, Order } from '../../types';
+import { YoumiLogo } from '../YoumiLogo';
 import { OverviewTab } from './OverviewTab';
 import { ProductsTab } from './ProductsTab';
 import { OrdersTab } from './OrdersTab';
@@ -128,10 +129,11 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
           <div className="flex items-center gap-4">
             <button
               onClick={onNavigateHome}
-              className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+              className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition"
               title="العودة للرئيسية"
             >
               <ArrowRight className="w-5 h-5" />
+              <YoumiLogo variant="header" size="sm" />
             </button>
 
             {/* Store Switcher Dropdown */}

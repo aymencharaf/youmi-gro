@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Store, Product } from '../../types';
 import { saveProductToStore, deleteProductFromStore } from '../../lib/storage';
 import { BUSINESS_CATEGORIES } from '../../data/algeriaData';
+import { ImageUploadInput } from '../common/ImageUploadInput';
 import { 
   Plus, 
   Search, 
@@ -372,16 +373,14 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">رابط صورة المنتج (Image URL)</label>
-                <input
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition"
-                />
-              </div>
+              <ImageUploadInput
+                label="صورة المنتج الرئيسي *"
+                value={imageUrl}
+                onChange={(url) => setImageUrl(url)}
+                helperText="اختر صورة المنتج من جهازك أو أدخل رابطاً مباشراً لضمان أعلى جودة لعرض المنتج للجملة"
+                placeholder="https://..."
+                aspectRatio="square"
+              />
 
               <div>
                 <div className="flex items-center justify-between mb-1">

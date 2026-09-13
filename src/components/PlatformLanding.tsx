@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Store, AppView, Product } from '../types';
+import { YoumiLogo } from './YoumiLogo';
 import {
   ShoppingBag,
   Search,
@@ -277,24 +278,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           {/* Logo & Platform Name */}
           <div
             onClick={() => onNavigate('PLATFORM_HOME')}
-            className="flex items-center gap-3 cursor-pointer shrink-0 group"
+            className="flex items-center cursor-pointer shrink-0 group hover:opacity-95 transition"
           >
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 group-hover:scale-105 transition">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-black tracking-tight text-slate-900 font-['Cairo'] leading-none">
-                  Youmi
-                </span>
-                <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-md border border-indigo-200">
-                  Wholesale B2B
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                سوق تجارة الجملة والربط المباشر بالجزائر
-              </p>
-            </div>
+            <YoumiLogo variant="full" size="md" />
           </div>
 
           {/* Integrated Search Bar with Filter Dropdown */}
@@ -1098,11 +1084,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold">
-                  Y
-                </div>
-                <span className="text-white font-black text-lg font-['Cairo']">Youmi B2B Market</span>
+              <div
+                onClick={() => onNavigate('PLATFORM_HOME')}
+                className="cursor-pointer inline-block hover:opacity-90 transition"
+              >
+                <YoumiLogo variant="full" size="md" isDark={true} />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 منصة تجارة الجملة والربط المباشر بين المصنعين والموردين وأصحاب المحلات بالجزائر.

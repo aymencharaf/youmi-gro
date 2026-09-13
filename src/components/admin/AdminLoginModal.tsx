@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Lock, User, X, AlertCircle, ArrowLeft, KeyRound } from 'lucide-react';
+import { YoumiLogo } from '../YoumiLogo';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -50,17 +51,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 border-b border-indigo-900/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xl shadow-md shrink-0">
-              <ShieldCheck className="w-6 h-6 text-slate-950" />
-            </div>
-            <div>
-              <h2 className="text-base font-black font-['Cairo'] text-white">
-                دخول مدير المنصة (Admin)
-              </h2>
-              <p className="text-xs text-indigo-200 mt-0.5">
-                لوحة التحكم المركزية لمنصة يومي للجملة
-              </p>
-            </div>
+            <YoumiLogo variant="full" size="sm" isDark={true} />
+            <span className="text-xs font-bold px-2 py-0.5 bg-amber-400 text-slate-950 rounded-md">Admin</span>
           </div>
 
           <button

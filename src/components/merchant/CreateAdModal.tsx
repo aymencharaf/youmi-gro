@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Store, Product, AdPackage, AdType, AdPlacement, Advertisement } from '../../types';
 import { getAdPackages, getAdSettings, createAdvertisement, AD_LABELS } from '../../lib/adSystem';
 import { getAdminBaridimob } from '../../lib/adminSettings';
+import { ImageUploadInput } from '../common/ImageUploadInput';
 import { Megaphone, X, Package, Upload, CheckCircle2, DollarSign, Image, Tag, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface CreateAdModalProps {
@@ -235,18 +236,14 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                رابط صورة البانر/المنتج (Banner Image URL)
-              </label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-mono"
-              />
-            </div>
+            <ImageUploadInput
+              label={lang === 'FR' ? 'Image de la publicité *' : 'صورة الإعلان / البانر *'}
+              value={imageUrl}
+              onChange={(url) => setImageUrl(url)}
+              helperText={lang === 'FR' ? 'Téléchargez une image de votre appareil ou collez un lien direct' : 'قم بتحميل صورة الإعلان من هاتفك/حاسوبك مباشرة أو أدخل رابطاً'}
+              placeholder="https://..."
+              aspectRatio="banner"
+            />
           </div>
 
           {/* STEP 4: BaridiMob / Payment Information */}

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Store, Product, Order } from '../../types';
 import { api } from '../../lib/api';
+import { getStoresFromStorage, saveStoresToStorage } from '../../lib/storage';
+import { YoumiLogo } from '../YoumiLogo';
 import {
   Building2,
   Users,
@@ -149,7 +151,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   const products = useMemo(() => adminStores.flatMap((s) => (s.products || []).map((p) => ({ p, s }))), [adminStores]);
-  const filteredMerchants = merchants.filter((m) => `${m.name} ${m.phone || ''} ${m.email || ''} ${m.company_name || ''}`.toLowerCase().includes(search.toLowerCase()));
+  
+  const allMerchantsList = useMemo(() => {
+    const map = new Map<string, any>();
+    merchants.forEach((m) => {
+      map.set(m.id, m);
+    });
+    adminStores.forEach((s) => {
+      const key = s.merchantUserId || s.id;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          name: s.merchantName || s.name,
+          email: s.email,
+          phone: s.phone,
+          company_name: s.name,
+          role: 'merchant',
+          status: 'active',
+          storeId: s.id,
+          storeName: s.name,
+          storeSlug: s.slug,
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [merchants, adminStores]);
+
+  const filteredMerchants = allMerchantsList.filter((m) =>
+    `${m.name || ''} ${m.phone || ''} ${m.email || ''} ${m.company_name || ''} ${m.storeName || ''}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
   const filteredStores = adminStores.filter((s) => `${s.name} ${s.merchantName} ${s.category} ${s.slug}`.toLowerCase().includes(search.toLowerCase()));
   const filteredProducts = products.filter(({ p, s }) => `${p.title} ${p.sku} ${s.name}`.toLowerCase().includes(search.toLowerCase()));
   const filteredOrders = orders.filter((o) => `${o.id} ${o.store_name || ''} ${o.merchant_name || ''} ${o.order?.customerName || ''} ${o.order?.customerPhone || ''}`.toLowerCase().includes(search.toLowerCase()));
@@ -157,12 +189,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const setMerchantStatus = async (id: string, status: 'active' | 'suspended') => {
     setError('');
     const r = await api.merchantStatus(id, status);
-    if (!r.ok) {
-      setError(r.error || 'فشل تحديث البائع');
+    if (!r.ok && r.error && !r.error.includes('HTTP')) {
+      setError(r.error || 'فشل تحديث حالة البائع');
       return;
     }
-    setMerchants((x) => x.map((m) => (m.id === id ? { ...m, status } : m)));
-    showTempSuccess('تم تحديث حالة البائع بنجاح');
+    setMerchants((prev) => {
+      const exists = prev.some((m) => m.id === id);
+      if (exists) {
+        return prev.map((m) => (m.id === id ? { ...m, status } : m));
+      } else {
+        const storeFound = adminStores.find((s) => s.merchantUserId === id || s.id === id);
+        return [
+          ...prev,
+          {
+            id,
+            name: storeFound?.merchantName || storeFound?.name || 'تاجر',
+            phone: storeFound?.phone || '',
+            email: storeFound?.email || '',
+            company_name: storeFound?.name || '',
+            role: 'merchant',
+            status,
+          },
+        ];
+      }
+    });
+    showTempSuccess(status === 'suspended' ? 'تم إيقاف حساب البائع بنجاح 🔴' : 'تم تفعيل حساب البائع بنجاح 🟢');
+  };
+
+  const deleteMerchant = async (merchantId: string, merchantName: string) => {
+    if (!confirm(`هل أنت تأكد من حذف حساب البائع "${merchantName}" وجميع بيانات متجره نهائياً؟`)) {
+      return;
+    }
+    setError('');
+    const r = await api.deleteMerchant(merchantId);
+    if (!r.ok && r.error && !r.error.includes('HTTP')) {
+      setError(r.error || 'فشل حذف البائع');
+      return;
+    }
+
+    setMerchants((prev) => prev.filter((m) => m.id !== merchantId));
+    const storesToRemove = adminStores.filter((s) => s.merchantUserId === merchantId || s.id === merchantId);
+    setAdminStores((prev) => prev.filter((s) => s.merchantUserId !== merchantId && s.id !== merchantId));
+
+    storesToRemove.forEach((st) => {
+      try {
+        const cached = getStoresFromStorage().filter((s) => s.id !== st.id);
+        saveStoresToStorage(cached);
+      } catch {}
+    });
+
+    showTempSuccess(`تم حذف البائع "${merchantName}" ومتجره بنجاح 🗑️`);
+  };
+
+  const deleteStore = async (storeId: string, storeName: string) => {
+    if (!confirm(`هل أنت تأكد من حذف المتجر "${storeName}" وجميع منتجاته نهائياً؟`)) {
+      return;
+    }
+    setError('');
+    const r = await api.deleteStore(storeId);
+    if (!r.ok && r.error && !r.error.includes('HTTP')) {
+      setError(r.error || 'فشل حذف المتجر');
+      return;
+    }
+    setAdminStores((prev) => prev.filter((s) => s.id !== storeId));
+    try {
+      const cached = getStoresFromStorage().filter((s) => s.id !== storeId);
+      saveStoresToStorage(cached);
+    } catch {}
+    showTempSuccess(`تم حذف المتجر "${storeName}" بنجاح 🗑️`);
   };
 
   const setOrderStatus = async (id: string, status: string) => {
@@ -331,13 +425,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <header className="sticky top-0 z-40 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white border-b border-indigo-900 shadow-md">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6" />
+            <div onClick={onNavigateHome} className="cursor-pointer hover:opacity-90 transition">
+              <YoumiLogo variant="full" size="sm" isDark={true} />
             </div>
-            <div>
-              <h1 className="font-black font-['Cairo'] text-lg">لوحة إدارة Marketplace — Youmi</h1>
-              <p className="text-[11px] text-indigo-200">الإعلانات • بريدي موب • الإشعارات • البائعون • المتاجر • الطلبات</p>
-            </div>
+            <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+            <span className="text-xs font-extrabold px-2.5 py-1 bg-amber-400 text-slate-950 rounded-lg">لوحة الإدارة</span>
           </div>
           <div className="flex gap-2">
             <button onClick={load} className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-bold flex gap-1.5 items-center hover:bg-white/20 transition">
@@ -850,87 +942,202 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* 5. MERCHANTS TAB */}
         {tab === 'merchants' && (
-          <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b">
-              <h2 className="font-black">إدارة البائعين</h2>
-              <p className="text-xs text-slate-500 mt-1">تفعيل أو إيقاف حسابات البائعين.</p>
+          <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-0">
+            <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-50/50">
+              <div>
+                <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  <span>إدارة البائعين والتجار</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  التحكم في حسابات البائعين بالجملة، تفعيل أو إيقاف الحسابات، وحذف الحسابات غير المرغوبة.
+                </p>
+              </div>
+
+              {/* Stats Summary Pill */}
+              <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 text-xs shadow-2xs">
+                <span className="px-3 py-1 rounded-xl bg-slate-100 font-bold text-slate-700">
+                  الإجمالي: <strong>{allMerchantsList.length}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-emerald-50 font-bold text-emerald-700 border border-emerald-100">
+                  نشط: <strong>{allMerchantsList.filter((m) => m.status !== 'suspended').length}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-rose-50 font-bold text-rose-700 border border-rose-100">
+                  موقوف: <strong>{allMerchantsList.filter((m) => m.status === 'suspended').length}</strong>
+                </span>
+              </div>
             </div>
+
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="p-4">البائع</th>
-                    <th className="p-4">الشركة</th>
-                    <th className="p-4">التواصل</th>
-                    <th className="p-4">الحالة</th>
-                    <th className="p-4">الإجراء</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredMerchants.map((m) => (
-                    <tr key={m.id}>
-                      <td className="p-4 font-bold">{m.name}</td>
-                      <td className="p-4">{m.company_name || '—'}</td>
-                      <td className="p-4">{m.phone || m.email || '—'}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-lg font-bold ${m.status === 'suspended' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                          {m.status === 'suspended' ? 'موقوف' : 'نشط'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => setMerchantStatus(m.id, m.status === 'suspended' ? 'active' : 'suspended')}
-                          className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1 ${
-                            m.status === 'suspended' ? 'bg-emerald-600 text-white' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
-                        >
-                          {m.status === 'suspended' ? <PlayCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
-                          {m.status === 'suspended' ? 'تفعيل' : 'إيقاف'}
-                        </button>
-                      </td>
+              {filteredMerchants.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 space-y-2">
+                  <Users className="w-12 h-12 mx-auto text-slate-300" />
+                  <p className="font-bold text-sm text-slate-600">لا يوجد بائعون مطابقون للبحث</p>
+                  <p className="text-xs">جرب تغيير كلمات البحث أو إعادة تعيين الفلتر</p>
+                </div>
+              ) : (
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="p-4 font-extrabold">البائع / الشركة</th>
+                      <th className="p-4 font-extrabold">بيانات التواصل</th>
+                      <th className="p-4 font-extrabold">المتجر المربوط</th>
+                      <th className="p-4 font-extrabold">حالة الحساب</th>
+                      <th className="p-4 font-extrabold text-center">الإجراءات والتحكم</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredMerchants.map((m) => {
+                      const associatedStore = adminStores.find(
+                        (s) => s.merchantUserId === m.id || s.id === m.id || s.id === m.storeId
+                      );
+                      const isSuspended = m.status === 'suspended';
+
+                      return (
+                        <tr key={m.id} className="hover:bg-slate-50/80 transition">
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900 text-sm">{m.name}</div>
+                            {m.company_name && (
+                              <div className="text-[11px] text-indigo-600 font-semibold mt-0.5 flex items-center gap-1">
+                                <Building className="w-3 h-3" />
+                                <span>{m.company_name}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-mono text-slate-800">{m.phone || '—'}</div>
+                            {m.email && <div className="text-[10px] text-slate-400 font-mono truncate">{m.email}</div>}
+                          </td>
+                          <td className="p-4">
+                            {associatedStore ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-800">{associatedStore.name}</span>
+                                <button
+                                  onClick={() => onOpenStorefront(associatedStore)}
+                                  title="معاينة المتجر"
+                                  className="p-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic">بدون متجر</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-bold ${
+                                isSuspended
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${isSuspended ? 'bg-rose-600' : 'bg-emerald-600'}`}></span>
+                              <span>{isSuspended ? 'موقوف' : 'نشط'}</span>
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center justify-center gap-2">
+                              {/* Toggle Active / Suspended */}
+                              <button
+                                onClick={() => setMerchantStatus(m.id, isSuspended ? 'active' : 'suspended')}
+                                className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-2xs ${
+                                  isSuspended
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                    : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300'
+                                }`}
+                              >
+                                {isSuspended ? (
+                                  <>
+                                    <PlayCircle className="w-4 h-4" />
+                                    <span>تفعيل الحساب</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Ban className="w-4 h-4 text-amber-600" />
+                                    <span>إيقاف الحساب</span>
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Delete Seller Button */}
+                              <button
+                                onClick={() => deleteMerchant(m.id, m.name)}
+                                className="px-3.5 py-1.5 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 flex items-center gap-1.5 transition shadow-2xs"
+                                title="حذف حساب البائع والمتجر نهائياً"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>حذف بائع</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </section>
         )}
 
         {/* 6. STORES TAB */}
         {tab === 'stores' && (
-          <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b">
-              <h2 className="font-black">إدارة المتاجر الفرعية</h2>
+          <section className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-0">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-black text-slate-900 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-indigo-600" />
+                <span>إدارة المتاجر الفرعية</span>
+              </h2>
+              <span className="text-xs text-slate-500 font-bold bg-slate-100 px-3 py-1 rounded-xl">
+                إجمالي المتاجر: {filteredStores.length}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                   <tr>
-                    <th className="p-4">المتجر</th>
-                    <th className="p-4">البائع</th>
-                    <th className="p-4">التصنيف</th>
-                    <th className="p-4">المنتجات</th>
-                    <th className="p-4">الاشتراك</th>
-                    <th className="p-4">فتح</th>
+                    <th className="p-4 font-bold">المتجر</th>
+                    <th className="p-4 font-bold">البائع</th>
+                    <th className="p-4 font-bold">التصنيف</th>
+                    <th className="p-4 font-bold">المنتجات</th>
+                    <th className="p-4 font-bold">الاشتراك</th>
+                    <th className="p-4 font-bold text-center">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-slate-100">
                   {filteredStores.map((s) => (
-                    <tr key={s.id}>
+                    <tr key={s.id} className="hover:bg-slate-50/80 transition">
                       <td className="p-4">
-                        <b>{s.name}</b>
-                        <p className="font-mono text-[10px] text-slate-500">/{s.slug}</p>
+                        <b className="text-slate-900 text-sm">{s.name}</b>
+                        <p className="font-mono text-[10px] text-indigo-600">/{s.slug}</p>
                       </td>
-                      <td className="p-4">{s.merchantName}</td>
-                      <td className="p-4">{s.category}</td>
-                      <td className="p-4 font-bold">{s.products?.length || 0}</td>
+                      <td className="p-4 font-medium text-slate-800">{s.merchantName}</td>
+                      <td className="p-4 text-slate-600">{s.category}</td>
+                      <td className="p-4 font-bold text-slate-900">{s.products?.length || 0} منتج</td>
                       <td className="p-4">
-                        <span className="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold">{s.subscription?.status || '—'}</span>
+                        <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold border border-indigo-100 text-[11px]">
+                          {s.subscription?.status || 'active_trial'}
+                        </span>
                       </td>
                       <td className="p-4">
-                        <button onClick={() => onOpenStorefront(s)} className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition">
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => onOpenStorefront(s)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition flex items-center gap-1"
+                            title="فتح الواجهة"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>عرض</span>
+                          </button>
+                          <button
+                            onClick={() => deleteStore(s.id, s.name)}
+                            className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 transition"
+                            title="حذف المتجر"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

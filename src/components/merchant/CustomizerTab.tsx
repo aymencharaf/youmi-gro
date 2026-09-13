@@ -14,7 +14,15 @@ import {
   Radio,
   CheckCircle2,
   RefreshCw,
-  ShieldCheck
+  ShieldCheck,
+  Phone,
+  Mail,
+  MessageCircle,
+  MapPin,
+  Clock,
+  Share2,
+  PhoneCall,
+  Eye
 } from 'lucide-react';
 
 interface CustomizerTabProps {
@@ -35,6 +43,35 @@ export const CustomizerTab: React.FC<CustomizerTabProps> = ({ store, onUpdateSto
   const [shippingFee, setShippingFee] = useState(store.settings.shippingFee);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(store.settings.freeShippingThreshold);
   const [minWholesaleCartTotal, setMinWholesaleCartTotal] = useState(store.settings.minWholesaleCartTotal || 10000);
+
+  // Contact Info state (معلومات الاتصال والتواصل للزبائن)
+  const initialContact = store.settings.contactInfo || {
+    phone: store.phone || '',
+    phone2: '',
+    whatsapp: store.settings.socialLinks?.whatsapp || store.phone || '',
+    email: store.email || '',
+    address: 'حي المستقبل - المنطقة الصناعية والمستودعات',
+    wilaya: '16 - الجزائر العاصمة',
+    workingHours: 'من الأحد إلى الخميس: 08:00 صباحاً - 05:00 مساءً',
+    facebook: store.settings.socialLinks?.facebook || '',
+    instagram: store.settings.socialLinks?.instagram || '',
+    telegram: '',
+    tiktok: '',
+    displayOnStorefront: true,
+  };
+
+  const [contactPhone, setContactPhone] = useState(initialContact.phone || store.phone || '');
+  const [contactPhone2, setContactPhone2] = useState(initialContact.phone2 || '');
+  const [contactWhatsapp, setContactWhatsapp] = useState(initialContact.whatsapp || store.phone || '');
+  const [contactEmail, setContactEmail] = useState(initialContact.email || store.email || '');
+  const [contactAddress, setContactAddress] = useState(initialContact.address || '');
+  const [contactWilaya, setContactWilaya] = useState(initialContact.wilaya || '16 - الجزائر العاصمة');
+  const [contactWorkingHours, setContactWorkingHours] = useState(initialContact.workingHours || 'من الأحد إلى الخميس: 08:00 صباحاً - 05:00 مساءً');
+  const [contactFacebook, setContactFacebook] = useState(initialContact.facebook || store.settings.socialLinks?.facebook || '');
+  const [contactInstagram, setContactInstagram] = useState(initialContact.instagram || store.settings.socialLinks?.instagram || '');
+  const [contactTelegram, setContactTelegram] = useState(initialContact.telegram || '');
+  const [contactTiktok, setContactTiktok] = useState(initialContact.tiktok || '');
+  const [displayOnStorefront, setDisplayOnStorefront] = useState(initialContact.displayOnStorefront !== false);
 
   // Shipping API state
   const initialApi = store.settings.shippingApiSettings || {
@@ -102,6 +139,8 @@ export const CustomizerTab: React.FC<CustomizerTabProps> = ({ store, onUpdateSto
     const updatedStore: Store = {
       ...store,
       name,
+      phone: contactPhone || store.phone,
+      email: contactEmail || store.email,
       slogan,
       description,
       theme,
@@ -116,6 +155,26 @@ export const CustomizerTab: React.FC<CustomizerTabProps> = ({ store, onUpdateSto
         minWholesaleCartTotal,
         shippingApiSettings: shippingApi,
         paymentMethods,
+        socialLinks: {
+          ...store.settings.socialLinks,
+          whatsapp: contactWhatsapp,
+          facebook: contactFacebook,
+          instagram: contactInstagram,
+        },
+        contactInfo: {
+          phone: contactPhone,
+          phone2: contactPhone2,
+          whatsapp: contactWhatsapp,
+          email: contactEmail,
+          address: contactAddress,
+          wilaya: contactWilaya,
+          workingHours: contactWorkingHours,
+          facebook: contactFacebook,
+          instagram: contactInstagram,
+          telegram: contactTelegram,
+          tiktok: contactTiktok,
+          displayOnStorefront,
+        },
       },
     };
 
@@ -349,6 +408,191 @@ export const CustomizerTab: React.FC<CustomizerTabProps> = ({ store, onUpdateSto
               helperText="صورة بنر المتجر العريضة أعلى صفحة المتجر"
               aspectRatio="banner"
             />
+          </div>
+        </div>
+
+        {/* Contact Information Section (معلومات الاتصال والتواصل لتظهر للزبائن) */}
+        <div className="p-6 rounded-3xl bg-white border-2 border-amber-200/70 shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 font-['Cairo'] flex items-center gap-2">
+                <PhoneCall className="w-5 h-5 text-amber-600" />
+                <span>معلومات الاتصال والتواصل المباشر مع الزبائن (Contact Information)</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                البيانات التي تدخلها هنا ستظهر مباشرة للزبائن في أسفل المتجر (Footer) وفي نافذة التواصل مع التاجر.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+              <input
+                type="checkbox"
+                checked={displayOnStorefront}
+                onChange={(e) => setDisplayOnStorefront(e.target.checked)}
+                className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+              />
+              <span className="text-xs font-bold text-amber-950 flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5 text-amber-600" />
+                إظهار للزبائن بالمتجر
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                رقم الهاتف الرئيسي للطلب والتواصل *
+              </label>
+              <input
+                type="text"
+                required
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="مثال: +213550123456"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <PhoneCall className="w-3.5 h-3.5 text-blue-600" />
+                رقم هاتف ثانٍ / خدمة العملاء (اختياري)
+              </label>
+              <input
+                type="text"
+                value={contactPhone2}
+                onChange={(e) => setContactPhone2(e.target.value)}
+                placeholder="مثال: +213660987654"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+                رقم الواتساب للمحادثات المباشرة (WhatsApp)
+              </label>
+              <input
+                type="text"
+                value={contactWhatsapp}
+                onChange={(e) => setContactWhatsapp(e.target.value)}
+                placeholder="مثال: +213550123456"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                البريد الإلكتروني للتاجر
+              </label>
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="contact@store.dz"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                الولاية ومقر النشاط
+              </label>
+              <select
+                value={contactWilaya}
+                onChange={(e) => setContactWilaya(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition"
+              >
+                {algerianWilayas.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                أوقات العمل واستقبال الطلبات
+              </label>
+              <input
+                type="text"
+                value={contactWorkingHours}
+                onChange={(e) => setContactWorkingHours(e.target.value)}
+                placeholder="مثال: من الأحد إلى الخميس: 08:00 صباحاً - 05:00 مساءً"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-slate-600" />
+              العنوان التفصيلي للمستودع / المعرض / الورشة
+            </label>
+            <input
+              type="text"
+              value={contactAddress}
+              onChange={(e) => setContactAddress(e.target.value)}
+              placeholder="مثال: حي المستقبل، المنطقة الصناعية والمستودعات، قطعة رقم 14"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition"
+            />
+          </div>
+
+          {/* Social Links Row */}
+          <div className="pt-2 border-t border-slate-100 space-y-3">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Share2 className="w-4 h-4 text-indigo-600" />
+              <span>صفحات وحسابات التواصل الاجتماعي (Social Media)</span>
+            </span>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Facebook</label>
+                <input
+                  type="text"
+                  value={contactFacebook}
+                  onChange={(e) => setContactFacebook(e.target.value)}
+                  placeholder="https://facebook.com/..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Instagram</label>
+                <input
+                  type="text"
+                  value={contactInstagram}
+                  onChange={(e) => setContactInstagram(e.target.value)}
+                  placeholder="https://instagram.com/..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Telegram</label>
+                <input
+                  type="text"
+                  value={contactTelegram}
+                  onChange={(e) => setContactTelegram(e.target.value)}
+                  placeholder="https://t.me/..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">TikTok</label>
+                <input
+                  type="text"
+                  value={contactTiktok}
+                  onChange={(e) => setContactTiktok(e.target.value)}
+                  placeholder="https://tiktok.com/@..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 focus:outline-none focus:border-indigo-600 transition dir-ltr text-right"
+                />
+              </div>
+            </div>
           </div>
         </div>
 

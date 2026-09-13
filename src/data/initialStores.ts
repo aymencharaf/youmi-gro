@@ -3,6 +3,7 @@ import { Store } from '../types';
 export const INITIAL_STORES: Store[] = [
   {
     id: 'store-001',
+    merchantCode: 'Y0012',
     name: 'مؤسسة أطلس للعود والمبخرة (جملة)',
     slug: 'oud-luxury-wholesale',
     category: 'عطور وبخور بالجملة',
@@ -59,6 +60,18 @@ export const INITIAL_STORES: Store[] = [
         instagram: 'https://instagram.com/oud_dz_wholesale',
         facebook: 'https://facebook.com/oud.wholesale.dz',
         whatsapp: '+213550123456',
+      },
+      contactInfo: {
+        phone: '+213550123456',
+        phone2: '+21323456789',
+        whatsapp: '+213550123456',
+        email: 'contact@oudwholesale-dz.com',
+        address: 'شارع فلسطين، المنطقة التجارية والاستيراد',
+        wilaya: '16 - الجزائر العاصمة',
+        workingHours: 'من الأحد إلى الخميس: 08:00 صباحاً - 05:00 مساءً',
+        facebook: 'https://facebook.com/oud.wholesale.dz',
+        instagram: 'https://instagram.com/oud_dz_wholesale',
+        displayOnStorefront: true,
       },
     },
     products: [
@@ -211,6 +224,7 @@ export const INITIAL_STORES: Store[] = [
   },
   {
     id: 'store-002',
+    merchantCode: 'Y0013',
     name: 'مصنع وورشة أنيقة للعبايات والأزياء (جملة)',
     slug: 'aneeqa-wholesale-dz',
     category: 'أزياء وعبايات بالجملة',
@@ -340,6 +354,7 @@ export const INITIAL_STORES: Store[] = [
   },
   {
     id: 'store-003',
+    merchantCode: 'Y0014',
     name: 'مؤسسة بكسل إلكترونكس للمستوردين (جملة)',
     slug: 'pixel-tech-wholesale',
     category: 'إلكترونيات وتقنية بالجملة',

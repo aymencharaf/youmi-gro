@@ -22,6 +22,21 @@ export interface ShippingApiSettings {
   stopDeskFee: number;
 }
 
+export interface StoreContactInfo {
+  phone?: string;
+  phone2?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;          // العنوان ومقر المستودع / المحل
+  wilaya?: string;           // الولاية
+  workingHours?: string;     // أوقات العمل والتواصل مع الزبائن
+  facebook?: string;
+  instagram?: string;
+  telegram?: string;
+  tiktok?: string;
+  displayOnStorefront?: boolean; // إظهار بيانات الاتصال للزبائن بالمتجر
+}
+
 export interface StoreSettings {
   paymentMethods: PaymentSettings;
   shippingFee: number;
@@ -36,6 +51,7 @@ export interface StoreSettings {
     snapchat?: string;
     facebook?: string;
   };
+  contactInfo?: StoreContactInfo;
 }
 
 export interface ProductVariant {
@@ -125,6 +141,7 @@ export interface MerchantSubscription {
 
 export interface Store {
   id: string;
+  merchantCode?: string;      // رقم تسجيل البائع بالمنصة (مثال: Y0012)
   name: string;
   slug: string;
   category: string;

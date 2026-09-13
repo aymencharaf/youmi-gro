@@ -210,6 +210,15 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
               </div>
 
               <div>
+                <span className="text-slate-500">أدنى طلب: </span>
+                <strong className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                  {product.minOrderQuantity || 1} {product.packageUnit || 'قطع'}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs pt-1">
+              <div>
                 <span className="text-slate-500">المخزون: </span>
                 <strong
                   className={`font-semibold ${
@@ -310,28 +319,38 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
               </div>
 
               {/* Wholesale MOQ & Package Unit */}
-              <div className="grid grid-cols-2 gap-3 p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-indigo-50/80 rounded-2xl border border-indigo-200/70">
                 <div>
-                  <label className="block text-xs font-bold text-indigo-950 mb-1">أصل الجملة (أقل كمية للطلب MOQ) *</label>
+                  <label className="block text-xs font-bold text-indigo-950 mb-1">
+                    الحد الأدنى لطلب المنتج (أدنى كمية بالجملة MOQ) *
+                  </label>
                   <input
                     type="number"
                     required
                     min={1}
                     value={minOrderQuantity}
-                    onChange={(e) => setMinOrderQuantity(Number(e.target.value))}
+                    onChange={(e) => setMinOrderQuantity(Math.max(1, Number(e.target.value)))}
                     className="w-full px-4 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:outline-none focus:border-indigo-600 transition"
                   />
+                  <span className="text-[10px] text-indigo-600 mt-1 block">
+                    يحدد أقل عدد قطع/وحدات يسمح للمشتري بطلبها من هذا المنتج.
+                  </span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-indigo-950 mb-1">وصف العبوة / الشحنة (Package Unit)</label>
+                  <label className="block text-xs font-bold text-indigo-950 mb-1">
+                    وحدة العبوة / التغليف (Package Unit)
+                  </label>
                   <input
                     type="text"
                     value={packageUnit}
                     onChange={(e) => setPackageUnit(e.target.value)}
-                    placeholder="مثال: كرتونة (12 قطعة)، طرد..."
+                    placeholder="مثال: كرتونة (12 قطعة)، طرد، علبة..."
                     className="w-full px-4 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs text-indigo-900 focus:outline-none focus:border-indigo-600 transition"
                   />
+                  <span className="text-[10px] text-indigo-600 mt-1 block">
+                    الوصف المصاحب للكمية الموضحة للمشتري.
+                  </span>
                 </div>
               </div>
 

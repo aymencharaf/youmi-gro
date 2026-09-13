@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Store, Product, Order } from '../../types';
 import { api } from '../../lib/api';
-import { getStoresFromStorage, saveStoresToStorage } from '../../lib/storage';
+import { getStoresFromStorage, saveStoresToStorage, getMerchantCode } from '../../lib/storage';
 import { YoumiLogo } from '../YoumiLogo';
 import {
   Building2,
@@ -177,12 +177,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return Array.from(map.values());
   }, [merchants, adminStores]);
 
-  const filteredMerchants = allMerchantsList.filter((m) =>
-    `${m.name || ''} ${m.phone || ''} ${m.email || ''} ${m.company_name || ''} ${m.storeName || ''}`
+  const filteredMerchants = allMerchantsList.filter((m) => {
+    const associatedStore = adminStores.find((s) => s.merchantUserId === m.id || s.id === m.id || s.id === m.storeId);
+    const mCode = getMerchantCode(associatedStore);
+    return `${m.name || ''} ${m.phone || ''} ${m.email || ''} ${m.company_name || ''} ${m.storeName || ''} ${mCode}`
       .toLowerCase()
-      .includes(search.toLowerCase())
-  );
-  const filteredStores = adminStores.filter((s) => `${s.name} ${s.merchantName} ${s.category} ${s.slug}`.toLowerCase().includes(search.toLowerCase()));
+      .includes(search.toLowerCase());
+  });
+  const filteredStores = adminStores.filter((s) => `${s.name} ${s.merchantName} ${s.category} ${s.slug} ${getMerchantCode(s)}`.toLowerCase().includes(search.toLowerCase()));
   const filteredProducts = products.filter(({ p, s }) => `${p.title} ${p.sku} ${s.name}`.toLowerCase().includes(search.toLowerCase()));
   const filteredOrders = orders.filter((o) => `${o.id} ${o.store_name || ''} ${o.merchant_name || ''} ${o.order?.customerName || ''} ${o.order?.customerPhone || ''}`.toLowerCase().includes(search.toLowerCase()));
 
@@ -526,18 +528,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <div className="grid lg:grid-cols-2 gap-5">
               <section className="bg-white rounded-3xl border border-slate-200 p-5">
-                <h2 className="font-black mb-4">آخر البائعين</h2>
-                {merchants.slice(0, 6).map((m) => (
-                  <div className="flex justify-between py-3 border-b last:border-0" key={m.id}>
-                    <div>
-                      <b className="text-sm">{m.name}</b>
-                      <p className="text-[11px] text-slate-500">{m.company_name || m.phone || '—'}</p>
+                <h2 className="font-black mb-4">آخر البائعين المسجلين</h2>
+                {merchants.slice(0, 6).map((m) => {
+                  const st = adminStores.find((s) => s.merchantUserId === m.id || s.id === m.id);
+                  return (
+                    <div className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0" key={m.id}>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <b className="text-sm font-bold text-slate-900">{m.name}</b>
+                          <span className="font-mono text-[10px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">
+                            {getMerchantCode(st)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">{m.company_name || m.phone || '—'}</p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${m.status === 'suspended' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                        {m.status === 'suspended' ? 'موقوف' : 'نشط'}
+                      </span>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${m.status === 'suspended' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                      {m.status === 'suspended' ? 'موقوف' : 'نشط'}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </section>
               <section className="bg-white rounded-3xl border border-slate-200 p-5">
                 <h2 className="font-black mb-4">آخر الطلبات</h2>
@@ -979,6 +989,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <table className="w-full text-right text-xs">
                   <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-700">
                     <tr>
+                      <th className="p-4 font-extrabold">رقم التسجيل</th>
                       <th className="p-4 font-extrabold">البائع / الشركة</th>
                       <th className="p-4 font-extrabold">بيانات التواصل</th>
                       <th className="p-4 font-extrabold">المتجر المربوط</th>
@@ -992,9 +1003,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         (s) => s.merchantUserId === m.id || s.id === m.id || s.id === m.storeId
                       );
                       const isSuspended = m.status === 'suspended';
+                      const mCode = getMerchantCode(associatedStore);
 
                       return (
                         <tr key={m.id} className="hover:bg-slate-50/80 transition">
+                          <td className="p-4">
+                            <span className="font-mono font-black text-amber-950 bg-amber-100 px-3 py-1 rounded-xl border border-amber-300 shadow-2xs text-xs">
+                              {mCode}
+                            </span>
+                          </td>
                           <td className="p-4">
                             <div className="font-bold text-slate-900 text-sm">{m.name}</div>
                             {m.company_name && (
@@ -1112,7 +1129,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <b className="text-slate-900 text-sm">{s.name}</b>
                         <p className="font-mono text-[10px] text-indigo-600">/{s.slug}</p>
                       </td>
-                      <td className="p-4 font-medium text-slate-800">{s.merchantName}</td>
+                      <td className="p-4 font-medium text-slate-800">
+                        <div>{s.merchantName}</div>
+                        <span className="font-mono text-[10px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                          {getMerchantCode(s)}
+                        </span>
+                      </td>
                       <td className="p-4 text-slate-600">{s.category}</td>
                       <td className="p-4 font-bold text-slate-900">{s.products?.length || 0} منتج</td>
                       <td className="p-4">
@@ -1252,7 +1274,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div key={s.id} className="border rounded-2xl p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <b>{s.name}</b>
+                      <div className="flex items-center gap-2">
+                        <b className="text-sm font-bold text-slate-900">{s.name}</b>
+                        <span className="font-mono text-[11px] font-black text-amber-950 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                          {getMerchantCode(s)}
+                        </span>
+                      </div>
                       <p className="text-xs text-slate-500">{s.merchantName} ({s.phone || 'بدون هاتف'})</p>
                     </div>
                     <span className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold">

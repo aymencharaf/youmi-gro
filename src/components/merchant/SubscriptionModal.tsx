@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Store } from '../../types';
-import { saveStore } from '../../lib/storage';
+import { saveStore, getMerchantCode } from '../../lib/storage';
 import { getAdminBaridimob } from '../../lib/adminSettings';
 import { 
   X, 
@@ -12,7 +12,8 @@ import {
   Check, 
   ShieldCheck,
   Send,
-  Building
+  Building,
+  UserCheck
 } from 'lucide-react';
 
 interface SubscriptionModalProps {
@@ -127,6 +128,26 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Merchant Registration Code Banner */}
+            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-2 border-amber-400/50 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-sm shadow-sm shrink-0">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-amber-900 block">رقم تسجيل التاجر بالمنصة (رمز معرف البائع):</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xl font-black font-mono text-indigo-900 tracking-wider bg-white px-3 py-0.5 rounded-lg border border-amber-300 shadow-2xs">
+                      {getMerchantCode(store)}
+                    </span>
+                    <span className="text-[10px] text-amber-800 font-bold bg-amber-200/60 px-2 py-0.5 rounded-md">
+                      استخدم هذا الرقم لتعريف طلب اشتراكك لدى الأدمن
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Trial Status Card */}
             <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl flex items-center justify-between">
               <div className="flex items-center gap-3">

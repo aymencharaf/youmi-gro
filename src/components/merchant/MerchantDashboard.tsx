@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store, Order } from '../../types';
+import { getMerchantCode } from '../../lib/storage';
 import { YoumiLogo } from '../YoumiLogo';
 import { OverviewTab } from './OverviewTab';
 import { ProductsTab } from './ProductsTab';
@@ -174,6 +175,12 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
 
           {/* Quick Actions */}
           <div className="flex items-center gap-2.5">
+            {/* Merchant Registration Code Badge */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold shadow-2xs">
+              <span className="text-slate-500 font-normal">رقم البائع:</span>
+              <span className="font-mono font-black text-amber-700">{getMerchantCode(currentStore)}</span>
+            </div>
+
             {/* Admin Notifications Bell Button */}
             <button
               onClick={() => setShowAdminNotifsModal(true)}

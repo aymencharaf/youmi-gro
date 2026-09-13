@@ -988,8 +988,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
       {/* 9. CART DRAWER MODAL */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end dir-rtl">
-          <div className="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between space-y-4">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end dir-rtl transition-opacity"
+          onClick={() => setIsCartOpen(false)}
+        >
+          <div
+            className="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             
             <div className="space-y-4 flex-1 overflow-y-auto">
               <div className="flex items-center justify-between pb-4 border-b border-slate-200">
@@ -997,19 +1003,31 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                   <ShoppingBag className="w-5 h-5 text-indigo-600" />
                   <h3 className="text-base font-bold text-slate-900 font-['Cairo']">سلّة طلبات الجملة</h3>
                 </div>
+                {/* Close Cart Button in Header */}
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg bg-slate-100"
+                  className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl bg-slate-100 transition flex items-center gap-1.5 border border-slate-200"
+                  title="إغلاق السلة"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
+                  <span>إغلاق السلة</span>
                 </button>
               </div>
 
               {cartItems.length === 0 ? (
-                <div className="py-16 text-center space-y-3">
+                <div className="py-16 text-center space-y-4">
                   <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
-                  <p className="text-xs font-bold text-slate-600">سلّة طلبات الجملة فارغة حالياً</p>
-                  <p className="text-[11px] text-slate-400">تصفح المتاجر والمنتجات وأضف كميات الجملة للطلب</p>
+                  <div>
+                    <p className="text-xs font-bold text-slate-600">سلّة طلبات الجملة فارغة حالياً</p>
+                    <p className="text-[11px] text-slate-400 mt-1">تصفح المتاجر والمنتجات وأضف كميات الجملة للطلب</p>
+                  </div>
+                  <button
+                    onClick={() => setIsCartOpen(false)}
+                    className="mt-4 px-6 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition inline-flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>إغلاق السلة والعودة للتصفح</span>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1045,34 +1063,45 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               )}
             </div>
 
-            {cartItems.length > 0 && (
-              <div className="pt-4 border-t border-slate-200 space-y-3">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-                  <span>المجموع الإجمالي للطلبية:</span>
-                  <span className="text-base text-rose-600 font-mono font-black">
-                    {totalCartPriceDzd.toLocaleString()} دج
-                  </span>
-                </div>
+            <div className="pt-4 border-t border-slate-200 space-y-3">
+              {cartItems.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span>المجموع الإجمالي للطلبية:</span>
+                    <span className="text-base text-rose-600 font-mono font-black">
+                      {totalCartPriceDzd.toLocaleString()} دج
+                    </span>
+                  </div>
 
-                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>طريقة السداد: الدفع نقداً عند استلام شحنة الجملة (COD)</span>
-                </div>
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>طريقة السداد: الدفع نقداً عند استلام شحنة الجملة (COD)</span>
+                  </div>
 
-                <button
-                  onClick={() => {
-                    if (cartItems.length > 0) {
-                      onSelectStore(cartItems[0].store, 'STORE_FRONT');
-                      setIsCartOpen(false);
-                    }
-                  }}
-                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
-                >
-                  <span>متابعة إتمام الطلب بالمتجر المختص</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={() => {
+                      if (cartItems.length > 0) {
+                        onSelectStore(cartItems[0].store, 'STORE_FRONT');
+                        setIsCartOpen(false);
+                      }
+                    }}
+                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
+                  >
+                    <span>متابعة إتمام الطلب بالمتجر المختص</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Bottom Exit Cart Button */}
+              <button
+                onClick={() => setIsCartOpen(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-200"
+              >
+                <X className="w-4 h-4 text-slate-500" />
+                <span>إغلاق السلة</span>
+              </button>
+            </div>
 
           </div>
         </div>

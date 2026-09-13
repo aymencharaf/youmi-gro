@@ -8,7 +8,7 @@ import {
   Truck, 
   Minus, 
   Plus,
-  Lock
+  Package
 } from 'lucide-react';
 
 interface ProductDetailModalProps {
@@ -28,8 +28,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   isLoggedIn = false,
   onOpenMemberAuthModal = () => {},
 }) => {
+  const minQty = product.minOrderQuantity && product.minOrderQuantity > 0 ? product.minOrderQuantity : 1;
   const [selectedImage, setSelectedImage] = useState<string>(product.images[0] || '');
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<number>(minQty);
   const [selectedVariantOption, setSelectedVariantOption] = useState<string>(
     product.variants?.[0]?.options[0] || ''
   );
@@ -146,12 +147,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </div>
               )}
 
+              {/* Minimum Order Quantity (MOQ) Notice */}
+              <div className="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-100 flex items-center justify-between text-xs">
+                <span className="font-bold text-indigo-950 flex items-center gap-1.5">
+                  <Package className="w-4 h-4 text-indigo-600" />
+                  <span>الحد الأدنى لطلب هذا المنتج (تحديد البائع):</span>
+                </span>
+                <span className="font-black text-indigo-700 font-mono bg-white px-2.5 py-1 rounded-xl border border-indigo-200 shadow-2xs">
+                  {minQty} {product.packageUnit || 'قطع'}
+                </span>
+              </div>
+
               <div className="flex items-center gap-4">
-                <span className="text-xs font-bold text-slate-700">الكمية:</span>
+                <span className="text-xs font-bold text-slate-700">الكمية المطلوبة:</span>
                 <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-2 text-slate-500 hover:text-slate-800"
+                    onClick={() => setQuantity(Math.max(minQty, quantity - 1))}
+                    disabled={quantity <= minQty}
+                    className="p-2 text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title={`الحد الأدنى للطلب هو ${minQty}`}
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>

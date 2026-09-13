@@ -486,7 +486,12 @@ export const CreateStoreWizard: React.FC<CreateStoreWizardProps> = ({
 
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                   <span className="text-xs text-slate-500">التاجر المسجل:</span>
-                  <span className="text-xs text-slate-800">{merchantName} ({email})</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-800">{merchantName} ({email})</span>
+                    <span className="text-xs font-mono font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                      رقم التسجيل: Y0012
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">

@@ -1,0 +1,30 @@
+-- Youmi per-vendor database schema
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(64) PRIMARY KEY,
+  sku VARCHAR(120),
+  title VARCHAR(255) NOT NULL,
+  price DECIMAL(14,2) NOT NULL DEFAULT 0,
+  stock INT NOT NULL DEFAULT 0,
+  data LONGTEXT NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX(sku), INDEX(updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id VARCHAR(64) PRIMARY KEY,
+  customer_user_id VARCHAR(64),
+  status VARCHAR(60) NOT NULL,
+  total_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+  data LONGTEXT NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX(status), INDEX(created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS coupons (
+  id VARCHAR(64) PRIMARY KEY,
+  code VARCHAR(80) NOT NULL,
+  data LONGTEXT NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_code(code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

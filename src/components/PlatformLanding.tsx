@@ -341,12 +341,13 @@ const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
               <Search className="w-4 h-4" />
             </div>
             <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ابحث عن منتجات بالجملة، مصنعين، أو موردين معتمدين..."
-              className="flex-1 bg-transparent py-2.5 text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
-            />
+  type="text"
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  onKeyDown={handleSearchKeyDown}
+  placeholder="ابحث عن منتجات بالجملة، مصنعين، أو موردين معتمدين..."
+  className="flex-1 bg-transparent py-2.5 text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+/>
 
             {/* Category Selector inside search */}
             <select

@@ -101,6 +101,23 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   const [cartItems, setCartItems] = useState<{ product: Product; store: Store; qty: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
+  const handleSearch = () => {
+  setSubmittedSearch(searchTerm.trim());
+
+  setTimeout(() => {
+    document.getElementById('wholesale-products')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, 50);
+};
+
+const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleSearch();
+  }
+};
 
   // Dynamic Platform Announcements from Admin
   const [platformAnnouncements, setPlatformAnnouncements] = useState<PlatformAnnouncement[]>(() =>
@@ -174,12 +191,46 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
   // Filtered products by search & category & active tab
   const filteredWholesaleProducts = useMemo(() => {
-    return allWholesaleProducts.filter(({ product, store }) => {
-      const matchesSearch =
-        searchTerm.trim() === '' ||
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        store.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const query = submittedSearch.toLowerCase();
+
+  return allWholesaleProducts.filter(({ product, store }) => {
+    const matchesSearch =
+      query === '' ||
+      product.title.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      store.name.toLowerCase().includes(query) ||
+      store.category.toLowerCase().includes(query);
+
+    const matchesCat =
+      selectedCategory === 'جميع التصنيفات' ||
+      product.category.includes(selectedCategory) ||
+      store.category.includes(selectedCategory);
+
+    let matchesTab = true;
+
+    if (activeProductTab === 'popular') {
+      matchesTab = (product.ratings?.score || 0) >= 4.5;
+    }
+
+    if (activeProductTab === 'new') {
+      matchesTab = !!product.badge;
+    }
+
+    if (activeProductTab === 'discount') {
+      matchesTab =
+        !!product.compareAtPrice &&
+        product.compareAtPrice > product.price;
+    }
+
+    return matchesSearch && matchesCat && matchesTab;
+  });
+}, [
+  allWholesaleProducts,
+  submittedSearch,
+  selectedCategory,
+  activeProductTab,
+]);
 
       const matchesCat =
         selectedCategory === 'جميع التصنيفات' ||

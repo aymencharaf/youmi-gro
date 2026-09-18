@@ -93,6 +93,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   const canViewWholesalePrices = isLoggedIn || isAdminLoggedIn;
   const [lang, setLang] = useState<'AR' | 'FR'>('AR');
   const [searchTerm, setSearchTerm] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('جميع التصنيفات');
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const [activeProductTab, setActiveProductTab] = useState<'all' | 'popular' | 'new' | 'discount'>('all');

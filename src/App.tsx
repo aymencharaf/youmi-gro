@@ -144,20 +144,62 @@ export default function App() {
   };
 
   const handleNavigate = (view: AppView) => {
-    if (view === 'ADMIN_DASHBOARD' && !isAdminLoggedIn) {
-      setAdminLoginOpen(true);
+  // لوحة الإدارة محمية
+  if (view === 'ADMIN_DASHBOARD' && !isAdminLoggedIn) {
+    setAdminLoginOpen(true);
+    return;
+  }
+
+  // إنشاء متجر
+  if (view === 'CREATE_STORE') {
+    if (isAdminLoggedIn) {
+      setCurrentView(view);
       return;
     }
-    if (view === 'CREATE_STORE' && !currentMember) {
+
+    if (!currentMember || currentMember.role !== 'merchant') {
       openMemberAuth('merchant');
       return;
     }
-    if (view === 'MERCHANT_DASHBOARD' && !currentStore) {
-      openMemberAuth('merchant');
-      return;
-    }
+
     setCurrentView(view);
-  };
+    return;
+  }
+
+  // لوحة تحكم البائع
+  if (view === 'MERCHANT_DASHBOARD') {
+    if (isAdminLoggedIn) {
+      setCurrentView(view);
+      return;
+    }
+
+    if (!currentMember || currentMember.role !== 'merchant') {
+      openMemberAuth('merchant');
+      return;
+    }
+
+    if (!currentStore) {
+      loadMyStoresFromApi()
+        .then((mine) => {
+          if (mine.length > 0) {
+            setStores(mine);
+            setCurrentStore(mine[0]);
+            setActiveStore(mine[0]);
+            setCurrentView('MERCHANT_DASHBOARD');
+          } else {
+            setCurrentView('CREATE_STORE');
+          }
+        })
+        .catch(() => {
+          setCurrentView('CREATE_STORE');
+        });
+
+      return;
+    }
+  }
+
+  setCurrentView(view);
+};
 
   const merchantStores = useMemo(() => {
     if (currentMember?.role !== 'merchant') return stores;

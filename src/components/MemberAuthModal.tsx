@@ -1,4 +1,3 @@
-```tsx
 import React, { useState } from 'react';
 import { YoumiLogo } from './YoumiLogo';
 import {
@@ -804,6 +803,6 @@ export const MemberAuthModal: React.FC<MemberAuthModalProps> = ({
     </div>
   );
 };
-```
 
-بهذا أصبح قسم **الدخول السريع محذوفاً بالكامل**، وليس فقط مخفياً من الواجهة، وتم حذف الكود الخاص به أيضاً. بقيت وظائف **التسجيل + تسجيل الدخول + نسيت كلمة المرور + إعادة تعيين كلمة المرور**.
+
+

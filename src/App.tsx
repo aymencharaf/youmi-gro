@@ -228,13 +228,25 @@ export default function App() {
    * تسجيل خروج المدير
    */
   const handleAdminLogout = async () => {
-    await logoutApi().catch(() => {});
+  try {
+    await logoutApi();
+  } catch {
+    // تجاهل الخطأ حتى يتم تسجيل الخروج محلياً
+  }
 
-    localStorage.removeItem(ADMIN_KEY);
+  // حذف جلسة Admin والمستخدم
+  localStorage.removeItem(ADMIN_KEY);
+  localStorage.removeItem(MEMBER_KEY);
 
-    setAdminUser(null);
-    setCurrentView('PLATFORM_HOME');
-  };
+  setAdminUser(null);
+  setCurrentMember(null);
+
+  // العودة إلى الصفحة الرئيسية
+  setCurrentView('PLATFORM_HOME');
+
+  // إعادة تحميل المتاجر العامة
+  await refreshPublicStores();
+};
 
   /**
    * تحديث متجر

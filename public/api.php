@@ -3678,6 +3678,559 @@ if (
             )
     ]);
 }
+    /*
+|--------------------------------------------------------------------------
+| Admin Delete Subscription Plan
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    'admin_delete_subscription_plan'
+) {
+
+    admin();
+
+    $d =
+        body();
+
+    $planId =
+        trim(
+            (string)(
+                $d['planId'] ?? ''
+            )
+        );
+
+    if (!$planId) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'معرف الخطة مطلوب.'
+        ], 422);
+    }
+
+    $plan =
+        getSubscriptionPlan(
+            $planId
+        );
+
+    if (!$plan) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'الخطة غير موجودة.'
+        ], 404);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Do not delete a plan assigned to stores.
+    |--------------------------------------------------------------------------
+    */
+
+    $rows =
+        db()->query(
+            "SELECT id, data
+             FROM stores"
+        )->fetchAll();
+
+    foreach (
+        $rows as $row
+    ) {
+
+        $store =
+            json_decode(
+                $row['data'] ?? '{}',
+                true
+            );
+
+        $assignedPlanId =
+            $store['subscription']
+            ['planId']
+            ?? null;
+
+        if (
+            $assignedPlanId ===
+            $planId
+        ) {
+
+            out([
+                'status' => 'error',
+                'message' =>
+                    'لا يمكن حذف هذه الخطة لأنها مستخدمة حالياً من متجر. قم بتعطيلها بدلاً من حذفها.'
+            ], 409);
+        }
+    }
+
+    db()->prepare(
+        "DELETE FROM subscription_plans
+         WHERE id=?"
+    )->execute([
+        $planId
+    ]);
+
+    out([
+        'status' => 'success'
+    ]);
+}
+    /*
+|--------------------------------------------------------------------------
+| Admin Assign Subscription Plan
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    'admin_assign_subscription_plan'
+) {
+
+    admin();
+
+    $d =
+        body();
+
+    $storeId =
+        trim(
+            (string)(
+                $d['storeId'] ?? ''
+            )
+        );
+
+    $planId =
+        trim(
+            (string)(
+                $d['planId'] ?? ''
+            )
+        );
+
+    if (
+        !$storeId ||
+        !$planId
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر والخطة مطلوبان.'
+        ], 422);
+    }
+
+    $r =
+        getStoreRow(
+            $storeId
+        );
+
+    if (!$r) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر غير موجود.'
+        ], 404);
+    }
+
+    $plan =
+        getSubscriptionPlan(
+            $planId
+        );
+
+    if (!$plan) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'خطة الاشتراك غير موجودة.'
+        ], 404);
+    }
+
+    if (
+        !$plan['is_active']
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'هذه الخطة غير مفعلة.'
+        ], 400);
+    }
+
+    $s =
+        hydrateStore(
+            decodeStore($r)
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Start date
+    |--------------------------------------------------------------------------
+    */
+
+    $startDate =
+        trim(
+            (string)(
+                $d['startedAt'] ?? ''
+            )
+        );
+
+    if (!$startDate) {
+
+        $startDate =
+            date(
+                'Y-m-d H:i:s'
+            );
+
+    } else {
+
+        $timestamp =
+            strtotime(
+                $startDate
+            );
+
+        if ($timestamp === false) {
+
+            $startDate =
+                date(
+                    'Y-m-d H:i:s'
+                );
+
+        } else {
+
+            $startDate =
+                date(
+                    'Y-m-d H:i:s',
+                    $timestamp
+                );
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Duration
+    |--------------------------------------------------------------------------
+    */
+
+    $durationDays =
+        isset(
+            $d['durationDays']
+        )
+            ? max(
+                1,
+                (int)$d['durationDays']
+            )
+            : (int)$plan[
+                'duration_days'
+            ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trial
+    |--------------------------------------------------------------------------
+    */
+
+    $isTrial =
+        !empty(
+            $d['isTrial']
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Expiration
+    |--------------------------------------------------------------------------
+    */
+
+    $startTimestamp =
+        strtotime(
+            $startDate
+        );
+
+    $expiresTimestamp =
+        $startTimestamp +
+        (
+            $durationDays *
+            86400
+        );
+
+    $expiresAt =
+        date(
+            'Y-m-d H:i:s',
+            $expiresTimestamp
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscription status
+    |--------------------------------------------------------------------------
+    */
+
+    $status =
+        $isTrial
+            ? 'active_trial'
+            : (
+                $plan['type'] === 'free'
+                    ? 'subscribed'
+                    : (
+                        $d['status']
+                        ?? 'subscribed'
+                    )
+            );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calculate remaining days
+    |--------------------------------------------------------------------------
+    */
+
+    $trialDaysLeft =
+        $isTrial
+            ? max(
+                0,
+                (int)ceil(
+                    (
+                        $expiresTimestamp -
+                        time()
+                    ) / 86400
+                )
+            )
+            : 0;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save authoritative subscription
+    |--------------------------------------------------------------------------
+    */
+
+    $subscription = [
+
+        'planId' =>
+            $plan['id'],
+
+        'planName' =>
+            $plan['name'],
+
+        'planType' =>
+            $plan['type'],
+
+        'priceDzd' =>
+            (float)$plan['price_dzd'],
+
+        'durationDays' =>
+            $durationDays,
+
+        'maxStores' =>
+            (int)$plan['max_stores'],
+
+        'maxProducts' =>
+            $plan['max_products'] === null
+                ? null
+                : (int)$plan['max_products'],
+
+        'status' =>
+            $status,
+
+        'startedAt' =>
+            $startDate,
+
+        'expiresAt' =>
+            $expiresAt,
+
+        'isTrialActive' =>
+            $isTrial,
+
+        'trialDaysLeft' =>
+            $trialDaysLeft,
+
+        'isActive' =>
+            true,
+
+        'baridimobPaymentDetails' =>
+            $d[
+                'baridimobPaymentDetails'
+            ]
+            ??
+            (
+                $s['subscription']
+                ['baridimobPaymentDetails']
+                ?? null
+            )
+    ];
+
+    $s['subscription'] =
+        $subscription;
+
+    $updated =
+        syncStore(
+            $s,
+            $r['merchant_user_id']
+                ?? null
+        );
+
+    out([
+        'status' => 'success',
+
+        'store' =>
+            $updated,
+
+        'subscription' =>
+            $subscription,
+
+        'plan' =>
+            subscriptionPlanToArray(
+                $plan
+            )
+    ]);
+}
+    /*
+|--------------------------------------------------------------------------
+| Admin Extend Subscription
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    'admin_extend_subscription'
+) {
+
+    admin();
+
+    $d =
+        body();
+
+    $storeId =
+        trim(
+            (string)(
+                $d['storeId'] ?? ''
+            )
+        );
+
+    $days =
+        max(
+            1,
+            (int)(
+                $d['days'] ?? 0
+            )
+        );
+
+    if (
+        !$storeId ||
+        !$days
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر وعدد الأيام مطلوبان.'
+        ], 422);
+    }
+
+    $r =
+        getStoreRow(
+            $storeId
+        );
+
+    if (!$r) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر غير موجود.'
+        ], 404);
+    }
+
+    $s =
+        hydrateStore(
+            decodeStore($r)
+        );
+
+    $subscription =
+        $s['subscription']
+        ?? [];
+
+    $currentExpires =
+        $subscription['expiresAt']
+        ?? null;
+
+    $baseTimestamp =
+        $currentExpires
+            ? strtotime(
+                $currentExpires
+            )
+            : time();
+
+    if (
+        $baseTimestamp < time()
+    ) {
+        $baseTimestamp =
+            time();
+    }
+
+    $newExpires =
+        $baseTimestamp +
+        (
+            $days *
+            86400
+        );
+
+    $subscription[
+        'expiresAt'
+    ] =
+        date(
+            'Y-m-d H:i:s',
+            $newExpires
+        );
+
+    $subscription[
+        'status'
+    ] =
+        $subscription[
+            'status'
+        ] === 'expired'
+            ? 'subscribed'
+            : (
+                $subscription[
+                    'status'
+                ]
+                ?? 'subscribed'
+            );
+
+    $subscription[
+        'isActive'
+    ] = true;
+
+    $subscription[
+        'extensionDays'
+    ] =
+        (
+            (int)(
+                $subscription[
+                    'extensionDays'
+                ] ?? 0
+            )
+        ) +
+        $days;
+
+    $s['subscription'] =
+        $subscription;
+
+    $updated =
+        syncStore(
+            $s,
+            $r['merchant_user_id']
+                ?? null
+        );
+
+    out([
+        'status' => 'success',
+
+        'store' =>
+            $updated,
+
+        'subscription' =>
+            $subscription
+    ]);
+}
+    
 |--------------------------------------------------------------------------
 | Subscription
 |--------------------------------------------------------------------------

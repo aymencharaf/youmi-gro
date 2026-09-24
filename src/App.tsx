@@ -467,15 +467,20 @@ export default function App() {
           onOpenMemberAuthModal={() =>
             openMemberAuth('buyer')
           }
-          onLogoutMember={handleMemberLogout}
-          onOpenInfinityFreeModal={() =>
+          onLogoutMember={
+         isAdminLoggedIn
+         ? handleAdminLogout
+         : handleMemberLogout
+         }
+         onOpenAdminDashboard={() =>
+            handleNavigate('ADMIN_DASHBOARD')
+         }
+         onOpenInfinityFreeModal={() =>
             setInfinityFreeOpen(true)
-          }
-          onOpenAdminLoginModal={() =>
+         }
+         onOpenAdminLoginModal={() =>
             setAdminLoginOpen(true)
-          }
-        />
-      )}
+         }
 
       {/* ======================================
           CREATE STORE

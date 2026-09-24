@@ -1,21 +1,23 @@
 <?php
+
 /**
- * Youmi production API - PHP/MySQL, InfinityFree compatible.
+ * Youmi Production API
+ * PHP / MySQL
+ * InfinityFree Compatible
+ *
  * Includes:
  * - Authentication
  * - Admin authentication
  * - Merchant authentication
- * - Stores / Products / Orders / Coupons / Subscriptions
+ * - Stores
+ * - Products
+ * - Orders
+ * - Coupons
+ * - Subscriptions
  * - Tenant databases
  * - Platform settings
  * - Password recovery by email verification code
  */
-
-/*
-|--------------------------------------------------------------------------
-| Error Protection
-|--------------------------------------------------------------------------
-*/
 
 error_reporting(E_ALL);
 
@@ -146,8 +148,10 @@ register_shutdown_function(function () {
         ], JSON_UNESCAPED_UNICODE);
     }
 });
+
+/*
 |--------------------------------------------------------------------------
-| PHP session
+| PHP Session
 |--------------------------------------------------------------------------
 */
 
@@ -163,7 +167,6 @@ session_set_cookie_params([
 session_start();
 
 /*
-
 |--------------------------------------------------------------------------
 | Helpers
 |--------------------------------------------------------------------------
@@ -171,7 +174,15 @@ session_start();
 
 function out($data, $code = 200)
 {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
     http_response_code($code);
+
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
 
     echo json_encode(
         $data,
@@ -183,8 +194,14 @@ function out($data, $code = 200)
 
 function body()
 {
+    $raw = file_get_contents('php://input');
+
+    if (!$raw) {
+        return [];
+    }
+
     $d = json_decode(
-        file_get_contents('php://input'),
+        $raw,
         true
     );
 
@@ -198,17 +215,36 @@ function cfg()
     if (!file_exists($p)) {
         out([
             'status' => 'error',
-            'message' => 'أنشئ public/config.php من config.example.php أولاً.'
+            'message' =>
+                'أنشئ public/config.php من config.example.php أولاً.'
         ], 500);
     }
 
     $c = require $p;
 
-    foreach (['host', 'dbname', 'user', 'pass'] as $k) {
+    if (!is_array($c)) {
+        out([
+            'status' => 'error',
+            'message' =>
+                'ملف config.php غير صالح.'
+        ], 500);
+    }
+
+    foreach (
+        [
+            'host',
+            'dbname',
+            'user',
+            'pass'
+        ] as $k
+    ) {
+
         if (!array_key_exists($k, $c)) {
+
             out([
                 'status' => 'error',
-                'message' => 'إعداد قاعدة البيانات ناقص.'
+                'message' =>
+                    'إعداد قاعدة البيانات ناقص.'
             ], 500);
         }
     }
@@ -220,7 +256,7 @@ function db()
 {
     static $pdo = null;
 
-    if ($pdo) {
+    if ($pdo instanceof PDO) {
         return $pdo;
     }
 
@@ -233,8 +269,14 @@ function db()
             $c['user'],
             $c['pass'],
             [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                PDO::ATTR_ERRMODE =>
+                    PDO::ERRMODE_EXCEPTION,
+
+                PDO::ATTR_DEFAULT_FETCH_MODE =>
+                    PDO::FETCH_ASSOC,
+
+                PDO::ATTR_EMULATE_PREPARES =>
+                    false
             ]
         );
 
@@ -242,7 +284,10 @@ function db()
 
         out([
             'status' => 'error',
-            'message' => 'تعذر الاتصال بقاعدة البيانات.'
+            'message' =>
+                'تعذر الاتصال بقاعدة البيانات.',
+            'debug' =>
+                $e->getMessage()
         ], 500);
     }
 
@@ -259,19 +304,27 @@ function requireUser($roles = [])
     $u = user();
 
     if (!$u) {
+
         out([
             'status' => 'error',
-            'message' => 'يجب تسجيل الدخول أولاً.'
+            'message' =>
+                'يجب تسجيل الدخول أولاً.'
         ], 401);
     }
 
     if (
         $roles &&
-        !in_array($u['role'], $roles, true)
+        !in_array(
+            $u['role'],
+            $roles,
+            true
+        )
     ) {
+
         out([
             'status' => 'error',
-            'message' => 'ليس لديك صلاحية لتنفيذ هذا الإجراء.'
+            'message' =>
+                'ليس لديك صلاحية لتنفيذ هذا الإجراء.'
         ], 403);
     }
 
@@ -279,9 +332,11 @@ function requireUser($roles = [])
         $u['role'] === 'merchant' &&
         ($u['status'] ?? 'active') === 'suspended'
     ) {
+
         out([
             'status' => 'error',
-            'message' => 'حساب البائع موقوف.'
+            'message' =>
+                'حساب البائع موقوف.'
         ], 403);
     }
 
@@ -291,100 +346,168 @@ function requireUser($roles = [])
 function publicUser($u)
 {
     return [
-        'id' => $u['id'],
-        'name' => $u['name'],
-        'phone' => $u['phone'] ?? null,
-        'companyName' => $u['company_name'] ?? null,
-        'role' => $u['role'],
-        'status' => $u['status'] ?? 'active',
-        'isLoggedIn' => true
+        'id' =>
+            $u['id'] ?? null,
+
+        'name' =>
+            $u['name'] ?? '',
+
+        'phone' =>
+            $u['phone'] ?? null,
+
+        'companyName' =>
+            $u['company_name'] ?? null,
+
+        'role' =>
+            $u['role'] ?? 'buyer',
+
+        'status' =>
+            $u['status'] ?? 'active',
+
+        'isLoggedIn' =>
+            true
     ];
 }
 
 /*
 |--------------------------------------------------------------------------
-| Password recovery helpers
+| Password Recovery Helpers
 |--------------------------------------------------------------------------
 */
 
-/**
- * Normalize Algerian phone number.
- *
- * Examples:
- * 0669964145
- * 669964145
- * +213669964145
- * 00213669964145
- *
- * Result:
- * 0669964145
- */
 function normalizePhone($phone)
 {
-    $phone = trim((string)$phone);
+    $phone = trim(
+        (string)$phone
+    );
 
-    $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
+    $phone = preg_replace(
+        '/[\s\-\(\)]/',
+        '',
+        $phone
+    );
 
-    if (strpos($phone, '+213') === 0) {
-        $phone = '0' . substr($phone, 4);
-    } elseif (strpos($phone, '00213') === 0) {
-        $phone = '0' . substr($phone, 5);
-    } elseif (strpos($phone, '213') === 0 && strlen($phone) >= 11) {
-        $phone = '0' . substr($phone, 3);
-    } elseif (strlen($phone) === 9 && $phone[0] !== '0') {
-        $phone = '0' . $phone;
+    if (
+        strpos(
+            $phone,
+            '+213'
+        ) === 0
+    ) {
+
+        $phone =
+            '0' .
+            substr(
+                $phone,
+                4
+            );
+
+    } elseif (
+        strpos(
+            $phone,
+            '00213'
+        ) === 0
+    ) {
+
+        $phone =
+            '0' .
+            substr(
+                $phone,
+                5
+            );
+
+    } elseif (
+        strpos(
+            $phone,
+            '213'
+        ) === 0 &&
+        strlen($phone) >= 11
+    ) {
+
+        $phone =
+            '0' .
+            substr(
+                $phone,
+                3
+            );
+
+    } elseif (
+        strlen($phone) === 9 &&
+        $phone[0] !== '0'
+    ) {
+
+        $phone =
+            '0' .
+            $phone;
     }
 
     return $phone;
 }
 
-/**
- * Generate a 6 digit verification code.
- */
 function generateResetCode()
 {
     return str_pad(
-        (string)random_int(0, 999999),
+        (string)random_int(
+            0,
+            999999
+        ),
         6,
         '0',
         STR_PAD_LEFT
     );
 }
 
-/**
- * Send password reset code by email.
- *
- * InfinityFree hosting may restrict PHP mail().
- * The function still attempts to send the email normally.
- */
-function sendResetCodeByEmail($email, $code, $name = '')
-{
-    $email = trim((string)$email);
+function sendResetCodeByEmail(
+    $email,
+    $code,
+    $name = ''
+) {
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $email =
+        trim(
+            (string)$email
+        );
+
+    if (
+        !filter_var(
+            $email,
+            FILTER_VALIDATE_EMAIL
+        )
+    ) {
         return false;
     }
 
-    $subject = 'Youmi - رمز استعادة كلمة المرور';
+    $subject =
+        'Youmi - رمز استعادة كلمة المرور';
 
-    $safeName = htmlspecialchars(
-        $name ?: 'عضو Youmi',
-        ENT_QUOTES,
-        'UTF-8'
-    );
+    $safeName =
+        htmlspecialchars(
+            $name ?: 'عضو Youmi',
+            ENT_QUOTES,
+            'UTF-8'
+        );
 
     $message = "
 <html>
 <head>
 <meta charset=\"UTF-8\">
 </head>
-<body dir=\"rtl\" style=\"font-family:Arial,sans-serif;\">
-    <h2>استعادة كلمة المرور - Youmi</h2>
 
-    <p>مرحباً {$safeName}،</p>
+<body
+    dir=\"rtl\"
+    style=\"font-family:Arial,sans-serif;\"
+>
+
+    <h2>
+        استعادة كلمة المرور - Youmi
+    </h2>
 
     <p>
-        لقد طلبت استعادة كلمة المرور لحسابك في منصة
+        مرحباً {$safeName}،
+    </p>
+
+    <p>
+        لقد طلبت استعادة كلمة المرور
+        لحسابك في منصة
         <strong>Youmi</strong>.
     </p>
 
@@ -406,35 +529,54 @@ function sendResetCodeByEmail($email, $code, $name = '')
     </div>
 
     <p>
-        هذا الرمز صالح لمدة <strong>10 دقائق</strong>.
+        هذا الرمز صالح لمدة
+        <strong>10 دقائق</strong>.
     </p>
 
     <p>
-        إذا لم تطلب استعادة كلمة المرور، يمكنك تجاهل هذه الرسالة.
+        إذا لم تطلب استعادة كلمة المرور،
+        يمكنك تجاهل هذه الرسالة.
     </p>
 
     <hr>
 
     <p>
-        Youmi - سوق تجارة الجملة والربط المباشر بالجزائر
+        Youmi -
+        سوق تجارة الجملة والربط المباشر بالجزائر
     </p>
+
 </body>
 </html>
 ";
 
     $headers = [];
 
-    $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-Type: text/html; charset=UTF-8';
-    $headers[] = 'From: Youmi <noreply@youmi.wuaze.com>';
-    $headers[] = 'Reply-To: noreply@youmi.wuaze.com';
-    $headers[] = 'X-Mailer: PHP/' . phpversion();
+    $headers[] =
+        'MIME-Version: 1.0';
 
-    $headersString = implode("\r\n", $headers);
+    $headers[] =
+        'Content-Type: text/html; charset=UTF-8';
+
+    $headers[] =
+        'From: Youmi <noreply@youmi.wuaze.com>';
+
+    $headers[] =
+        'Reply-To: noreply@youmi.wuaze.com';
+
+    $headers[] =
+        'X-Mailer: PHP/' . phpversion();
+
+    $headersString =
+        implode(
+            "\r\n",
+            $headers
+        );
 
     return @mail(
         $email,
-        '=?UTF-8?B?' . base64_encode($subject) . '?=',
+        '=?UTF-8?B?' .
+            base64_encode($subject) .
+            '?=',
         $message,
         $headersString
     );
@@ -442,7 +584,7 @@ function sendResetCodeByEmail($email, $code, $name = '')
 
 /*
 |--------------------------------------------------------------------------
-| Database installation
+| Database Installation
 |--------------------------------------------------------------------------
 */
 
@@ -458,8 +600,10 @@ function install()
             phone VARCHAR(40),
             email VARCHAR(190),
             company_name VARCHAR(190),
-            role ENUM('buyer','merchant','admin') NOT NULL DEFAULT 'buyer',
-            status VARCHAR(30) NOT NULL DEFAULT 'active',
+            role ENUM('buyer','merchant','admin')
+                NOT NULL DEFAULT 'buyer',
+            status VARCHAR(30)
+                NOT NULL DEFAULT 'active',
             password_hash VARCHAR(255),
             created_at DATETIME NOT NULL,
             UNIQUE KEY uq_email(email)
@@ -481,8 +625,10 @@ function install()
             store_id VARCHAR(64) NOT NULL,
             sku VARCHAR(120),
             title VARCHAR(255) NOT NULL,
-            price DECIMAL(14,2) NOT NULL DEFAULT 0,
-            stock INT NOT NULL DEFAULT 0,
+            price DECIMAL(14,2)
+                NOT NULL DEFAULT 0,
+            stock INT
+                NOT NULL DEFAULT 0,
             data LONGTEXT NOT NULL,
             updated_at DATETIME NOT NULL,
             INDEX(store_id),
@@ -494,7 +640,8 @@ function install()
             store_id VARCHAR(64) NOT NULL,
             customer_user_id VARCHAR(64),
             status VARCHAR(60) NOT NULL,
-            total_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+            total_amount DECIMAL(14,2)
+                NOT NULL DEFAULT 0,
             data LONGTEXT NOT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
@@ -531,35 +678,31 @@ function install()
             db_name VARCHAR(190) NOT NULL,
             db_user VARCHAR(190) NOT NULL,
             db_pass TEXT NOT NULL,
-            enabled TINYINT(1) NOT NULL DEFAULT 1,
+            enabled TINYINT(1)
+                NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             INDEX(enabled)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     ];
 
-    foreach ($sql as $q) {
+    foreach (
+        $sql as $q
+    ) {
         $p->exec($q);
-    }
-
-    try {
-        $p->exec(
-            "ALTER TABLE users
-             ADD COLUMN status VARCHAR(30)
-             NOT NULL DEFAULT 'active'"
-        );
-    } catch (Throwable $e) {
-        // Column already exists.
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Bootstrap admin
+    | Bootstrap Admin
     |--------------------------------------------------------------------------
     */
 
-    $adminUsername = 'aymen';
-    $adminPhone = '0669964145';
+    $adminUsername =
+        'aymen';
+
+    $adminPhone =
+        '0669964145';
 
     $adminPasswordHash =
         '$2y$12$z7SqtIX3s696apMyWckg/ei0HuRrcBU0W/KFUoKgd9oaFBk1/JSgS';
@@ -572,21 +715,26 @@ function install()
          LIMIT 1"
     );
 
-    $q->execute([$adminUsername]);
+    $q->execute([
+        $adminUsername
+    ]);
 
-    $admin = $q->fetch();
+    $admin =
+        $q->fetch();
 
     if (!$admin) {
 
-        $q = $p->query(
-            "SELECT id
-             FROM users
-             WHERE role='admin'
-             ORDER BY created_at ASC
-             LIMIT 1"
-        );
+        $q =
+            $p->query(
+                "SELECT id
+                 FROM users
+                 WHERE role='admin'
+                 ORDER BY created_at ASC
+                 LIMIT 1"
+            );
 
-        $admin = $q->fetch();
+        $admin =
+            $q->fetch();
     }
 
     if (!$admin) {
@@ -605,7 +753,11 @@ function install()
             )
             VALUES (?,?,?,?,?,?,?,?)"
         )->execute([
-            'admin-' . bin2hex(random_bytes(5)),
+            'admin-' .
+                bin2hex(
+                    random_bytes(5)
+                ),
+
             $adminUsername,
             $adminPhone,
             $adminUsername,
@@ -637,7 +789,7 @@ function install()
 
     /*
     |--------------------------------------------------------------------------
-    | Demo buyer
+    | Demo Buyer
     |--------------------------------------------------------------------------
     */
 
@@ -648,7 +800,9 @@ function install()
          LIMIT 1"
     );
 
-    $q->execute(['0550123456']);
+    $q->execute([
+        '0550123456'
+    ]);
 
     if (!$q->fetch()) {
 
@@ -672,7 +826,10 @@ function install()
             'مؤسسة الأمل لتجارة التجزئة',
             'buyer',
             'active',
-            password_hash('demo1234', PASSWORD_DEFAULT),
+            password_hash(
+                'demo1234',
+                PASSWORD_DEFAULT
+            ),
             date('Y-m-d H:i:s')
         ]);
     }
@@ -680,40 +837,50 @@ function install()
 
 /*
 |--------------------------------------------------------------------------
-| Store helpers
+| Store Helpers
 |--------------------------------------------------------------------------
 */
 
 function decodeStore($row)
 {
-    $s = json_decode(
-        $row['data'] ?? '{}',
-        true
-    );
+    $s =
+        json_decode(
+            $row['data'] ?? '{}',
+            true
+        );
 
-    return is_array($s) ? $s : [];
+    return is_array($s)
+        ? $s
+        : [];
 }
 
 function getStoreRow($id)
 {
-    $q = db()->prepare(
-        'SELECT * FROM stores WHERE id=? LIMIT 1'
-    );
+    $q =
+        db()->prepare(
+            'SELECT *
+             FROM stores
+             WHERE id=?
+             LIMIT 1'
+        );
 
-    $q->execute([$id]);
+    $q->execute([
+        $id
+    ]);
 
     return $q->fetch();
 }
 
 function owned($id, $uid)
 {
-    $q = db()->prepare(
-        'SELECT id
-         FROM stores
-         WHERE id=?
-         AND merchant_user_id=?
-         LIMIT 1'
-    );
+    $q =
+        db()->prepare(
+            'SELECT id
+             FROM stores
+             WHERE id=?
+             AND merchant_user_id=?
+             LIMIT 1'
+        );
 
     $q->execute([
         $id,
@@ -725,7 +892,7 @@ function owned($id, $uid)
 
 /*
 |--------------------------------------------------------------------------
-| Tenant database
+| Tenant Database
 |--------------------------------------------------------------------------
 */
 
@@ -737,27 +904,39 @@ function tenantDb($storeId)
         return db();
     }
 
-    if (isset($cache[$storeId])) {
+    if (
+        isset(
+            $cache[$storeId]
+        )
+    ) {
         return $cache[$storeId];
     }
 
     $c = cfg();
 
-    if (empty($c['tenant_databases_enabled'])) {
+    if (
+        empty(
+            $c['tenant_databases_enabled']
+        )
+    ) {
         return db();
     }
 
-    $q = db()->prepare(
-        'SELECT *
-         FROM tenant_databases
-         WHERE store_id=?
-         AND enabled=1
-         LIMIT 1'
-    );
+    $q =
+        db()->prepare(
+            'SELECT *
+             FROM tenant_databases
+             WHERE store_id=?
+             AND enabled=1
+             LIMIT 1'
+        );
 
-    $q->execute([$storeId]);
+    $q->execute([
+        $storeId
+    ]);
 
-    $t = $q->fetch();
+    $t =
+        $q->fetch();
 
     if (!$t) {
         return db();
@@ -765,17 +944,25 @@ function tenantDb($storeId)
 
     try {
 
-        $pdo = new PDO(
-            "mysql:host={$t['db_host']};dbname={$t['db_name']};charset=utf8mb4",
-            $t['db_user'],
-            $t['db_pass'],
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
-        );
+        $pdo =
+            new PDO(
+                "mysql:host={$t['db_host']};dbname={$t['db_name']};charset=utf8mb4",
+                $t['db_user'],
+                $t['db_pass'],
+                [
+                    PDO::ATTR_ERRMODE =>
+                        PDO::ERRMODE_EXCEPTION,
 
-        $cache[$storeId] = $pdo;
+                    PDO::ATTR_DEFAULT_FETCH_MODE =>
+                        PDO::FETCH_ASSOC,
+
+                    PDO::ATTR_EMULATE_PREPARES =>
+                        false
+                ]
+            );
+
+        $cache[$storeId] =
+            $pdo;
 
         return $pdo;
 
@@ -783,7 +970,10 @@ function tenantDb($storeId)
 
         out([
             'status' => 'error',
-            'message' => 'تعذر الاتصال بقاعدة بيانات المتجر.'
+            'message' =>
+                'تعذر الاتصال بقاعدة بيانات المتجر.',
+            'debug' =>
+                $e->getMessage()
         ], 500);
     }
 }
@@ -796,8 +986,10 @@ function ensureTenantSchema($p)
             id VARCHAR(64) PRIMARY KEY,
             sku VARCHAR(120),
             title VARCHAR(255) NOT NULL,
-            price DECIMAL(14,2) NOT NULL DEFAULT 0,
-            stock INT NOT NULL DEFAULT 0,
+            price DECIMAL(14,2)
+                NOT NULL DEFAULT 0,
+            stock INT
+                NOT NULL DEFAULT 0,
             data LONGTEXT NOT NULL,
             updated_at DATETIME NOT NULL,
             INDEX(sku),
@@ -833,7 +1025,9 @@ function ensureTenantSchema($p)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     ];
 
-    foreach ($sql as $q) {
+    foreach (
+        $sql as $q
+    ) {
         $p->exec($q);
     }
 }
@@ -847,94 +1041,148 @@ function hydrateStore($s)
         return $s;
     }
 
-    $p = tenantDb($s['id']);
+    $central =
+        db();
 
-    if ($p === db()) {
+    $p =
+        tenantDb(
+            $s['id']
+        );
+
+    if ($p === $central) {
         return $s;
     }
 
     ensureTenantSchema($p);
 
-    $r = $p->query(
-        'SELECT *
-         FROM products
-         ORDER BY updated_at DESC'
-    )->fetchAll();
+    $r =
+        $p->query(
+            'SELECT *
+             FROM products
+             ORDER BY updated_at DESC'
+        )->fetchAll();
 
-    $s['products'] = array_map(
-        fn($x) => json_decode($x['data'], true) ?: [],
-        $r
-    );
+    $s['products'] =
+        array_map(
+            function ($x) {
 
-    $r = $p->query(
-        'SELECT data
-         FROM orders
-         ORDER BY created_at DESC'
-    )->fetchAll();
+                return
+                    json_decode(
+                        $x['data'],
+                        true
+                    ) ?: [];
+            },
+            $r
+        );
 
-    $s['orders'] = array_map(
-        fn($x) => json_decode($x['data'], true) ?: [],
-        $r
-    );
+    $r =
+        $p->query(
+            'SELECT data
+             FROM orders
+             ORDER BY created_at DESC'
+        )->fetchAll();
 
-    $r = $p->query(
-        'SELECT data
-         FROM coupons
-         ORDER BY updated_at DESC'
-    )->fetchAll();
+    $s['orders'] =
+        array_map(
+            function ($x) {
 
-    $s['coupons'] = array_map(
-        fn($x) => json_decode($x['data'], true) ?: [],
-        $r
-    );
+                return
+                    json_decode(
+                        $x['data'],
+                        true
+                    ) ?: [];
+            },
+            $r
+        );
 
-    $r = $p->query(
-        'SELECT data
-         FROM subscriptions
-         LIMIT 1'
-    )->fetch();
+    $r =
+        $p->query(
+            'SELECT data
+             FROM coupons
+             ORDER BY updated_at DESC'
+        )->fetchAll();
+
+    $s['coupons'] =
+        array_map(
+            function ($x) {
+
+                return
+                    json_decode(
+                        $x['data'],
+                        true
+                    ) ?: [];
+            },
+            $r
+        );
+
+    $r =
+        $p->query(
+            'SELECT data
+             FROM subscriptions
+             LIMIT 1'
+        )->fetch();
 
     if ($r) {
+
         $s['subscription'] =
-            json_decode($r['data'], true) ?: [];
+            json_decode(
+                $r['data'],
+                true
+            ) ?: [];
     }
 
     return $s;
 }
 
-function syncStore($s, $merchantId = null)
-{
+function syncStore(
+    $s,
+    $merchantId = null
+) {
+
     if (
         empty($s['id']) ||
         empty($s['slug']) ||
         empty($s['name'])
     ) {
+
         out([
             'status' => 'error',
-            'message' => 'بيانات المتجر غير مكتملة.'
-        ]);
+            'message' =>
+                'بيانات المتجر غير مكتملة.'
+        ], 422);
     }
 
-    $central = db();
+    $central =
+        db();
 
-    $now = date('Y-m-d H:i:s');
+    $now =
+        date('Y-m-d H:i:s');
 
-    $row = getStoreRow($s['id']);
+    $row =
+        getStoreRow(
+            $s['id']
+        );
 
     $owner =
         $merchantId ??
-        ($row['merchant_user_id'] ??
-        ($s['merchantUserId'] ?? null));
+        (
+            $row['merchant_user_id'] ??
+            (
+                $s['merchantUserId'] ??
+                null
+            )
+        );
 
-    $s['merchantUserId'] = $owner;
+    $s['merchantUserId'] =
+        $owner;
 
-    $old = $row
-        ? decodeStore($row)
-        : [];
+    $centralStore =
+        $s;
 
-    $centralStore = $s;
-
-    $p = tenantDb($s['id']);
+    $p =
+        tenantDb(
+            $s['id']
+        );
 
     if ($p !== $central) {
 
@@ -943,25 +1191,27 @@ function syncStore($s, $merchantId = null)
         $centralStore['coupons'] = [];
     }
 
-    $q = $central->prepare(
-        "INSERT INTO stores
-        (
-            id,
-            slug,
-            name,
-            merchant_user_id,
-            data,
-            created_at,
-            updated_at
-        )
-        VALUES (?,?,?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE
-            slug=VALUES(slug),
-            name=VALUES(name),
-            merchant_user_id=VALUES(merchant_user_id),
-            data=VALUES(data),
-            updated_at=VALUES(updated_at)"
-    );
+    $q =
+        $central->prepare(
+            "INSERT INTO stores
+            (
+                id,
+                slug,
+                name,
+                merchant_user_id,
+                data,
+                created_at,
+                updated_at
+            )
+            VALUES (?,?,?,?,?,?,?)
+
+            ON DUPLICATE KEY UPDATE
+                slug=VALUES(slug),
+                name=VALUES(name),
+                merchant_user_id=VALUES(merchant_user_id),
+                data=VALUES(data),
+                updated_at=VALUES(updated_at)"
+        );
 
     $created =
         $row['created_at'] ??
@@ -972,19 +1222,32 @@ function syncStore($s, $merchantId = null)
         $s['slug'],
         $s['name'],
         $owner,
+
         json_encode(
             $centralStore,
             JSON_UNESCAPED_UNICODE
         ),
+
         $created,
         $now
     ]);
 
     if ($p !== $central) {
 
-        ensureTenantSchema($p);
+        ensureTenantSchema(
+            $p
+        );
 
-        foreach (($s['products'] ?? []) as $x) {
+        foreach (
+            ($s['products'] ?? [])
+            as $x
+        ) {
+
+            if (
+                empty($x['id'])
+            ) {
+                continue;
+            }
 
             $p->prepare(
                 "INSERT INTO products
@@ -998,6 +1261,7 @@ function syncStore($s, $merchantId = null)
                     updated_at
                 )
                 VALUES (?,?,?,?,?,?,?)
+
                 ON DUPLICATE KEY UPDATE
                     sku=VALUES(sku),
                     title=VALUES(title),
@@ -1009,17 +1273,32 @@ function syncStore($s, $merchantId = null)
                 $x['id'],
                 $x['sku'] ?? null,
                 $x['title'] ?? '',
-                (float)($x['price'] ?? 0),
-                (int)($x['stock'] ?? 0),
+                (float)(
+                    $x['price'] ?? 0
+                ),
+                (int)(
+                    $x['stock'] ?? 0
+                ),
+
                 json_encode(
                     $x,
                     JSON_UNESCAPED_UNICODE
                 ),
+
                 $now
             ]);
         }
 
-        foreach (($s['coupons'] ?? []) as $x) {
+        foreach (
+            ($s['coupons'] ?? [])
+            as $x
+        ) {
+
+            if (
+                empty($x['id'])
+            ) {
+                continue;
+            }
 
             $p->prepare(
                 "INSERT INTO coupons
@@ -1030,6 +1309,7 @@ function syncStore($s, $merchantId = null)
                     updated_at
                 )
                 VALUES (?,?,?,?)
+
                 ON DUPLICATE KEY UPDATE
                     code=VALUES(code),
                     data=VALUES(data),
@@ -1037,15 +1317,26 @@ function syncStore($s, $merchantId = null)
             )->execute([
                 $x['id'],
                 $x['code'] ?? '',
+
                 json_encode(
                     $x,
                     JSON_UNESCAPED_UNICODE
                 ),
+
                 $now
             ]);
         }
 
-        foreach (($s['orders'] ?? []) as $x) {
+        foreach (
+            ($s['orders'] ?? [])
+            as $x
+        ) {
+
+            if (
+                empty($x['id'])
+            ) {
+                continue;
+            }
 
             $p->prepare(
                 "INSERT INTO orders
@@ -1059,6 +1350,7 @@ function syncStore($s, $merchantId = null)
                     updated_at
                 )
                 VALUES (?,?,?,?,?,?,?)
+
                 ON DUPLICATE KEY UPDATE
                     customer_user_id=VALUES(customer_user_id),
                     status=VALUES(status),
@@ -1069,17 +1361,26 @@ function syncStore($s, $merchantId = null)
                 $x['id'],
                 $x['customerUserId'] ?? null,
                 $x['status'] ?? 'جديد',
-                (float)($x['totalAmount'] ?? 0),
+
+                (float)(
+                    $x['totalAmount'] ?? 0
+                ),
+
                 json_encode(
                     $x,
                     JSON_UNESCAPED_UNICODE
                 ),
+
                 date('Y-m-d H:i:s'),
                 $now
             ]);
         }
 
-        if (isset($s['subscription'])) {
+        if (
+            isset(
+                $s['subscription']
+            )
+        ) {
 
             $p->prepare(
                 "INSERT INTO subscriptions
@@ -1090,18 +1391,22 @@ function syncStore($s, $merchantId = null)
                     updated_at
                 )
                 VALUES (?,?,?,?)
+
                 ON DUPLICATE KEY UPDATE
                     status=VALUES(status),
                     data=VALUES(data),
                     updated_at=VALUES(updated_at)"
             )->execute([
                 'sub-' . $s['id'],
-                $s['subscription']['status'] ??
-                    'active_trial',
+
+                $s['subscription']['status']
+                    ?? 'active_trial',
+
                 json_encode(
                     $s['subscription'],
                     JSON_UNESCAPED_UNICODE
                 ),
+
                 $now
             ]);
         }
@@ -1118,8 +1423,12 @@ function publicStore($s)
 
     $s['orders'] = [];
 
-    if (isset($s['stats'])) {
-        $s['stats']['totalSales'] = 0;
+    if (
+        isset($s['stats'])
+    ) {
+
+        $s['stats']['totalSales'] =
+            0;
     }
 
     $s['email'] = '';
@@ -1132,6 +1441,7 @@ function publicStore($s)
             ['apiKey']
         )
     ) {
+
         $s['settings']
         ['shippingApiSettings']
         ['apiKey'] = '';
@@ -1140,20 +1450,24 @@ function publicStore($s)
     return $s;
 }
 
-function allStores($public = true)
-{
-    $r = db()->query(
-        'SELECT data
-         FROM stores
-         ORDER BY created_at DESC'
-    )->fetchAll();
+function allStores(
+    $public = true
+) {
+
+    $r =
+        db()->query(
+            'SELECT data
+             FROM stores
+             ORDER BY created_at DESC'
+        )->fetchAll();
 
     return array_map(
         function ($x) use ($public) {
 
-            $s = hydrateStore(
-                decodeStore($x)
-            );
+            $s =
+                hydrateStore(
+                    decodeStore($x)
+                );
 
             return $public
                 ? publicStore($s)
@@ -1165,28 +1479,43 @@ function allStores($public = true)
 
 function admin()
 {
-    return requireUser(['admin']);
+    return requireUser([
+        'admin'
+    ]);
 }
 
 function merchantStore($id)
 {
-    $u = requireUser(['merchant']);
+    $u =
+        requireUser([
+            'merchant'
+        ]);
 
-    if (!owned($id, $u['id'])) {
+    if (
+        !owned(
+            $id,
+            $u['id']
+        )
+    ) {
 
         out([
             'status' => 'error',
-            'message' => 'لا تملك هذا المتجر.'
+            'message' =>
+                'لا تملك هذا المتجر.'
         ], 403);
     }
 
-    $r = getStoreRow($id);
+    $r =
+        getStoreRow(
+            $id
+        );
 
     if (!$r) {
 
         out([
             'status' => 'error',
-            'message' => 'المتجر غير موجود.'
+            'message' =>
+                'المتجر غير موجود.'
         ], 404);
     }
 
@@ -1197,11 +1526,24 @@ function merchantStore($id)
 
 /*
 |--------------------------------------------------------------------------
-| Install database
+| Install Database
 |--------------------------------------------------------------------------
 */
 
-install();
+try {
+
+    install();
+
+} catch (Throwable $e) {
+
+    out([
+        'status' => 'error',
+        'message' =>
+            'حدث خطأ أثناء تهيئة قاعدة البيانات.',
+        'debug' =>
+            $e->getMessage()
+    ], 500);
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1209,7 +1551,8 @@ install();
 |--------------------------------------------------------------------------
 */
 
-$action = $_GET['action'] ?? 'status';
+$action =
+    $_GET['action'] ?? 'status';
 
 /*
 |--------------------------------------------------------------------------
@@ -1217,33 +1560,50 @@ $action = $_GET['action'] ?? 'status';
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'status') {
+if (
+    $action === 'status'
+) {
 
     out([
         'status' => 'success',
-        'server' => 'InfinityFree PHP/MySQL',
-        'database' => 'connected',
+        'server' =>
+            'InfinityFree PHP/MySQL',
+
+        'database' =>
+            'connected',
+
         'mysql_version' =>
-            db()->query(
-                'SELECT VERSION() v'
-            )->fetch()['v'],
-        'timestamp' => date('c')
+            db()
+                ->query(
+                    'SELECT VERSION() v'
+                )
+                ->fetch()['v'],
+
+        'timestamp' =>
+            date('c')
     ]);
 }
 
 /*
 |--------------------------------------------------------------------------
-| Current session
+| Current Session
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'me') {
+if (
+    $action === 'me'
+) {
+
+    $current =
+        user();
 
     out([
         'status' => 'success',
-        'user' => user()
-            ? publicUser(user())
-            : null
+
+        'user' =>
+            $current
+                ? publicUser($current)
+                : null
     ]);
 }
 
@@ -1253,9 +1613,31 @@ if ($action === 'me') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'logout') {
+if (
+    $action === 'logout'
+) {
 
     $_SESSION = [];
+
+    if (
+        ini_get(
+            'session.use_cookies'
+        )
+    ) {
+
+        $params =
+            session_get_cookie_params();
+
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'] ?? '',
+            $params['secure'],
+            $params['httponly']
+        );
+    }
 
     session_destroy();
 
@@ -1270,17 +1652,24 @@ if ($action === 'logout') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'register') {
+if (
+    $action === 'register'
+) {
 
-    $d = body();
+    $d =
+        body();
 
-    $role = in_array(
-        ($d['role'] ?? 'buyer'),
-        ['buyer', 'merchant'],
-        true
-    )
-        ? $d['role']
-        : 'buyer';
+    $role =
+        in_array(
+            ($d['role'] ?? 'buyer'),
+            [
+                'buyer',
+                'merchant'
+            ],
+            true
+        )
+            ? $d['role']
+            : 'buyer';
 
     if (
         empty($d['phone']) ||
@@ -1295,31 +1684,57 @@ if ($action === 'register') {
         ], 422);
     }
 
-    $p = db();
+    $p =
+        db();
 
-    $phone = normalizePhone($d['phone']);
+    $phone =
+        normalizePhone(
+            $d['phone']
+        );
 
-    $email = trim(
-        (string)($d['email'] ?? '')
-    );
+    $email =
+        trim(
+            (string)(
+                $d['email'] ?? ''
+            )
+        );
 
-    $q = $p->prepare(
-        'SELECT id
-         FROM users
-         WHERE phone=?
-         OR (
-            email IS NOT NULL
-            AND email=?
-         )
-         LIMIT 1'
-    );
+    if (
+        $email &&
+        !filter_var(
+            $email,
+            FILTER_VALIDATE_EMAIL
+        )
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'البريد الإلكتروني غير صالح.'
+        ], 422);
+    }
+
+    $q =
+        $p->prepare(
+            'SELECT id
+             FROM users
+             WHERE phone=?
+             OR (
+                email IS NOT NULL
+                AND email=?
+                AND email <> ""
+             )
+             LIMIT 1'
+        );
 
     $q->execute([
         $phone,
         $email
     ]);
 
-    if ($q->fetch()) {
+    if (
+        $q->fetch()
+    ) {
 
         out([
             'status' => 'error',
@@ -1330,7 +1745,9 @@ if ($action === 'register') {
 
     $id =
         'usr-' .
-        bin2hex(random_bytes(8));
+        bin2hex(
+            random_bytes(8)
+        );
 
     $p->prepare(
         "INSERT INTO users
@@ -1354,27 +1771,44 @@ if ($action === 'register') {
         $d['companyName'] ?? null,
         $role,
         'active',
+
         password_hash(
             $d['password'],
             PASSWORD_DEFAULT
         ),
+
         date('Y-m-d H:i:s')
     ]);
 
+    session_regenerate_id(true);
+
     $_SESSION['user'] = [
-        'id' => $id,
-        'name' => $d['name'],
-        'phone' => $phone,
+        'id' =>
+            $id,
+
+        'name' =>
+            $d['name'],
+
+        'phone' =>
+            $phone,
+
         'company_name' =>
             $d['companyName'] ?? null,
-        'role' => $role,
-        'status' => 'active'
+
+        'role' =>
+            $role,
+
+        'status' =>
+            'active'
     ];
 
     out([
         'status' => 'success',
+
         'user' =>
-            publicUser($_SESSION['user'])
+            publicUser(
+                $_SESSION['user']
+            )
     ]);
 }
 
@@ -1384,34 +1818,52 @@ if ($action === 'register') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'login') {
+if (
+    $action === 'login'
+) {
 
-    $d = body();
+    $d =
+        body();
 
-    $p = db();
+    $p =
+        db();
 
-    $login = trim(
-        (string)($d['login'] ?? '')
-    );
+    $login =
+        trim(
+            (string)(
+                $d['login'] ?? ''
+            )
+        );
 
-    $q = $p->prepare(
-        'SELECT *
-         FROM users
-         WHERE phone=?
-         OR email=?
-         LIMIT 1'
-    );
+    $normalizedLogin =
+        normalizePhone(
+            $login
+        );
+
+    $q =
+        $p->prepare(
+            'SELECT *
+             FROM users
+             WHERE phone=?
+             OR phone=?
+             OR email=?
+             LIMIT 1'
+        );
 
     $q->execute([
         $login,
+        $normalizedLogin,
         $login
     ]);
 
-    $u = $q->fetch();
+    $u =
+        $q->fetch();
 
     if (
         !$u ||
-        empty($u['password_hash']) ||
+        empty(
+            $u['password_hash']
+        ) ||
         !password_verify(
             $d['password'] ?? '',
             $u['password_hash']
@@ -1437,21 +1889,35 @@ if ($action === 'login') {
         ], 403);
     }
 
+    session_regenerate_id(true);
+
     $_SESSION['user'] = [
-        'id' => $u['id'],
-        'name' => $u['name'],
-        'phone' => $u['phone'],
+        'id' =>
+            $u['id'],
+
+        'name' =>
+            $u['name'],
+
+        'phone' =>
+            $u['phone'],
+
         'company_name' =>
             $u['company_name'],
-        'role' => $u['role'],
+
+        'role' =>
+            $u['role'],
+
         'status' =>
             $u['status'] ?? 'active'
     ];
 
     out([
         'status' => 'success',
+
         'user' =>
-            publicUser($_SESSION['user'])
+            publicUser(
+                $_SESSION['user']
+            )
     ]);
 }
 
@@ -1461,42 +1927,63 @@ if ($action === 'login') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'admin_login') {
+if (
+    $action === 'admin_login'
+) {
 
-    $d = body();
+    $d =
+        body();
 
-    $p = db();
+    $p =
+        db();
 
-    $login = trim(
-        (string)($d['username'] ?? '')
-    );
+    $login =
+        trim(
+            (string)(
+                $d['username'] ?? ''
+            )
+        );
 
-    $q = $p->prepare(
-        "SELECT *
-         FROM users
-         WHERE role='admin'
-         AND (
-            email=?
-            OR name=?
-            OR phone=?
-         )
-         LIMIT 1"
-    );
+    $normalizedLogin =
+        normalizePhone(
+            $login
+        );
+
+    $q =
+        $p->prepare(
+            "SELECT *
+             FROM users
+             WHERE role='admin'
+             AND (
+                email=?
+                OR name=?
+                OR phone=?
+                OR phone=?
+             )
+             LIMIT 1"
+        );
 
     $q->execute([
         $login,
         $login,
-        $login
+        $login,
+        $normalizedLogin
     ]);
 
-    $u = $q->fetch();
+    $u =
+        $q->fetch();
 
     if (
         !$u ||
-        ($u['status'] ?? 'active') !== 'active' ||
-        empty($u['password_hash']) ||
+        ($u['status'] ?? 'active') !==
+            'active' ||
+        empty(
+            $u['password_hash']
+        ) ||
         !password_verify(
-            (string)($d['password'] ?? ''),
+            (string)(
+                $d['password'] ?? ''
+            ),
             $u['password_hash']
         )
     ) {
@@ -1511,19 +1998,32 @@ if ($action === 'admin_login') {
     session_regenerate_id(true);
 
     $_SESSION['user'] = [
-        'id' => $u['id'],
-        'name' => $u['name'],
-        'phone' => $u['phone'],
+        'id' =>
+            $u['id'],
+
+        'name' =>
+            $u['name'],
+
+        'phone' =>
+            $u['phone'],
+
         'company_name' =>
             $u['company_name'],
-        'role' => 'admin',
-        'status' => 'active'
+
+        'role' =>
+            'admin',
+
+        'status' =>
+            'active'
     ];
 
     out([
         'status' => 'success',
+
         'user' =>
-            publicUser($_SESSION['user'])
+            publicUser(
+                $_SESSION['user']
+            )
     ]);
 }
 
@@ -1533,13 +2033,17 @@ if ($action === 'admin_login') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'forgot_password') {
+if (
+    $action === 'forgot_password'
+) {
 
-    $d = body();
+    $d =
+        body();
 
-    $phone = normalizePhone(
-        $d['phone'] ?? ''
-    );
+    $phone =
+        normalizePhone(
+            $d['phone'] ?? ''
+        );
 
     if (!$phone) {
 
@@ -1549,12 +2053,6 @@ if ($action === 'forgot_password') {
                 'رقم الهاتف مطلوب.'
         ], 422);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validate Algerian phone
-    |--------------------------------------------------------------------------
-    */
 
     if (
         !preg_match(
@@ -1570,18 +2068,28 @@ if ($action === 'forgot_password') {
         ], 422);
     }
 
-    $p = db();
+    $p =
+        db();
 
-    $q = $p->prepare(
-        "SELECT id,name,phone,email,status
-         FROM users
-         WHERE phone=?
-         LIMIT 1"
-    );
+    $q =
+        $p->prepare(
+            "SELECT
+                id,
+                name,
+                phone,
+                email,
+                status
+             FROM users
+             WHERE phone=?
+             LIMIT 1"
+        );
 
-    $q->execute([$phone]);
+    $q->execute([
+        $phone
+    ]);
 
-    $u = $q->fetch();
+    $u =
+        $q->fetch();
 
     if (!$u) {
 
@@ -1604,9 +2112,12 @@ if ($action === 'forgot_password') {
         ], 403);
     }
 
-    $email = trim(
-        (string)($u['email'] ?? '')
-    );
+    $email =
+        trim(
+            (string)(
+                $u['email'] ?? ''
+            )
+        );
 
     if (
         !$email ||
@@ -1623,52 +2134,37 @@ if ($action === 'forgot_password') {
         ], 422);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Generate code
-    |--------------------------------------------------------------------------
-    */
-
-    $code = generateResetCode();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Save hashed code in session
-    |--------------------------------------------------------------------------
-    */
+    $code =
+        generateResetCode();
 
     $_SESSION['password_reset'] = [
-        'user_id' => $u['id'],
-        'phone' => $phone,
+        'user_id' =>
+            $u['id'],
+
+        'phone' =>
+            $phone,
+
         'code_hash' =>
             password_hash(
                 $code,
                 PASSWORD_DEFAULT
             ),
+
         'expires_at' =>
             time() + (10 * 60),
-        'attempts' => 0
+
+        'attempts' =>
+            0
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Send email
-    |--------------------------------------------------------------------------
-    */
-
-    $sent = sendResetCodeByEmail(
-        $email,
-        $code,
-        $u['name'] ?? ''
-    );
+    $sent =
+        sendResetCodeByEmail(
+            $email,
+            $code,
+            $u['name'] ?? ''
+        );
 
     if (!$sent) {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Remove reset session if sending failed.
-        |--------------------------------------------------------------------------
-        */
 
         unset(
             $_SESSION['password_reset']
@@ -1681,14 +2177,12 @@ if ($action === 'forgot_password') {
         ], 500);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Mask email
-    |--------------------------------------------------------------------------
-    */
-
     $emailParts =
-        explode('@', $email, 2);
+        explode(
+            '@',
+            $email,
+            2
+        );
 
     $local =
         $emailParts[0] ?? '';
@@ -1696,31 +2190,51 @@ if ($action === 'forgot_password') {
     $domain =
         $emailParts[1] ?? '';
 
-    if (strlen($local) > 2) {
+    if (
+        strlen($local) > 2
+    ) {
 
         $maskedEmail =
-            substr($local, 0, 2) .
+            substr(
+                $local,
+                0,
+                2
+            ) .
+
             str_repeat(
                 '*',
-                max(2, strlen($local) - 2)
+                max(
+                    2,
+                    strlen($local) - 2
+                )
             ) .
+
             '@' .
             $domain;
 
     } else {
 
         $maskedEmail =
-            substr($local, 0, 1) .
+            substr(
+                $local,
+                0,
+                1
+            ) .
             '**@' .
             $domain;
     }
 
     out([
         'status' => 'success',
+
         'message' =>
             'تم إرسال رمز التحقق إلى بريدك الإلكتروني.',
-        'email' => $maskedEmail,
-        'expiresIn' => 600
+
+        'email' =>
+            $maskedEmail,
+
+        'expiresIn' =>
+            600
     ]);
 }
 
@@ -1730,20 +2244,29 @@ if ($action === 'forgot_password') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'reset_password') {
+if (
+    $action === 'reset_password'
+) {
 
-    $d = body();
+    $d =
+        body();
 
-    $phone = normalizePhone(
-        $d['phone'] ?? ''
-    );
+    $phone =
+        normalizePhone(
+            $d['phone'] ?? ''
+        );
 
-    $code = trim(
-        (string)($d['code'] ?? '')
-    );
+    $code =
+        trim(
+            (string)(
+                $d['code'] ?? ''
+            )
+        );
 
     $password =
-        (string)($d['password'] ?? '');
+        (string)(
+            $d['password'] ?? ''
+        );
 
     if (!$phone) {
 
@@ -1768,7 +2291,9 @@ if ($action === 'reset_password') {
         ], 422);
     }
 
-    if (strlen($password) < 6) {
+    if (
+        strlen($password) < 6
+    ) {
 
         out([
             'status' => 'error',
@@ -1778,7 +2303,8 @@ if ($action === 'reset_password') {
     }
 
     $reset =
-        $_SESSION['password_reset'] ?? null;
+        $_SESSION['password_reset']
+        ?? null;
 
     if (!$reset) {
 
@@ -1803,7 +2329,9 @@ if ($action === 'reset_password') {
 
     if (
         time() >
-        (int)($reset['expires_at'] ?? 0)
+        (int)(
+            $reset['expires_at'] ?? 0
+        )
     ) {
 
         unset(
@@ -1818,9 +2346,13 @@ if ($action === 'reset_password') {
     }
 
     $attempts =
-        (int)($reset['attempts'] ?? 0);
+        (int)(
+            $reset['attempts'] ?? 0
+        );
 
-    if ($attempts >= 5) {
+    if (
+        $attempts >= 5
+    ) {
 
         unset(
             $_SESSION['password_reset']
@@ -1833,17 +2365,13 @@ if ($action === 'reset_password') {
         ], 429);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Increase attempts before verification
-    |--------------------------------------------------------------------------
-    */
-
     $_SESSION['password_reset']['attempts'] =
         $attempts + 1;
 
     if (
-        empty($reset['code_hash']) ||
+        empty(
+            $reset['code_hash']
+        ) ||
         !password_verify(
             $code,
             $reset['code_hash']
@@ -1857,28 +2385,25 @@ if ($action === 'reset_password') {
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Find user
-    |--------------------------------------------------------------------------
-    */
+    $p =
+        db();
 
-    $p = db();
-
-    $q = $p->prepare(
-        "SELECT *
-         FROM users
-         WHERE id=?
-         AND phone=?
-         LIMIT 1"
-    );
+    $q =
+        $p->prepare(
+            "SELECT *
+             FROM users
+             WHERE id=?
+             AND phone=?
+             LIMIT 1"
+        );
 
     $q->execute([
         $reset['user_id'],
         $phone
     ]);
 
-    $u = $q->fetch();
+    $u =
+        $q->fetch();
 
     if (!$u) {
 
@@ -1893,16 +2418,11 @@ if ($action === 'reset_password') {
         ], 404);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Update password
-    |--------------------------------------------------------------------------
-    */
-
-    $newHash = password_hash(
-        $password,
-        PASSWORD_DEFAULT
-    );
+    $newHash =
+        password_hash(
+            $password,
+            PASSWORD_DEFAULT
+        );
 
     $p->prepare(
         "UPDATE users
@@ -1912,12 +2432,6 @@ if ($action === 'reset_password') {
         $newHash,
         $u['id']
     ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Clear reset session
-    |--------------------------------------------------------------------------
-    */
 
     unset(
         $_SESSION['password_reset']
@@ -1936,11 +2450,14 @@ if ($action === 'reset_password') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'stores') {
+if (
+    $action === 'stores'
+) {
 
     out([
         'status' => 'success',
-        'stores' => allStores(true)
+        'stores' =>
+            allStores(true)
     ]);
 }
 
@@ -1950,38 +2467,51 @@ if ($action === 'stores') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'my_stores') {
+if (
+    $action === 'my_stores'
+) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    if ($u['role'] === 'admin') {
+    if (
+        $u['role'] === 'admin'
+    ) {
 
         out([
             'status' => 'success',
-            'stores' => allStores(false)
+            'stores' =>
+                allStores(false)
         ]);
     }
 
-    $q = db()->prepare(
-        'SELECT data
-         FROM stores
-         WHERE merchant_user_id=?
-         ORDER BY created_at DESC'
-    );
+    $q =
+        db()->prepare(
+            'SELECT data
+             FROM stores
+             WHERE merchant_user_id=?
+             ORDER BY created_at DESC'
+        );
 
     $q->execute([
         $u['id']
     ]);
 
+    $rows =
+        $q->fetchAll();
+
     out([
         'status' => 'success',
+
         'stores' =>
             array_map(
-                fn($x) => decodeStore($x),
-                $q->fetchAll()
+                function ($x) {
+                    return decodeStore($x);
+                },
+                $rows
             )
     ]);
 }
@@ -1992,11 +2522,17 @@ if ($action === 'my_stores') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'create_store') {
+if (
+    $action === 'create_store'
+) {
 
-    $u = requireUser(['merchant']);
+    $u =
+        requireUser([
+            'merchant'
+        ]);
 
-    $s = body();
+    $s =
+        body();
 
     if (
         empty($s['id']) ||
@@ -2011,18 +2547,21 @@ if ($action === 'create_store') {
         ], 422);
     }
 
-    $q = db()->prepare(
-        'SELECT id
-         FROM stores
-         WHERE slug=?
-         LIMIT 1'
-    );
+    $q =
+        db()->prepare(
+            'SELECT id
+             FROM stores
+             WHERE slug=?
+             LIMIT 1'
+        );
 
     $q->execute([
         $s['slug']
     ]);
 
-    if ($q->fetch()) {
+    if (
+        $q->fetch()
+    ) {
 
         out([
             'status' => 'error',
@@ -2031,18 +2570,21 @@ if ($action === 'create_store') {
         ], 409);
     }
 
-    $qOwner = db()->prepare(
-        'SELECT id
-         FROM stores
-         WHERE merchant_user_id=?
-         LIMIT 1'
-    );
+    $qOwner =
+        db()->prepare(
+            'SELECT id
+             FROM stores
+             WHERE merchant_user_id=?
+             LIMIT 1'
+        );
 
     $qOwner->execute([
         $u['id']
     ]);
 
-    if ($qOwner->fetch()) {
+    if (
+        $qOwner->fetch()
+    ) {
 
         out([
             'status' => 'error',
@@ -2056,6 +2598,7 @@ if ($action === 'create_store') {
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
@@ -2075,23 +2618,26 @@ if (
     $action === 'merchant_save_store'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $s = body();
+    $s =
+        body();
 
-    $r = getStoreRow(
-        $s['id'] ?? ''
-    );
+    $r =
+        getStoreRow(
+            $s['id'] ?? ''
+        );
 
     if (
         $u['role'] === 'merchant' &&
         (
             !$r ||
             $r['merchant_user_id'] !==
-            $u['id']
+                $u['id']
         )
     ) {
 
@@ -2125,16 +2671,21 @@ if (
     $s['stats'] =
         $old['stats'] ??
         [
-            'totalSales' => 0,
-            'visitorsCount' => 0
+            'totalSales' =>
+                0,
+
+            'visitorsCount' =>
+                0
         ];
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
-                $r['merchant_user_id'] ?? null
+                $r['merchant_user_id'] ??
+                    null
             )
     ]);
 }
@@ -2150,34 +2701,71 @@ if (
     $action === 'merchant_save_product'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $d = body();
+    $d =
+        body();
 
-    $s =
-        merchantStore(
-            $d['storeId']
-        );
+    $storeId =
+        $d['storeId'] ?? '';
+
+    if (!$storeId) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'معرف المتجر مطلوب.'
+        ], 422);
+    }
+
+    /*
+    | Important:
+    | Admin must NOT call merchantStore()
+    | because merchantStore() only accepts merchant role.
+    */
+
+    if (
+        $u['role'] === 'admin'
+    ) {
+
+        $r =
+            getStoreRow(
+                $storeId
+            );
+
+        if (!$r) {
+
+            out([
+                'status' => 'error',
+                'message' =>
+                    'المتجر غير موجود.'
+            ], 404);
+        }
+
+        $s =
+            hydrateStore(
+                decodeStore($r)
+            );
+
+    } else {
+
+        $s =
+            merchantStore(
+                $storeId
+            );
+    }
 
     $p =
         $d['product'] ??
         $d;
 
-    if ($u['role'] === 'admin') {
-
-        $r =
-            getStoreRow(
-                $d['storeId']
-            );
-
-        $s =
-            decodeStore($r);
-    }
-
-    if (empty($p['id'])) {
+    if (
+        empty($p['id'])
+    ) {
 
         out([
             'status' => 'error',
@@ -2186,24 +2774,43 @@ if (
         ], 422);
     }
 
+    if (
+        !isset(
+            $s['products']
+        ) ||
+        !is_array(
+            $s['products']
+        )
+    ) {
+
+        $s['products'] = [];
+    }
+
     $i = -1;
 
     foreach (
-        $s['products'] ?? []
+        $s['products']
         as $k => $x
     ) {
 
         if (
-            $x['id'] ===
+            ($x['id'] ?? '') ===
             $p['id']
         ) {
+
             $i = $k;
+
+            break;
         }
     }
 
     if ($i >= 0) {
-        $s['products'][$i] = $p;
+
+        $s['products'][$i] =
+            $p;
+
     } else {
+
         array_unshift(
             $s['products'],
             $p
@@ -2212,8 +2819,13 @@ if (
 
     out([
         'status' => 'success',
+
         'store' =>
-            syncStore($s)
+            syncStore(
+                $s,
+                $r['merchant_user_id'] ??
+                    ($s['merchantUserId'] ?? null)
+            )
     ]);
 }
 
@@ -2228,38 +2840,85 @@ if (
     $action === 'merchant_delete_product'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $d = body();
+    $d =
+        body();
 
-    $s =
+    $storeId =
+        $d['storeId'] ?? '';
+
+    if (!$storeId) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'معرف المتجر مطلوب.'
+        ], 422);
+    }
+
+    if (
         $u['role'] === 'admin'
-            ? decodeStore(
-                getStoreRow(
-                    $d['storeId']
-                )
-            )
-            : merchantStore(
-                $d['storeId']
+    ) {
+
+        $r =
+            getStoreRow(
+                $storeId
             );
+
+        if (!$r) {
+
+            out([
+                'status' => 'error',
+                'message' =>
+                    'المتجر غير موجود.'
+            ], 404);
+        }
+
+        $s =
+            hydrateStore(
+                decodeStore($r)
+            );
+
+    } else {
+
+        $s =
+            merchantStore(
+                $storeId
+            );
+
+        $r =
+            getStoreRow(
+                $storeId
+            );
+    }
 
     $s['products'] =
         array_values(
             array_filter(
                 $s['products'] ?? [],
-                fn($x) =>
-                    $x['id'] !==
-                    ($d['productId'] ?? '')
+                function ($x) use ($d) {
+
+                    return
+                        ($x['id'] ?? '') !==
+                        ($d['productId'] ?? '');
+                }
             )
         );
 
     out([
         'status' => 'success',
+
         'store' =>
-            syncStore($s)
+            syncStore(
+                $s,
+                $r['merchant_user_id'] ??
+                    null
+            )
     ]);
 }
 
@@ -2274,46 +2933,110 @@ if (
     $action === 'merchant_save_coupon'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $d = body();
+    $d =
+        body();
+
+    $storeId =
+        $d['storeId'] ?? '';
+
+    if (!$storeId) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'معرف المتجر مطلوب.'
+        ], 422);
+    }
+
+    $r =
+        getStoreRow(
+            $storeId
+        );
+
+    if (!$r) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر غير موجود.'
+        ], 404);
+    }
+
+    if (
+        $u['role'] === 'merchant' &&
+        $r['merchant_user_id'] !==
+            $u['id']
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'لا تملك هذا المتجر.'
+        ], 403);
+    }
 
     $s =
-        $u['role'] === 'admin'
-            ? decodeStore(
-                getStoreRow(
-                    $d['storeId']
-                )
-            )
-            : merchantStore(
-                $d['storeId']
-            );
+        hydrateStore(
+            decodeStore($r)
+        );
 
     $c =
         $d['coupon'] ??
         $d;
 
+    if (
+        empty($c['id'])
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'بيانات القسيمة غير صالحة.'
+        ], 422);
+    }
+
+    if (
+        !isset(
+            $s['coupons']
+        ) ||
+        !is_array(
+            $s['coupons']
+        )
+    ) {
+        $s['coupons'] = [];
+    }
+
     $i = -1;
 
     foreach (
-        $s['coupons'] ?? []
+        $s['coupons']
         as $k => $x
     ) {
 
         if (
-            $x['id'] ===
+            ($x['id'] ?? '') ===
             $c['id']
         ) {
+
             $i = $k;
+
+            break;
         }
     }
 
     if ($i >= 0) {
-        $s['coupons'][$i] = $c;
+
+        $s['coupons'][$i] =
+            $c;
+
     } else {
+
         array_unshift(
             $s['coupons'],
             $c
@@ -2322,8 +3045,13 @@ if (
 
     out([
         'status' => 'success',
+
         'store' =>
-            syncStore($s)
+            syncStore(
+                $s,
+                $r['merchant_user_id'] ??
+                    null
+            )
     ]);
 }
 
@@ -2338,62 +3066,22 @@ if (
     $action === 'merchant_delete_coupon'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $d = body();
+    $d =
+        body();
 
-    $s =
-        $u['role'] === 'admin'
-            ? decodeStore(
-                getStoreRow(
-                    $d['storeId']
-                )
-            )
-            : merchantStore(
-                $d['storeId']
-            );
+    $storeId =
+        $d['storeId'] ?? '';
 
-    $s['coupons'] =
-        array_values(
-            array_filter(
-                $s['coupons'] ?? [],
-                fn($x) =>
-                    $x['id'] !==
-                    ($d['couponId'] ?? '')
-            )
+    $r =
+        getStoreRow(
+            $storeId
         );
-
-    out([
-        'status' => 'success',
-        'store' =>
-            syncStore($s)
-    ]);
-}
-
-/*
-|--------------------------------------------------------------------------
-| Subscription
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $action === 'merchant_update_subscription' ||
-    $action === 'admin_update_subscription'
-) {
-
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
-
-    $d = body();
-
-    $r = getStoreRow(
-        $d['storeId'] ?? ''
-    );
 
     if (!$r) {
 
@@ -2407,7 +3095,7 @@ if (
     if (
         $u['role'] === 'merchant' &&
         $r['merchant_user_id'] !==
-        $u['id']
+            $u['id']
     ) {
 
         out([
@@ -2418,10 +3106,92 @@ if (
     }
 
     $s =
-        decodeStore($r);
+        hydrateStore(
+            decodeStore($r)
+        );
+
+    $s['coupons'] =
+        array_values(
+            array_filter(
+                $s['coupons'] ?? [],
+                function ($x) use ($d) {
+
+                    return
+                        ($x['id'] ?? '') !==
+                        ($d['couponId'] ?? '');
+                }
+            )
+        );
+
+    out([
+        'status' => 'success',
+
+        'store' =>
+            syncStore(
+                $s,
+                $r['merchant_user_id'] ??
+                    null
+            )
+    ]);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Subscription
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+        'merchant_update_subscription' ||
+    $action ===
+        'admin_update_subscription'
+) {
+
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
+
+    $d =
+        body();
+
+    $r =
+        getStoreRow(
+            $d['storeId'] ?? ''
+        );
+
+    if (!$r) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر غير موجود.'
+        ], 404);
+    }
+
+    if (
+        $u['role'] === 'merchant' &&
+        $r['merchant_user_id'] !==
+            $u['id']
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'لا تملك هذا المتجر.'
+        ], 403);
+    }
+
+    $s =
+        hydrateStore(
+            decodeStore($r)
+        );
 
     $incoming =
-        $d['subscription'] ?? [];
+        $d['subscription'] ??
+        [];
 
     $s['subscription'] =
         array_merge(
@@ -2431,10 +3201,12 @@ if (
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
-                $r['merchant_user_id'] ?? null
+                $r['merchant_user_id'] ??
+                    null
             )
     ]);
 }
@@ -2445,11 +3217,16 @@ if (
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'merchant_store') {
+if (
+    $action === 'merchant_store'
+) {
 
-    requireUser(['merchant']);
+    requireUser([
+        'merchant'
+    ]);
 
-    $d = body();
+    $d =
+        body();
 
     $s =
         merchantStore(
@@ -2468,11 +3245,16 @@ if ($action === 'merchant_store') {
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'merchant_orders') {
+if (
+    $action === 'merchant_orders'
+) {
 
-    requireUser(['merchant']);
+    requireUser([
+        'merchant'
+    ]);
 
-    $d = body();
+    $d =
+        body();
 
     $s =
         merchantStore(
@@ -2481,6 +3263,7 @@ if ($action === 'merchant_orders') {
 
     out([
         'status' => 'success',
+
         'orders' =>
             $s['orders'] ?? []
     ]);
@@ -2497,28 +3280,49 @@ if (
     $action === 'merchant_update_order'
 ) {
 
-    $u = requireUser([
-        'merchant',
-        'admin'
-    ]);
+    $u =
+        requireUser([
+            'merchant',
+            'admin'
+        ]);
 
-    $d = body();
+    $d =
+        body();
 
     $storeId =
         $d['storeId'] ?? '';
 
+    $r =
+        getStoreRow(
+            $storeId
+        );
+
+    if (!$r) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر غير موجود.'
+        ], 404);
+    }
+
+    if (
+        $u['role'] === 'merchant' &&
+        $r['merchant_user_id'] !==
+            $u['id']
+    ) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'لا تملك هذا المتجر.'
+        ], 403);
+    }
+
     $s =
-        $u['role'] === 'admin'
-            ? hydrateStore(
-                decodeStore(
-                    getStoreRow(
-                        $storeId
-                    )
-                )
-            )
-            : merchantStore(
-                $storeId
-            );
+        hydrateStore(
+            decodeStore($r)
+        );
 
     $orderId =
         $d['orderId'] ?? '';
@@ -2534,7 +3338,10 @@ if (
             ($x['id'] ?? '') ===
             $orderId
         ) {
+
             $idx = $i;
+
+            break;
         }
     }
 
@@ -2552,28 +3359,41 @@ if (
 
     $o['status'] =
         $d['status'] ??
-        $o['status'];
+        $o['status'] ??
+        'جديد';
 
     if (
-        isset($d['trackingNumber'])
+        isset(
+            $d['trackingNumber']
+        )
     ) {
+
         $o['trackingNumber'] =
             $d['trackingNumber'];
     }
 
     if (
-        isset($d['shippingProvider'])
+        isset(
+            $d['shippingProvider']
+        )
     ) {
+
         $o['shippingProvider'] =
             $d['shippingProvider'];
     }
 
-    $s['orders'][$idx] = $o;
+    $s['orders'][$idx] =
+        $o;
 
     out([
         'status' => 'success',
+
         'store' =>
-            syncStore($s)
+            syncStore(
+                $s,
+                $r['merchant_user_id'] ??
+                    null
+            )
     ]);
 }
 
@@ -2594,18 +3414,22 @@ if (
         'admin'
     ]);
 
-    $d = body();
+    $d =
+        body();
 
     $order =
         $d['order'] ??
         $d;
 
     $slug =
-        $d['storeSlug'] ?? '';
+        $d['storeSlug'] ??
+        '';
 
     if (
         !$slug ||
-        empty($order['id'])
+        empty(
+            $order['id']
+        )
     ) {
 
         out([
@@ -2615,20 +3439,23 @@ if (
         ], 422);
     }
 
-    $p = db();
+    $p =
+        db();
 
-    $q = $p->prepare(
-        'SELECT *
-         FROM stores
-         WHERE slug=?
-         LIMIT 1'
-    );
+    $q =
+        $p->prepare(
+            'SELECT *
+             FROM stores
+             WHERE slug=?
+             LIMIT 1'
+        );
 
     $q->execute([
         $slug
     ]);
 
-    $sr = $q->fetch();
+    $sr =
+        $q->fetch();
 
     if (!$sr) {
 
@@ -2652,7 +3479,8 @@ if (
         as $it
     ) {
 
-        $found = false;
+        $found =
+            false;
 
         foreach (
             $products
@@ -2660,15 +3488,20 @@ if (
         ) {
 
             if (
-                $prod['id'] ===
-                $it['productId']
+                ($prod['id'] ?? '') ===
+                ($it['productId'] ?? '')
             ) {
 
-                $found = true;
+                $found =
+                    true;
 
                 if (
-                    (int)$prod['stock'] <
-                    (int)$it['quantity']
+                    (int)(
+                        $prod['stock'] ?? 0
+                    ) <
+                    (int)(
+                        $it['quantity'] ?? 0
+                    )
                 ) {
 
                     out([
@@ -2680,15 +3513,22 @@ if (
                 }
 
                 $prod['stock'] =
-                    (int)$prod['stock'] -
-                    (int)$it['quantity'];
+                    (int)(
+                        $prod['stock'] ?? 0
+                    ) -
+                    (int)(
+                        $it['quantity'] ?? 0
+                    );
 
                 if (
                     $prod['stock'] <= 0
                 ) {
+
                     $prod['isAvailable'] =
                         false;
                 }
+
+                break;
             }
         }
 
@@ -2715,15 +3555,48 @@ if (
     $s['products'] =
         $products;
 
+    if (
+        !isset(
+            $s['orders']
+        ) ||
+        !is_array(
+            $s['orders']
+        )
+    ) {
+        $s['orders'] = [];
+    }
+
     array_unshift(
         $s['orders'],
         $order
     );
 
+    if (
+        !isset(
+            $s['stats']
+        ) ||
+        !is_array(
+            $s['stats']
+        )
+    ) {
+
+        $s['stats'] = [
+            'totalSales' =>
+                0,
+
+            'visitorsCount' =>
+                0
+        ];
+    }
+
     $s['stats']['totalSales'] =
-        ($s['stats']['totalSales'] ?? 0) +
+        (
+            $s['stats']['totalSales']
+            ?? 0
+        ) +
         (float)(
-            $order['totalAmount'] ?? 0
+            $order['totalAmount']
+            ?? 0
         );
 
     $tp =
@@ -2731,11 +3604,19 @@ if (
             $sr['id']
         );
 
-    ensureTenantSchema($tp);
+    ensureTenantSchema(
+        $tp
+    );
 
-    $tp->beginTransaction();
+    $transactionStarted =
+        false;
 
     try {
+
+        $tp->beginTransaction();
+
+        $transactionStarted =
+            true;
 
         $tp->prepare(
             "INSERT INTO orders
@@ -2749,6 +3630,7 @@ if (
                 updated_at
             )
             VALUES (?,?,?,?,?,?,?)
+
             ON DUPLICATE KEY UPDATE
                 data=VALUES(data),
                 status=VALUES(status),
@@ -2756,40 +3638,62 @@ if (
                 updated_at=VALUES(updated_at)"
         )->execute([
             $order['id'],
-            user()['id'] ?? null,
+
+            user()['id']
+                ?? null,
+
             $order['status'],
+
             (float)(
-                $order['totalAmount'] ?? 0
+                $order['totalAmount']
+                ?? 0
             ),
+
             json_encode(
                 $order,
                 JSON_UNESCAPED_UNICODE
             ),
+
             date('Y-m-d H:i:s'),
             date('Y-m-d H:i:s')
         ]);
 
         $tp->commit();
 
+        $transactionStarted =
+            false;
+
     } catch (Throwable $e) {
 
-        $tp->rollBack();
+        if (
+            $transactionStarted &&
+            $tp->inTransaction()
+        ) {
+
+            $tp->rollBack();
+        }
 
         out([
             'status' => 'error',
             'message' =>
-                'تعذر حفظ الطلب.'
+                'تعذر حفظ الطلب.',
+            'debug' =>
+                $e->getMessage()
         ], 500);
     }
 
     syncStore(
         $s,
-        $sr['merchant_user_id'] ?? null
+        $sr['merchant_user_id']
+            ?? null
     );
 
     out([
         'status' => 'success',
-        'order' => $order,
+
+        'order' =>
+            $order,
+
         'store' =>
             publicStore($s)
     ]);
@@ -2801,9 +3705,12 @@ if (
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'track_order') {
+if (
+    $action === 'track_order'
+) {
 
-    $d = body();
+    $d =
+        body();
 
     $term =
         trim(
@@ -2835,27 +3742,30 @@ if ($action === 'track_order') {
                 $st['id']
             );
 
-        ensureTenantSchema($tp);
-
-        $q = $tp->prepare(
-            "SELECT data
-             FROM orders
-             WHERE id=?
-             OR JSON_UNQUOTE(
-                 JSON_EXTRACT(
-                     data,
-                     '$.customerPhone'
-                 )
-             )=?
-             OR JSON_UNQUOTE(
-                 JSON_EXTRACT(
-                     data,
-                     '$.trackingNumber'
-                 )
-             )=?
-             ORDER BY created_at DESC
-             LIMIT 1"
+        ensureTenantSchema(
+            $tp
         );
+
+        $q =
+            $tp->prepare(
+                "SELECT data
+                 FROM orders
+                 WHERE id=?
+                 OR JSON_UNQUOTE(
+                     JSON_EXTRACT(
+                         data,
+                         '$.customerPhone'
+                     )
+                 )=?
+                 OR JSON_UNQUOTE(
+                     JSON_EXTRACT(
+                         data,
+                         '$.trackingNumber'
+                     )
+                 )=?
+                 ORDER BY created_at DESC
+                 LIMIT 1"
+            );
 
         $q->execute([
             $term,
@@ -2863,12 +3773,14 @@ if ($action === 'track_order') {
             $term
         ]);
 
-        $r = $q->fetch();
+        $r =
+            $q->fetch();
 
         if ($r) {
 
             out([
                 'status' => 'success',
+
                 'order' =>
                     json_decode(
                         $r['data'],
@@ -2898,7 +3810,8 @@ if (
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     foreach (
         [
@@ -2953,6 +3866,7 @@ if (
             updated_at
         )
         VALUES (?,?,?,?,?,1,?,?)
+
         ON DUPLICATE KEY UPDATE
             db_host=VALUES(db_host),
             db_name=VALUES(db_name),
@@ -2975,14 +3889,17 @@ if (
             $d['storeId']
         );
 
-    ensureTenantSchema($tp);
+    ensureTenantSchema(
+        $tp
+    );
 
     $s =
         decodeStore($sr);
 
     syncStore(
         $s,
-        $sr['merchant_user_id'] ?? null
+        $sr['merchant_user_id']
+            ?? null
     );
 
     out([
@@ -2998,11 +3915,14 @@ if (
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'admin_dashboard') {
+if (
+    $action === 'admin_dashboard'
+) {
 
     admin();
 
-    $p = db();
+    $p =
+        db();
 
     $stats = [
 
@@ -3098,6 +4018,7 @@ if (
 
     out([
         'status' => 'success',
+
         'stores' =>
             allStores(false)
     ]);
@@ -3145,7 +4066,9 @@ if (
                 true
             );
 
-        unset($x['data']);
+        unset(
+            $x['data']
+        );
     }
 
     unset($x);
@@ -3164,14 +4087,15 @@ if (
 
 if (
     $action ===
-    'admin_set_merchant_status' ||
+        'admin_set_merchant_status' ||
     $action ===
-    'set_merchant_status'
+        'set_merchant_status'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     if (
         !in_array(
@@ -3214,14 +4138,15 @@ if (
 
 if (
     $action ===
-    'admin_delete_merchant' ||
+        'admin_delete_merchant' ||
     $action ===
-    'delete_merchant'
+        'delete_merchant'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     $id =
         $d['id'] ?? '';
@@ -3235,15 +4160,19 @@ if (
         ], 422);
     }
 
-    $p = db();
+    $p =
+        db();
 
-    $q = $p->prepare(
-        "SELECT id
-         FROM stores
-         WHERE merchant_user_id=?"
-    );
+    $q =
+        $p->prepare(
+            "SELECT id
+             FROM stores
+             WHERE merchant_user_id=?"
+        );
 
-    $q->execute([$id]);
+    $q->execute([
+        $id
+    ]);
 
     $stores =
         $q->fetchAll();
@@ -3258,34 +4187,53 @@ if (
         $p->prepare(
             "DELETE FROM products
              WHERE store_id=?"
-        )->execute([$sid]);
+        )->execute([
+            $sid
+        ]);
 
         $p->prepare(
             "DELETE FROM orders
              WHERE store_id=?"
-        )->execute([$sid]);
+        )->execute([
+            $sid
+        ]);
 
         $p->prepare(
             "DELETE FROM coupons
              WHERE store_id=?"
-        )->execute([$sid]);
+        )->execute([
+            $sid
+        ]);
 
         $p->prepare(
             "DELETE FROM subscriptions
              WHERE store_id=?"
-        )->execute([$sid]);
+        )->execute([
+            $sid
+        ]);
+
+        $p->prepare(
+            "DELETE FROM tenant_databases
+             WHERE store_id=?"
+        )->execute([
+            $sid
+        ]);
 
         $p->prepare(
             "DELETE FROM stores
              WHERE id=?"
-        )->execute([$sid]);
+        )->execute([
+            $sid
+        ]);
     }
 
     $p->prepare(
         "DELETE FROM users
          WHERE id=?
          AND role='merchant'"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
 
     out([
         'status' => 'success'
@@ -3300,14 +4248,15 @@ if (
 
 if (
     $action ===
-    'admin_delete_store' ||
+        'admin_delete_store' ||
     $action ===
-    'delete_store'
+        'delete_store'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     $id =
         $d['id'] ?? '';
@@ -3321,32 +4270,50 @@ if (
         ], 422);
     }
 
-    $p = db();
+    $p =
+        db();
 
     $p->prepare(
         "DELETE FROM products
          WHERE store_id=?"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
 
     $p->prepare(
         "DELETE FROM orders
          WHERE store_id=?"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
 
     $p->prepare(
         "DELETE FROM coupons
          WHERE store_id=?"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
 
     $p->prepare(
         "DELETE FROM subscriptions
          WHERE store_id=?"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
+
+    $p->prepare(
+        "DELETE FROM tenant_databases
+         WHERE store_id=?"
+    )->execute([
+        $id
+    ]);
 
     $p->prepare(
         "DELETE FROM stores
          WHERE id=?"
-    )->execute([$id]);
+    )->execute([
+        $id
+    ]);
 
     out([
         'status' => 'success'
@@ -3359,11 +4326,15 @@ if (
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'admin_save_product') {
+if (
+    $action ===
+        'admin_save_product'
+) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     $r =
         getStoreRow(
@@ -3380,12 +4351,17 @@ if ($action === 'admin_save_product') {
     }
 
     $s =
-        decodeStore($r);
+        hydrateStore(
+            decodeStore($r)
+        );
 
     $p =
-        $d['product'] ?? [];
+        $d['product'] ??
+        [];
 
-    if (empty($p['id'])) {
+    if (
+        empty($p['id'])
+    ) {
 
         out([
             'status' => 'error',
@@ -3394,22 +4370,35 @@ if ($action === 'admin_save_product') {
         ], 422);
     }
 
-    $found = false;
+    if (
+        !isset(
+            $s['products']
+        ) ||
+        !is_array(
+            $s['products']
+        )
+    ) {
+        $s['products'] = [];
+    }
+
+    $found =
+        false;
 
     foreach (
-        $s['products'] ?? []
+        $s['products']
         as $i => $x
     ) {
 
         if (
-            $x['id'] ===
+            ($x['id'] ?? '') ===
             $p['id']
         ) {
 
             $s['products'][$i] =
                 $p;
 
-            $found = true;
+            $found =
+                true;
 
             break;
         }
@@ -3425,10 +4414,12 @@ if ($action === 'admin_save_product') {
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
-                $r['merchant_user_id'] ?? null
+                $r['merchant_user_id']
+                    ?? null
             )
     ]);
 }
@@ -3441,12 +4432,13 @@ if ($action === 'admin_save_product') {
 
 if (
     $action ===
-    'admin_delete_product'
+        'admin_delete_product'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
     $r =
         getStoreRow(
@@ -3463,24 +4455,31 @@ if (
     }
 
     $s =
-        decodeStore($r);
+        hydrateStore(
+            decodeStore($r)
+        );
 
     $s['products'] =
         array_values(
             array_filter(
                 $s['products'] ?? [],
-                fn($x) =>
-                    $x['id'] !==
-                    ($d['productId'] ?? '')
+                function ($x) use ($d) {
+
+                    return
+                        ($x['id'] ?? '') !==
+                        ($d['productId'] ?? '');
+                }
             )
         );
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
-                $r['merchant_user_id'] ?? null
+                $r['merchant_user_id']
+                    ?? null
             )
     ]);
 }
@@ -3493,22 +4492,24 @@ if (
 
 if (
     $action ===
-    'admin_set_order_status' ||
+        'admin_set_order_status' ||
     $action ===
-    'set_order_status'
+        'set_order_status'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
-    $q = db()->prepare(
-        'SELECT
-            store_id,
-            data
-         FROM orders
-         WHERE id=?'
-    );
+    $q =
+        db()->prepare(
+            'SELECT
+                store_id,
+                data
+             FROM orders
+             WHERE id=?'
+        );
 
     $q->execute([
         $d['id'] ?? ''
@@ -3526,7 +4527,8 @@ if (
         ], 404);
     }
 
-    $p = db();
+    $p =
+        db();
 
     $now =
         date('Y-m-d H:i:s');
@@ -3550,11 +4552,14 @@ if (
          WHERE id=?"
     )->execute([
         $o['status'],
+
         json_encode(
             $o,
             JSON_UNESCAPED_UNICODE
         ),
+
         $now,
+
         $d['id']
     ]);
 
@@ -3566,7 +4571,9 @@ if (
     if ($sr) {
 
         $store =
-            decodeStore($sr);
+            hydrateStore(
+                decodeStore($sr)
+            );
 
         foreach (
             $store['orders'] ?? []
@@ -3578,7 +4585,8 @@ if (
                 ($o['id'] ?? '')
             ) {
 
-                $so = $o;
+                $so =
+                    $o;
 
                 break;
             }
@@ -3588,7 +4596,8 @@ if (
 
         syncStore(
             $store,
-            $sr['merchant_user_id'] ?? null
+            $sr['merchant_user_id']
+                ?? null
         );
     }
 
@@ -3606,12 +4615,13 @@ if (
 
 if (
     $action ===
-    'admin_save_store'
+        'admin_save_store'
 ) {
 
     admin();
 
-    $s = body();
+    $s =
+        body();
 
     $r =
         getStoreRow(
@@ -3623,23 +4633,58 @@ if (
             ? decodeStore($r)
             : [];
 
+    if (
+        isset(
+            $old['orders']
+        ) &&
+        !isset(
+            $s['orders']
+        )
+    ) {
+
+        $s['orders'] =
+            $old['orders'];
+    }
+
+    if (
+        isset(
+            $old['stats']
+        ) &&
+        !isset(
+            $s['stats']
+        )
+    ) {
+
+        $s['stats'] =
+            $old['stats'];
+    }
+
     $s['orders'] =
-        $old['orders'] ?? [];
+        $s['orders'] ?? [];
 
     $s['stats'] =
-        $old['stats'] ??
+        $s['stats'] ??
         [
-            'totalSales' => 0,
-            'visitorsCount' => 0
+            'totalSales' =>
+                0,
+
+            'visitorsCount' =>
+                0
         ];
 
     out([
         'status' => 'success',
+
         'store' =>
             syncStore(
                 $s,
-                $r['merchant_user_id'] ??
-                ($s['merchantUserId'] ?? null)
+
+                $r['merchant_user_id']
+                    ??
+                    (
+                        $s['merchantUserId']
+                        ?? null
+                    )
             )
     ]);
 }
@@ -3650,13 +4695,17 @@ if (
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'seed') {
+if (
+    $action === 'seed'
+) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
-    $count = 0;
+    $count =
+        0;
 
     foreach (
         ($d['stores'] ?? [])
@@ -3665,7 +4714,8 @@ if ($action === 'seed') {
 
         syncStore(
             $s,
-            $s['merchantUserId'] ?? null
+            $s['merchantUserId']
+                ?? null
         );
 
         $count++;
@@ -3685,49 +4735,70 @@ if ($action === 'seed') {
 
 if (
     $action ===
-    'get_platform_settings'
+        'get_platform_settings'
 ) {
 
-    $p = db();
+    $p =
+        db();
+
+    $baridimobRaw =
+        $p->query(
+            "SELECT v
+             FROM settings
+             WHERE k='admin_baridimob'"
+        )->fetchColumn();
+
+    $announcementsRaw =
+        $p->query(
+            "SELECT v
+             FROM settings
+             WHERE k='platform_announcements'"
+        )->fetchColumn();
+
+    $notificationsRaw =
+        $p->query(
+            "SELECT v
+             FROM settings
+             WHERE k='merchant_notifications'"
+        )->fetchColumn();
 
     $b =
         json_decode(
-            $p->query(
-                "SELECT v
-                 FROM settings
-                 WHERE k='admin_baridimob'"
-            )->fetchColumn()
-            ?: 'null',
+            $baridimobRaw
+                ?: 'null',
             true
         );
 
     $a =
         json_decode(
-            $p->query(
-                "SELECT v
-                 FROM settings
-                 WHERE k='platform_announcements'"
-            )->fetchColumn()
-            ?: '[]',
+            $announcementsRaw
+                ?: '[]',
             true
         );
 
     $n =
         json_decode(
-            $p->query(
-                "SELECT v
-                 FROM settings
-                 WHERE k='merchant_notifications'"
-            )->fetchColumn()
-            ?: '[]',
+            $notificationsRaw
+                ?: '[]',
             true
         );
 
     out([
-        'status' => 'success',
-        'baridimob' => $b,
-        'announcements' => $a,
-        'notifications' => $n
+        'status' =>
+            'success',
+
+        'baridimob' =>
+            $b,
+
+        'announcements' =>
+            is_array($a)
+                ? $a
+                : [],
+
+        'notifications' =>
+            is_array($n)
+                ? $n
+                : []
     ]);
 }
 
@@ -3739,22 +4810,29 @@ if (
 
 if (
     $action ===
-    'admin_save_platform_settings'
+        'admin_save_platform_settings'
 ) {
 
     admin();
 
-    $d = body();
+    $d =
+        body();
 
-    $p = db();
+    $p =
+        db();
 
-    if (isset($d['baridimob'])) {
+    if (
+        isset(
+            $d['baridimob']
+        )
+    ) {
 
         $p->prepare(
             "INSERT INTO settings
             (k,v)
             VALUES
             ('admin_baridimob',?)
+
             ON DUPLICATE KEY UPDATE
                 v=VALUES(v)"
         )->execute([
@@ -3765,13 +4843,18 @@ if (
         ]);
     }
 
-    if (isset($d['announcements'])) {
+    if (
+        isset(
+            $d['announcements']
+        )
+    ) {
 
         $p->prepare(
             "INSERT INTO settings
             (k,v)
             VALUES
             ('platform_announcements',?)
+
             ON DUPLICATE KEY UPDATE
                 v=VALUES(v)"
         )->execute([
@@ -3782,13 +4865,18 @@ if (
         ]);
     }
 
-    if (isset($d['notifications'])) {
+    if (
+        isset(
+            $d['notifications']
+        )
+    ) {
 
         $p->prepare(
             "INSERT INTO settings
             (k,v)
             VALUES
             ('merchant_notifications',?)
+
             ON DUPLICATE KEY UPDATE
                 v=VALUES(v)"
         )->execute([
@@ -3806,11 +4894,14 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| Gemini endpoint disabled
+| Gemini Endpoint Disabled
 |--------------------------------------------------------------------------
 */
 
-if ($action === 'gemini_generate') {
+if (
+    $action ===
+        'gemini_generate'
+) {
 
     requireUser([
         'merchant',
@@ -3826,7 +4917,7 @@ if ($action === 'gemini_generate') {
 
 /*
 |--------------------------------------------------------------------------
-| Unknown action
+| Unknown Action
 |--------------------------------------------------------------------------
 */
 

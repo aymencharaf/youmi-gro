@@ -3419,6 +3419,45 @@ if (
 }
 
 /*
+/*
+|--------------------------------------------------------------------------
+| Admin Subscription Plans - List
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    'admin_subscription_plans'
+) {
+
+    admin();
+
+    $rows =
+        db()->query(
+            "SELECT *
+             FROM subscription_plans
+             ORDER BY
+                is_default DESC,
+                is_active DESC,
+                price_dzd ASC,
+                created_at ASC"
+        )->fetchAll();
+
+    $plans =
+        array_map(
+            function ($plan) {
+                return subscriptionPlanToArray(
+                    $plan
+                );
+            },
+            $rows
+        );
+
+    out([
+        'status' => 'success',
+        'plans' => $plans
+    ]);
+}
 |--------------------------------------------------------------------------
 | Subscription
 |--------------------------------------------------------------------------

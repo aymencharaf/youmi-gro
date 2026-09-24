@@ -10,7 +10,66 @@
  * - Platform settings
  * - Password recovery by email verification code
  */
+<?php
 
+/*
+|--------------------------------------------------------------------------
+| Youmi PHP API - Error Protection
+|--------------------------------------------------------------------------
+*/
+
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('log_errors', '1');
+
+header('Content-Type: application/json; charset=utf-8');
+
+set_exception_handler(function (Throwable $e) {
+
+    http_response_code(500);
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'خطأ PHP في الخادم.',
+        'debug' => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+
+    exit;
+});
+
+register_shutdown_function(function () {
+
+    $e = error_get_last();
+
+    if ($e && in_array(
+        $e['type'],
+        [
+            E_ERROR,
+            E_PARSE,
+            E_CORE_ERROR,
+            E_COMPILE_ERROR
+        ],
+        true
+    )) {
+
+        if (!headers_sent()) {
+            header(
+                'Content-Type: application/json; charset=utf-8'
+            );
+        }
+
+        http_response_code(500);
+
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'خطأ PHP في الخادم.',
+            'debug' => $e['message'],
+            'file' => basename($e['file']),
+            'line' => $e['line']
+        ], JSON_UNESCAPED_UNICODE);
+    }
+});
 header('Content-Type: application/json; charset=utf-8');
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

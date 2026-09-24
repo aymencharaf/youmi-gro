@@ -667,6 +667,30 @@ function install()
             UNIQUE KEY uq_sub_store(store_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
+        "CREATE TABLE IF NOT EXISTS subscription_plans (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(190) NOT NULL,
+    type ENUM('free','paid')
+        NOT NULL DEFAULT 'free',
+    price_dzd DECIMAL(14,2)
+        NOT NULL DEFAULT 0,
+    duration_days INT
+        NOT NULL DEFAULT 30,
+    max_stores INT
+        NOT NULL DEFAULT 1,
+    max_products INT NULL,
+    is_default TINYINT(1)
+        NOT NULL DEFAULT 0,
+    is_active TINYINT(1)
+        NOT NULL DEFAULT 1,
+    description TEXT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX(is_active),
+    INDEX(is_default),
+    INDEX(type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
         "CREATE TABLE IF NOT EXISTS settings (
             k VARCHAR(100) PRIMARY KEY,
             v LONGTEXT NOT NULL

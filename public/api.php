@@ -3458,6 +3458,226 @@ if (
         'plans' => $plans
     ]);
 }
+    /*
+|--------------------------------------------------------------------------
+| Admin Save Subscription Plan
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    'admin_save_subscription_plan'
+) {
+
+    admin();
+
+    $d =
+        body();
+
+    $plan =
+        $d['plan'] ?? [];
+
+    $id =
+        trim(
+            (string)(
+                $plan['id'] ?? ''
+            )
+        );
+
+    $name =
+        trim(
+            (string)(
+                $plan['name'] ?? ''
+            )
+        );
+
+    $type =
+        ($plan['type'] ?? 'free') ===
+        'paid'
+            ? 'paid'
+            : 'free';
+
+    $price =
+        max(
+            0,
+            (float)(
+                $plan['priceDzd'] ?? 0
+            )
+        );
+
+    $duration =
+        max(
+            1,
+            (int)(
+                $plan['durationDays'] ?? 30
+            )
+        );
+
+    $maxStores =
+        max(
+            1,
+            (int)(
+                $plan['maxStores'] ?? 1
+            )
+        );
+
+    $maxProducts =
+        $plan['maxProducts']
+            ?? null;
+
+    if (
+        $maxProducts !== null &&
+        $maxProducts !== '' &&
+        strtolower(
+            (string)$maxProducts
+        ) !== 'unlimited'
+    ) {
+
+        $maxProducts =
+            max(
+                1,
+                (int)$maxProducts
+            );
+
+    } else {
+
+        $maxProducts = null;
+    }
+
+    $isDefault =
+        !empty(
+            $plan['isDefault']
+        )
+            ? 1
+            : 0;
+
+    $isActive =
+        isset(
+            $plan['isActive']
+        )
+            ? (
+                !empty(
+                    $plan['isActive']
+                )
+                    ? 1
+                    : 0
+            )
+            : 1;
+
+    $description =
+        trim(
+            (string)(
+                $plan['description']
+                ?? ''
+            )
+        );
+
+    if (!$name) {
+
+        out([
+            'status' => 'error',
+            'message' =>
+                'اسم الخطة مطلوب.'
+        ], 422);
+    }
+
+    if (
+        $type === 'free'
+    ) {
+
+        $price = 0;
+    }
+
+    if (!$id) {
+
+        $id =
+            'plan-' .
+            bin2hex(
+                random_bytes(8)
+            );
+    }
+
+    $p =
+        db();
+
+    /*
+    |--------------------------------------------------------------------------
+    | If this plan becomes default,
+    | remove default from other plans
+    |--------------------------------------------------------------------------
+    */
+
+    if ($isDefault) {
+
+        $p->exec(
+            "UPDATE subscription_plans
+             SET is_default=0"
+        );
+    }
+
+    $q =
+        $p->prepare(
+            "INSERT INTO subscription_plans
+            (
+                id,
+                name,
+                type,
+                price_dzd,
+                duration_days,
+                max_stores,
+                max_products,
+                is_default,
+                is_active,
+                description,
+                created_at,
+                updated_at
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+
+            ON DUPLICATE KEY UPDATE
+                name=VALUES(name),
+                type=VALUES(type),
+                price_dzd=VALUES(price_dzd),
+                duration_days=VALUES(duration_days),
+                max_stores=VALUES(max_stores),
+                max_products=VALUES(max_products),
+                is_default=VALUES(is_default),
+                is_active=VALUES(is_active),
+                description=VALUES(description),
+                updated_at=VALUES(updated_at)"
+        );
+
+    $now =
+        date('Y-m-d H:i:s');
+
+    $q->execute([
+        $id,
+        $name,
+        $type,
+        $price,
+        $duration,
+        $maxStores,
+        $maxProducts,
+        $isDefault,
+        $isActive,
+        $description,
+        $now,
+        $now
+    ]);
+
+    $saved =
+        getSubscriptionPlan(
+            $id
+        );
+
+    out([
+        'status' => 'success',
+        'plan' =>
+            subscriptionPlanToArray(
+                $saved
+            )
+    ]);
+}
 |--------------------------------------------------------------------------
 | Subscription
 |--------------------------------------------------------------------------

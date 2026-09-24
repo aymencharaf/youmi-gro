@@ -38,20 +38,7 @@ set_exception_handler(function (Throwable $e) {
     exit;
 });
 
-register_shutdown_function(function () {
 
-    $e = error_get_last();
-
-    if ($e && in_array(
-        $e['type'],
-        [
-            E_ERROR,
-            E_PARSE,
-            E_CORE_ERROR,
-            E_COMPILE_ERROR
-        ],
-        true
-    )) {
 
         if (!headers_sent()) {
             header(

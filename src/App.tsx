@@ -481,7 +481,8 @@ export default function App() {
          onOpenAdminLoginModal={() =>
             setAdminLoginOpen(true)
          }
-
+      /> 
+    )}
       {/* ======================================
           CREATE STORE
       ====================================== */}

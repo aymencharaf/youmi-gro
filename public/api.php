@@ -717,6 +717,118 @@ function install()
     }
 
     /*
+    /*
+|--------------------------------------------------------------------------
+| Default Subscription Plans
+|--------------------------------------------------------------------------
+*/
+
+$plansCount =
+    (int)$p->query(
+        "SELECT COUNT(*)
+         FROM subscription_plans"
+    )->fetchColumn();
+
+if ($plansCount === 0) {
+
+    $now =
+        date('Y-m-d H:i:s');
+
+    $defaultPlans = [
+
+        [
+            'plan-free',
+            'المجاني',
+            'free',
+            0,
+            30,
+            1,
+            20,
+            1,
+            1,
+            'خطة مجانية للبائعين الجدد.'
+        ],
+
+        [
+            'plan-basic',
+            'Basic',
+            'paid',
+            1500,
+            30,
+            1,
+            100,
+            0,
+            1,
+            'خطة أساسية للبائعين.'
+        ],
+
+        [
+            'plan-pro',
+            'Pro',
+            'paid',
+            3500,
+            30,
+            1,
+            500,
+            0,
+            1,
+            'خطة احترافية للبائعين.'
+        ],
+
+        [
+            'plan-business',
+            'Business',
+            'paid',
+            7000,
+            30,
+            3,
+            null,
+            0,
+            1,
+            'خطة متقدمة تصل إلى 3 متاجر ومنتجات غير محدودة.'
+        ]
+    ];
+
+    $q =
+        $p->prepare(
+            "INSERT INTO subscription_plans
+            (
+                id,
+                name,
+                type,
+                price_dzd,
+                duration_days,
+                max_stores,
+                max_products,
+                is_default,
+                is_active,
+                description,
+                created_at,
+                updated_at
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        );
+
+    foreach (
+        $defaultPlans as $plan
+    ) {
+
+        $q->execute([
+            $plan[0],
+            $plan[1],
+            $plan[2],
+            $plan[3],
+            $plan[4],
+            $plan[5],
+            $plan[6],
+            $plan[7],
+            $plan[8],
+            $plan[9],
+            $now,
+            $now
+        ]);
+    }
+}
     |--------------------------------------------------------------------------
     | Bootstrap Admin
     |--------------------------------------------------------------------------

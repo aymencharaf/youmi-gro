@@ -27,5 +27,46 @@ export const api = {
   dashboard:()=>request('admin_dashboard'), merchants:()=>request('admin_merchants'), stores:()=>request('admin_stores'), orders:()=>request('admin_orders'),
   merchantStatus:(id:string,status:'active'|'suspended')=>post('admin_set_merchant_status',{id,status}), deleteMerchant:(id:string)=>post('admin_delete_merchant',{id}), deleteStore:(id:string)=>post('admin_delete_store',{id}), orderStatus:(id:string,status:string)=>post('admin_set_order_status',{id,status}), adminSubscription:(storeId:string,subscription:any)=>post('admin_update_subscription',{storeId,subscription}), adminSaveProduct:(storeId:string,product:any)=>post('admin_save_product',{storeId,product}), adminDeleteProduct:(storeId:string,productId:string)=>post('admin_delete_product',{storeId,productId}),
   getPlatformSettings: () => request('get_platform_settings'),
-  savePlatformSettings: (payload: any) => post('admin_save_platform_settings', payload),
-};
+
+savePlatformSettings: (payload: any) =>
+  post('admin_save_platform_settings', payload),
+
+// =====================================================
+// إدارة خطط اشتراك البائعين
+// =====================================================
+
+// جلب جميع خطط الاشتراك
+adminSubscriptionPlans: () =>
+  request('admin_subscription_plans'),
+
+// إضافة أو تعديل خطة اشتراك
+adminSaveSubscriptionPlan: (plan: any) =>
+  post('admin_save_subscription_plan', { plan }),
+
+// حذف خطة اشتراك
+adminDeleteSubscriptionPlan: (planId: string) =>
+  post('admin_delete_subscription_plan', {
+    planId,
+  }),
+
+// تعيين خطة لبائع / متجر
+adminAssignSubscriptionPlan: (
+  storeId: string,
+  planId: string,
+  options: any = {}
+) =>
+  post('admin_assign_subscription_plan', {
+    storeId,
+    planId,
+    ...options,
+  }),
+
+// تمديد اشتراك بائع
+adminExtendSubscription: (
+  storeId: string,
+  days: number
+) =>
+  post('admin_extend_subscription', {
+    storeId,
+    days,
+  }),

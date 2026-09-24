@@ -4234,31 +4234,45 @@ if (
 |--------------------------------------------------------------------------
 | Subscription
 |--------------------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
+| Admin Extend Subscription
+|--------------------------------------------------------------------------
 */
 
 if (
     $action ===
-        'merchant_update_subscription' ||
-    $action ===
-        'admin_update_subscription'
+    'admin_extend_subscription'
 ) {
 
-    $u =
-        requireUser([
-            'merchant',
-            'admin'
-        ]);
+    admin();
 
-    $d =
-        body();
+    $d = body();
 
-    $r =
-        getStoreRow(
+    $storeId = trim(
+        (string)(
             $d['storeId'] ?? ''
-        );
+        )
+    );
+
+    $days = max(
+        1,
+        (int)(
+            $d['days'] ?? 0
+        )
+    );
+
+    if (!$storeId || !$days) {
+        out([
+            'status' => 'error',
+            'message' =>
+                'المتجر وعدد الأيام مطلوبان.'
+        ], 422);
+    }
+
+    $r = getStoreRow($storeId);
 
     if (!$r) {
-
         out([
             'status' => 'error',
             'message' =>
@@ -4266,47 +4280,149 @@ if (
         ], 404);
     }
 
-    if (
-        $u['role'] === 'merchant' &&
-        $r['merchant_user_id'] !==
-            $u['id']
-    ) {
+    $s = hydrateStore(
+        decodeStore($r)
+    );
 
-        out([
-            'status' => 'error',
-            'message' =>
-                'لا تملك هذا المتجر.'
-        ], 403);
+    $subscription =
+        $s['subscription']
+        ?? [];
+
+    /*
+    |--------------------------------------------------------------------------
+    | تحديد تاريخ بداية التمديد
+    |--------------------------------------------------------------------------
+    */
+
+    $currentExpires =
+        $subscription['expiresAt']
+        ?? null;
+
+    $baseTimestamp = time();
+
+    if ($currentExpires) {
+
+        $parsedExpires =
+            strtotime(
+                $currentExpires
+            );
+
+        if (
+            $parsedExpires &&
+            $parsedExpires > time()
+        ) {
+            $baseTimestamp =
+                $parsedExpires;
+        }
     }
 
-    $s =
-        hydrateStore(
-            decodeStore($r)
+    /*
+    |--------------------------------------------------------------------------
+    | حساب تاريخ الانتهاء الجديد
+    |--------------------------------------------------------------------------
+    */
+
+    $newExpires =
+        $baseTimestamp +
+        (
+            $days *
+            86400
         );
 
-    $incoming =
-        $d['subscription'] ??
-        [];
+    $subscription[
+        'expiresAt'
+    ] = date(
+        'Y-m-d H:i:s',
+        $newExpires
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | تفعيل الاشتراك
+    |--------------------------------------------------------------------------
+    */
+
+    $subscription[
+        'status'
+    ] =
+        'subscribed';
+
+    $subscription[
+        'isActive'
+    ] =
+        true;
+
+    $subscription[
+        'isTrialActive'
+    ] =
+        false;
+
+    /*
+    |--------------------------------------------------------------------------
+    | حفظ عدد أيام التمديد
+    |--------------------------------------------------------------------------
+    */
+
+    $subscription[
+        'extensionDays'
+    ] =
+        (
+            (int)(
+                $subscription[
+                    'extensionDays'
+                ] ?? 0
+            )
+        ) +
+        $days;
+
+    /*
+    |--------------------------------------------------------------------------
+    | الاحتفاظ بتاريخ آخر تمديد
+    |--------------------------------------------------------------------------
+    */
+
+    $subscription[
+        'lastExtendedAt'
+    ] =
+        date(
+            'Y-m-d H:i:s'
+        );
+
+    $subscription[
+        'lastExtensionDays'
+    ] =
+        $days;
+
+    /*
+    |--------------------------------------------------------------------------
+    | حفظ الاشتراك
+    |--------------------------------------------------------------------------
+    */
 
     $s['subscription'] =
-        array_merge(
-            $s['subscription'] ?? [],
-            $incoming
+        $subscription;
+
+    $updated =
+        syncStore(
+            $s,
+            $r['merchant_user_id']
+                ?? null
         );
 
     out([
-        'status' => 'success',
+        'status' =>
+            'success',
+
+        'message' =>
+            'تم تمديد اشتراك البائع بنجاح.',
 
         'store' =>
-            syncStore(
-                $s,
-                $r['merchant_user_id'] ??
-                    null
-            )
+            $updated,
+
+        'subscription' =>
+            $subscription
     ]);
 }
-
-/*
 |--------------------------------------------------------------------------
 | Merchant Store
 |--------------------------------------------------------------------------

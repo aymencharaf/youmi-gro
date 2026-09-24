@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * Youmi production API - PHP/MySQL, InfinityFree compatible.
  * Includes:
  * - Authentication
@@ -10,54 +10,40 @@
  * - Platform settings
  * - Password recovery by email verification code
  */
-<?php
 
 /*
 |--------------------------------------------------------------------------
-| Youmi PHP API - Error Protection
+| Error Protection
 |--------------------------------------------------------------------------
 */
 
 error_reporting(E_ALL);
+
 ini_set('display_errors', '0');
 ini_set('display_startup_errors', '0');
 ini_set('log_errors', '1');
 
+/*
+|--------------------------------------------------------------------------
+| Prevent accidental output from breaking JSON
+|--------------------------------------------------------------------------
+*/
+
+ob_start();
+
+/*
+|--------------------------------------------------------------------------
+| JSON Header
+|--------------------------------------------------------------------------
+*/
+
 header('Content-Type: application/json; charset=utf-8');
 
-set_exception_handler(function (Throwable $e) {
-
-    http_response_code(500);
-
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'خطأ PHP في الخادم.',
-        'debug' => $e->getMessage()
-    ], JSON_UNESCAPED_UNICODE);
-
-    exit;
-});
-
-
-
-        if (!headers_sent()) {
-            header(
-                'Content-Type: application/json; charset=utf-8'
-            );
-        }
-
-        http_response_code(500);
-
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'خطأ PHP في الخادم.',
-            'debug' => $e['message'],
-            'file' => basename($e['file']),
-            'line' => $e['line']
-        ], JSON_UNESCAPED_UNICODE);
-    }
-});
-header('Content-Type: application/json; charset=utf-8');
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
@@ -73,12 +59,93 @@ header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+/*
+|--------------------------------------------------------------------------
+| OPTIONS / CORS preflight
+|--------------------------------------------------------------------------
+*/
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+
     http_response_code(204);
+
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+
     exit;
 }
 
 /*
+|--------------------------------------------------------------------------
+| Global PHP Exception Protection
+|--------------------------------------------------------------------------
+*/
+
+set_exception_handler(function (Throwable $e) {
+
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+
+    http_response_code(500);
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'خطأ PHP في الخادم.',
+        'debug' => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+
+    exit;
+});
+
+/*
+|--------------------------------------------------------------------------
+| Fatal / Parse Error Protection
+|--------------------------------------------------------------------------
+*/
+
+register_shutdown_function(function () {
+
+    $e = error_get_last();
+
+    if (
+        $e &&
+        in_array(
+            $e['type'],
+            [
+                E_ERROR,
+                E_CORE_ERROR,
+                E_COMPILE_ERROR,
+                E_PARSE
+            ],
+            true
+        )
+    ) {
+
+        if (ob_get_length()) {
+            ob_clean();
+        }
+
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+
+        http_response_code(500);
+
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'حدث خطأ داخلي في الخادم.',
+            'debug' => $e['message'],
+            'file' => basename($e['file']),
+            'line' => $e['line']
+        ], JSON_UNESCAPED_UNICODE);
+    }
+});
 |--------------------------------------------------------------------------
 | PHP session
 |--------------------------------------------------------------------------

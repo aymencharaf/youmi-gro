@@ -1619,7 +1619,154 @@ function admin()
         'admin'
     ]);
 }
+/*
+|--------------------------------------------------------------------------
+| Subscription Plan Helpers
+|--------------------------------------------------------------------------
+*/
 
+function getSubscriptionPlan($id)
+{
+    if (!$id) {
+        return null;
+    }
+
+    $q =
+        db()->prepare(
+            "SELECT *
+             FROM subscription_plans
+             WHERE id=?
+             LIMIT 1"
+        );
+
+    $q->execute([
+        $id
+    ]);
+
+    $plan =
+        $q->fetch();
+
+    if (!$plan) {
+        return null;
+    }
+
+    $plan['price_dzd'] =
+        (float)$plan['price_dzd'];
+
+    $plan['duration_days'] =
+        (int)$plan['duration_days'];
+
+    $plan['max_stores'] =
+        (int)$plan['max_stores'];
+
+    $plan['max_products'] =
+        $plan['max_products'] === null
+            ? null
+            : (int)$plan['max_products'];
+
+    $plan['is_default'] =
+        (bool)$plan['is_default'];
+
+    $plan['is_active'] =
+        (bool)$plan['is_active'];
+
+    return $plan;
+}
+
+function subscriptionPlanToArray($plan)
+{
+    if (!$plan) {
+        return null;
+    }
+
+    return [
+        'id' =>
+            $plan['id'],
+
+        'name' =>
+            $plan['name'],
+
+        'type' =>
+            $plan['type'],
+
+        'priceDzd' =>
+            (float)$plan['price_dzd'],
+
+        'durationDays' =>
+            (int)$plan['duration_days'],
+
+        'maxStores' =>
+            (int)$plan['max_stores'],
+
+        'maxProducts' =>
+            $plan['max_products'] === null
+                ? null
+                : (int)$plan['max_products'],
+
+        'isDefault' =>
+            (bool)$plan['is_default'],
+
+        'isActive' =>
+            (bool)$plan['is_active'],
+
+        'description' =>
+            $plan['description'] ?? ''
+    ];
+}
+
+function merchantSubscriptionPlan($merchantId)
+{
+    $q =
+        db()->prepare(
+            "SELECT
+                s.data
+             FROM stores s
+             WHERE s.merchant_user_id=?
+             ORDER BY s.created_at ASC
+             LIMIT 1"
+        );
+
+    $q->execute([
+        $merchantId
+    ]);
+
+    $store =
+        $q->fetch();
+
+    if (!$store) {
+        return null;
+    }
+
+    $data =
+        json_decode(
+            $store['data'] ?? '{}',
+            true
+        );
+
+    if (
+        !is_array($data) ||
+        empty(
+            $data['subscription']
+        )
+    ) {
+        return null;
+    }
+
+    $subscription =
+        $data['subscription'];
+
+    $planId =
+        $subscription['planId']
+        ?? null;
+
+    if (!$planId) {
+        return null;
+    }
+
+    return getSubscriptionPlan(
+        $planId
+    );
+}
 function merchantStore($id)
 {
     $u =

@@ -5101,10 +5101,10 @@ if (
             )->fetchColumn(),
 
         'products' =>
-            (int)$p->query(
-                'SELECT COUNT(*)
-                 FROM products'
-            )->fetchColumn(),
+    (int)$p->query(
+        'SELECT COUNT(*)
+         FROM products'
+    )->fetchColumn(),
 
         'orders' =>
             (int)$p->query(

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Store, AppView } from './types';
+
 import {
   getStoresFromStorage,
   getActiveStore,
@@ -8,27 +9,68 @@ import {
   loadMyStoresFromApi,
   logoutApi,
 } from './lib/storage';
+
 import { api } from './lib/api';
+
 import { PlatformLanding } from './components/PlatformLanding';
 import { CreateStoreWizard } from './components/CreateStoreWizard';
 import { MerchantDashboard } from './components/merchant/MerchantDashboard';
 import { StoreFrontView } from './components/storefront/StoreFrontView';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
-import { MemberAuthModal, B2BMember } from './components/MemberAuthModal';
+import {
+  MemberAuthModal,
+  B2BMember,
+} from './components/MemberAuthModal';
 import { InfinityFreeModal } from './components/InfinityFreeModal';
 
 const MEMBER_KEY = 'youmi_member_user';
 const ADMIN_KEY = 'youmi_admin_session';
+
+/**
+ * تحويل أي ID إلى String للمقارنة الآمنة.
+ *
+ * هذا مهم لأن API قد يعيد ID كرقم بينما
+ * currentMember.id قد يكون String.
+ */
+const normalizeId = (
+  value: string | number | null | undefined
+): string => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return String(value).trim();
+};
+
+/**
+ * التحقق من ملكية المتجر.
+ */
+const isStoreOwnedByMember = (
+  store: Store | null | undefined,
+  member: B2BMember | null | undefined
+): boolean => {
+  if (!store || !member) {
+    return false;
+  }
+
+  const storeOwnerId = normalizeId(store.merchantUserId);
+  const memberId = normalizeId(member.id);
+
+  return (
+    storeOwnerId !== '' &&
+    memberId !== '' &&
+    storeOwnerId === memberId
+  );
+};
 
 export default function App() {
   const [stores, setStores] = useState<Store[]>(() =>
     getStoresFromStorage()
   );
 
-  const [currentStore, setCurrentStore] = useState<Store | null>(() =>
-    getActiveStore()
-  );
+  const [currentStore, setCurrentStore] =
+    useState<Store | null>(() => getActiveStore());
 
   const [currentView, setCurrentView] =
     useState<AppView>('PLATFORM_HOME');
@@ -54,13 +96,17 @@ export default function App() {
     }
   });
 
-  const [memberAuthOpen, setMemberAuthOpen] = useState(false);
+  const [memberAuthOpen, setMemberAuthOpen] =
+    useState(false);
 
   const [memberAuthRole, setMemberAuthRole] =
     useState<'buyer' | 'merchant'>('buyer');
 
-  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
-  const [infinityFreeOpen, setInfinityFreeOpen] = useState(false);
+  const [adminLoginOpen, setAdminLoginOpen] =
+    useState(false);
+
+  const [infinityFreeOpen, setInfinityFreeOpen] =
+    useState(false);
 
   const isAdminLoggedIn = !!adminUser;
 
@@ -68,7 +114,7 @@ export default function App() {
     !!currentMember?.isLoggedIn || isAdminLoggedIn;
 
   /**
-   * تحميل المتاجر العامة
+   * تحميل المتاجر العامة.
    */
   const refreshPublicStores = async () => {
     try {
@@ -77,23 +123,32 @@ export default function App() {
       if (next?.length) {
         setStores(next);
 
-        if (currentStore) {
+        setCurrentStore((previousStore) => {
+          if (!previousStore) {
+            return null;
+          }
+
+          const previousId =
+            normalizeId(previousStore.id);
+
           const updated = next.find(
-            (store) => store.id === currentStore.id
+            (store) =>
+              normalizeId(store.id) === previousId
           );
 
-          if (updated) {
-            setCurrentStore(updated);
-          }
-        }
+          return updated || previousStore;
+        });
       }
     } catch (error) {
-      console.warn('تعذر تحميل المتاجر:', error);
+      console.warn(
+        'تعذر تحميل المتاجر:',
+        error
+      );
     }
   };
 
   /**
-   * استعادة جلسة المستخدم عند فتح التطبيق
+   * استعادة جلسة المستخدم عند فتح التطبيق.
    */
   useEffect(() => {
     let cancelled = false;
@@ -102,17 +157,26 @@ export default function App() {
       try {
         const me = await api.me();
 
-        if (!cancelled && me.ok && me.data?.user) {
+        if (
+          !cancelled &&
+          me.ok &&
+          me.data?.user
+        ) {
           const u = me.data.user;
 
           const member: B2BMember = {
             id: u.id,
-            name: u.name || u.username || '',
+            name:
+              u.name ||
+              u.username ||
+              '',
             phone: u.phone || '',
             companyName:
-              u.company_name || u.companyName,
+              u.company_name ||
+              u.companyName,
             role:
-              u.role === 'merchant' || u.role === 'admin'
+              u.role === 'merchant' ||
+              u.role === 'admin'
                 ? u.role
                 : 'buyer',
             status: u.status,
@@ -121,12 +185,14 @@ export default function App() {
 
           if (member.role === 'admin') {
             setAdminUser(u);
+
             localStorage.setItem(
               ADMIN_KEY,
               JSON.stringify(u)
             );
           } else {
             setCurrentMember(member);
+
             localStorage.setItem(
               MEMBER_KEY,
               JSON.stringify(member)
@@ -137,7 +203,9 @@ export default function App() {
         // لا توجد جلسة API صالحة
       }
 
-      await refreshPublicStores();
+      if (!cancelled) {
+        await refreshPublicStores();
+      }
     })();
 
     return () => {
@@ -146,7 +214,7 @@ export default function App() {
   }, []);
 
   /**
-   * فتح تسجيل الدخول للأعضاء
+   * فتح تسجيل الدخول للأعضاء.
    */
   const openMemberAuth = (
     role: 'buyer' | 'merchant' = 'buyer'
@@ -156,7 +224,7 @@ export default function App() {
   };
 
   /**
-   * نجاح تسجيل دخول / تسجيل عضو
+   * نجاح تسجيل دخول / تسجيل عضو.
    */
   const handleMemberSuccess = async (
     member: B2BMember
@@ -170,17 +238,25 @@ export default function App() {
 
     if (member.role === 'merchant') {
       try {
-        const mine = await loadMyStoresFromApi();
+        const mine =
+          await loadMyStoresFromApi();
 
-        setStores(
-          mine.length
-            ? mine
-            : getStoresFromStorage()
-        );
+        if (mine.length > 0) {
+          setStores(mine);
 
-        if (mine.length) {
-          setCurrentStore(mine[0]);
-          setActiveStore(mine[0]);
+          const ownedStore =
+            mine.find((store) =>
+              isStoreOwnedByMember(
+                store,
+                member
+              )
+            ) || mine[0];
+
+          setCurrentStore(ownedStore);
+          setActiveStore(ownedStore);
+        } else {
+          setStores(getStoresFromStorage());
+          setCurrentStore(null);
         }
       } catch (error) {
         console.warn(
@@ -196,7 +272,7 @@ export default function App() {
   };
 
   /**
-   * تسجيل خروج العضو
+   * تسجيل خروج العضو.
    */
   const handleMemberLogout = async () => {
     await logoutApi().catch(() => {});
@@ -204,15 +280,19 @@ export default function App() {
     localStorage.removeItem(MEMBER_KEY);
 
     setCurrentMember(null);
+    setCurrentStore(null);
+
     setCurrentView('PLATFORM_HOME');
 
     await refreshPublicStores();
   };
 
   /**
-   * نجاح تسجيل دخول المدير
+   * نجاح تسجيل دخول المدير.
    */
-  const handleAdminSuccess = (user: any) => {
+  const handleAdminSuccess = (
+    user: any
+  ) => {
     setAdminUser(user);
 
     localStorage.setItem(
@@ -225,42 +305,47 @@ export default function App() {
   };
 
   /**
-   * تسجيل خروج المدير
+   * تسجيل خروج المدير.
    */
   const handleAdminLogout = async () => {
-  try {
-    await logoutApi();
-  } catch {
-    // تجاهل الخطأ حتى يتم تسجيل الخروج محلياً
-  }
+    try {
+      await logoutApi();
+    } catch {
+      // تجاهل الخطأ حتى يتم تسجيل الخروج محلياً
+    }
 
-  // حذف جلسة Admin والمستخدم
-  localStorage.removeItem(ADMIN_KEY);
-  localStorage.removeItem(MEMBER_KEY);
+    localStorage.removeItem(
+      ADMIN_KEY
+    );
 
-  setAdminUser(null);
-  setCurrentMember(null);
+    localStorage.removeItem(
+      MEMBER_KEY
+    );
 
-  // العودة إلى الصفحة الرئيسية
-  setCurrentView('PLATFORM_HOME');
+    setAdminUser(null);
+    setCurrentMember(null);
+    setCurrentStore(null);
 
-  // إعادة تحميل المتاجر العامة
-  await refreshPublicStores();
-};
+    setCurrentView('PLATFORM_HOME');
+
+    await refreshPublicStores();
+  };
 
   /**
-   * تحديث متجر
-   *
-   * تم تحديد نوع prev صراحةً لتجنب
-   * مشكلة TypeScript في updater callback.
+   * تحديث متجر.
    */
-  const updateStore = (updated: Store) => {
+  const updateStore = (
+    updated: Store
+  ) => {
     setStores((prev: Store[]) => {
       const copy = [...prev];
 
-      const index = copy.findIndex(
-        (store) => store.id === updated.id
-      );
+      const index =
+        copy.findIndex(
+          (store) =>
+            normalizeId(store.id) ===
+            normalizeId(updated.id)
+        );
 
       if (index >= 0) {
         copy[index] = updated;
@@ -271,17 +356,20 @@ export default function App() {
       return copy;
     });
 
-    setCurrentStore((prev: Store | null) =>
-      prev?.id === updated.id
-        ? updated
-        : prev
+    setCurrentStore(
+      (prev: Store | null) =>
+        prev &&
+        normalizeId(prev.id) ===
+          normalizeId(updated.id)
+          ? updated
+          : prev
     );
 
     setActiveStore(updated);
   };
 
   /**
-   * اختيار متجر
+   * اختيار متجر.
    */
   const selectStore = (
     store: Store,
@@ -295,211 +383,394 @@ export default function App() {
   };
 
   /**
-   * التنقل بين شاشات التطبيق
+   * فتح لوحة تحكم البائع.
+   *
+   * هذه هي الدالة الأساسية التي يستخدمها
+   * زر "لوحة تحكم البائع".
    */
-  const handleNavigate = (view: AppView) => {
-    // ==============================
-    // لوحة الإدارة محمية
-    // ==============================
-    if (
-      view === 'ADMIN_DASHBOARD' &&
-      !isAdminLoggedIn
-    ) {
-      setAdminLoginOpen(true);
-      return;
-    }
-
-    // ==============================
-    // إنشاء متجر
-    // ==============================
-    if (view === 'CREATE_STORE') {
+  const openMerchantDashboard =
+    async () => {
+      /**
+       * Admin يستطيع الدخول مباشرة.
+       */
       if (isAdminLoggedIn) {
-        setCurrentView(view);
-        return;
-      }
+        if (!currentStore) {
+          try {
+            const allStores =
+              await loadStoresFromApi();
 
-      if (
-        !currentMember ||
-        currentMember.role !== 'merchant'
-      ) {
-        openMemberAuth('merchant');
-        return;
-      }
-
-      setCurrentView(view);
-      return;
-    }
-
-    // ==============================
-    // لوحة تحكم البائع
-    // ==============================
-    if (view === 'MERCHANT_DASHBOARD') {
-      if (isAdminLoggedIn) {
-        setCurrentView(view);
-        return;
-      }
-
-      if (
-        !currentMember ||
-        currentMember.role !== 'merchant'
-      ) {
-        openMemberAuth('merchant');
-        return;
-      }
-
-      if (!currentStore || currentStore.merchantUserId !== currentMember.id) {
-        loadMyStoresFromApi()
-          .then((mine) => {
-            if (mine.length > 0) {
-              setStores(mine);
-
-              setCurrentStore(mine[0]);
-              setActiveStore(mine[0]);
-
-              setCurrentView(
-                'MERCHANT_DASHBOARD'
-              );
+            if (allStores.length > 0) {
+              setStores(allStores);
+              setCurrentStore(allStores[0]);
+              setActiveStore(allStores[0]);
             } else {
-              setCurrentView('CREATE_STORE');
+              setCurrentView(
+                'PLATFORM_HOME'
+              );
+              return;
             }
-          })
-          .catch(() => {
-            setCurrentView('CREATE_STORE');
-          });
+          } catch {
+            setCurrentView(
+              'PLATFORM_HOME'
+            );
+            return;
+          }
+        }
+
+        setCurrentView(
+          'MERCHANT_DASHBOARD'
+        );
 
         return;
       }
+
+      /**
+       * يجب أن يكون المستخدم مسجلاً
+       * بدور merchant.
+       */
+      if (
+        !currentMember ||
+        currentMember.role !== 'merchant'
+      ) {
+        openMemberAuth('merchant');
+        return;
+      }
+
+      /**
+       * إذا كان المتجر الحالي ملكاً للبائع
+       * نفتحه مباشرة.
+       */
+      if (
+        isStoreOwnedByMember(
+          currentStore,
+          currentMember
+        )
+      ) {
+        setCurrentView(
+          'MERCHANT_DASHBOARD'
+        );
+
+        return;
+      }
+
+      /**
+       * البحث أولاً داخل المتاجر الموجودة
+       * محلياً.
+       */
+      const merchantStore =
+        stores.find((store) =>
+          isStoreOwnedByMember(
+            store,
+            currentMember
+          )
+        );
+
+      if (merchantStore) {
+        setCurrentStore(
+          merchantStore
+        );
+
+        setActiveStore(
+          merchantStore
+        );
+
+        setCurrentView(
+          'MERCHANT_DASHBOARD'
+        );
+
+        return;
+      }
+
+      /**
+       * إذا لم نجد متجر البائع محلياً،
+       * نطلبه من API.
+       */
+      try {
+        const mine =
+          await loadMyStoresFromApi();
+
+        /**
+         * API يفترض أن يعيد متاجر
+         * المستخدم الحالي فقط.
+         *
+         * مع ذلك نتحقق من merchantUserId
+         * قبل فتح لوحة التحكم.
+         */
+        const ownedStores =
+          mine.filter((store) =>
+            isStoreOwnedByMember(
+              store,
+              currentMember
+            )
+          );
+
+        if (ownedStores.length > 0) {
+          const firstStore =
+            ownedStores[0];
+
+          setStores(ownedStores);
+
+          setCurrentStore(
+            firstStore
+          );
+
+          setActiveStore(
+            firstStore
+          );
+
+          setCurrentView(
+            'MERCHANT_DASHBOARD'
+          );
+        } else if (mine.length > 0) {
+          /**
+           * إذا كان API يعيد المتجر ولكن
+           * merchantUserId غير موجود بسبب
+           * اختلاف اسم الحقل، storage.ts
+           * يجب أن يكون قد طبّع الحقل.
+           *
+           * نستخدم أول متجر كحل توافق
+           * فقط لأن myStores API يفترض
+           * أنه يعيد متاجر المستخدم الحالي.
+           */
+          const firstStore =
+            mine[0];
+
+          setStores(mine);
+
+          setCurrentStore(
+            firstStore
+          );
+
+          setActiveStore(
+            firstStore
+          );
+
+          setCurrentView(
+            'MERCHANT_DASHBOARD'
+          );
+        } else {
+          /**
+           * البائع ليس لديه متجر.
+           */
+          setCurrentStore(null);
+          setCurrentView(
+            'CREATE_STORE'
+          );
+        }
+      } catch (error) {
+        console.warn(
+          'تعذر تحميل متاجر البائع:',
+          error
+        );
+
+        setCurrentStore(null);
+        setCurrentView(
+          'CREATE_STORE'
+        );
+      }
+    };
+
+  /**
+   * التنقل بين شاشات التطبيق.
+   */
+  const handleNavigate = async (
+    view: AppView
+  ) => {
+    /**
+     * لوحة الإدارة محمية.
+     */
+    if (
+      view === 'ADMIN_DASHBOARD'
+    ) {
+      if (!isAdminLoggedIn) {
+        setAdminLoginOpen(true);
+        return;
+      }
+
+      setCurrentView(
+        'ADMIN_DASHBOARD'
+      );
+
+      return;
     }
 
+    /**
+     * إنشاء متجر.
+     */
+    if (
+      view === 'CREATE_STORE'
+    ) {
+      if (isAdminLoggedIn) {
+        setCurrentView(view);
+        return;
+      }
+
+      if (
+        !currentMember ||
+        currentMember.role !== 'merchant'
+      ) {
+        openMemberAuth('merchant');
+        return;
+      }
+
+      setCurrentView(
+        'CREATE_STORE'
+      );
+
+      return;
+    }
+
+    /**
+     * لوحة تحكم البائع.
+     */
+    if (
+      view === 'MERCHANT_DASHBOARD'
+    ) {
+      await openMerchantDashboard();
+      return;
+    }
+
+    /**
+     * باقي الشاشات.
+     */
     setCurrentView(view);
   };
 
   /**
-   * فتح لوحة تحكم البائع مباشرة
+   * المتاجر التي يمكن للبائع التعامل معها.
    *
-   * يستخدمه زر "لوحة تحكم البائع"
-   * في PlatformLanding.
+   * إذا كان Merchant فلا نعرض له إلا
+   * المتاجر المرتبطة بحسابه.
    */
-  const openMerchantDashboard = async () => {
-    // إذا لم يسجل الدخول كبائع
-    if (
-      !currentMember ||
-      currentMember.role !== 'merchant'
-    ) {
-      openMemberAuth('merchant');
-      return;
-    }
-
-    // استعمال المتجر الحالي إذا كان ملكًا للبائع
-    if (
-      currentStore &&
-      currentStore.merchantUserId === currentMember.id
-    ) {
-      setCurrentView('MERCHANT_DASHBOARD');
-      return;
-    }
-
-    // البحث عن متجر البائع في المتاجر الموجودة
-    const merchantStore = stores.find(
-      (store) =>
-        store.merchantUserId === currentMember.id
-    );
-
-    if (merchantStore) {
-      setCurrentStore(merchantStore);
-      setActiveStore(merchantStore);
-      setCurrentView('MERCHANT_DASHBOARD');
-      return;
-    }
-
-    // محاولة تحميل متاجر البائع من API
-    try {
-      const mine = await loadMyStoresFromApi();
-
-      if (mine.length > 0) {
-        setStores(mine);
-        setCurrentStore(mine[0]);
-        setActiveStore(mine[0]);
-        setCurrentView('MERCHANT_DASHBOARD');
-      } else {
-        // البائع ليس لديه متجر بعد
-        setCurrentView('CREATE_STORE');
+  const merchantStores =
+    useMemo(() => {
+      if (
+        currentMember?.role !==
+        'merchant'
+      ) {
+        return stores;
       }
-    } catch {
-      setCurrentView('CREATE_STORE');
-    }
-  };
 
-  /**
-   * المتاجر التي يسمح للبائع برؤيتها
-   */
-  const merchantStores = useMemo(() => {
-    if (currentMember?.role !== 'merchant') {
-      return stores;
-    }
+      const memberId =
+        normalizeId(
+          currentMember.id
+        );
 
-    return stores.filter(
-      (store) =>
-        !store.merchantUserId ||
-        store.merchantUserId === currentMember.id
-    );
-  }, [stores, currentMember]);
+      return stores.filter(
+        (store) =>
+          normalizeId(
+            store.merchantUserId
+          ) === memberId
+      );
+    }, [
+      stores,
+      currentMember,
+    ]);
 
   return (
     <>
       {/* ======================================
           PLATFORM HOME
       ====================================== */}
-      {currentView === 'PLATFORM_HOME' && (
+
+      {currentView ===
+        'PLATFORM_HOME' && (
         <PlatformLanding
           stores={stores}
-          onNavigate={handleNavigate}
-          onSelectStore={selectStore}
-          onOpenLoginModal={() =>
-            openMemberAuth('merchant')
+
+          onNavigate={
+            handleNavigate
           }
+
+          onSelectStore={
+            selectStore
+          }
+
+          onOpenLoginModal={() =>
+            openMemberAuth(
+              'merchant'
+            )
+          }
+
           onOpenMerchantDashboard={
             openMerchantDashboard
           }
-          isLoggedIn={isLoggedIn}
-          isAdminLoggedIn={isAdminLoggedIn}
-          currentMember={currentMember}
-          onOpenMemberAuthModal={() =>
-            openMemberAuth('buyer')
+
+          isLoggedIn={
+            isLoggedIn
           }
+
+          currentMember={
+            currentMember
+          }
+
+          onOpenMemberAuthModal={() =>
+            openMemberAuth(
+              'buyer'
+            )
+          }
+
           onLogoutMember={
-         isAdminLoggedIn
-         ? handleAdminLogout
-         : handleMemberLogout
-         }
-         onOpenAdminDashboard={() =>
-            handleNavigate('ADMIN_DASHBOARD')
-         }
-         onOpenInfinityFreeModal={() =>
-            setInfinityFreeOpen(true)
-         }
-         onOpenAdminLoginModal={() =>
-            setAdminLoginOpen(true)
-         }
-      /> 
-    )}
+            isAdminLoggedIn
+              ? handleAdminLogout
+              : handleMemberLogout
+          }
+
+          onOpenAdminDashboard={() =>
+            handleNavigate(
+              'ADMIN_DASHBOARD'
+            )
+          }
+
+          onOpenInfinityFreeModal={() =>
+            setInfinityFreeOpen(
+              true
+            )
+          }
+
+          onOpenAdminLoginModal={() =>
+            setAdminLoginOpen(
+              true
+            )
+          }
+        />
+      )}
+
       {/* ======================================
           CREATE STORE
       ====================================== */}
-      {currentView === 'CREATE_STORE' && (
+
+      {currentView ===
+        'CREATE_STORE' && (
         <CreateStoreWizard
-          currentMember={currentMember}
+          currentMember={
+            currentMember
+          }
+
           onBackToHome={() =>
-            setCurrentView('PLATFORM_HOME')
+            setCurrentView(
+              'PLATFORM_HOME'
+            )
           }
+
           onCancel={() =>
-            setCurrentView('PLATFORM_HOME')
+            setCurrentView(
+              'PLATFORM_HOME'
+            )
           }
-          onStoreCreated={(store) => {
+
+          onStoreCreated={(
+            store
+          ) => {
             updateStore(store);
 
-            setCurrentStore(store);
-            setActiveStore(store);
+            setCurrentStore(
+              store
+            );
+
+            setActiveStore(
+              store
+            );
 
             setCurrentView(
               'MERCHANT_DASHBOARD'
@@ -511,47 +782,141 @@ export default function App() {
       {/* ======================================
           MERCHANT DASHBOARD
       ====================================== */}
-      {currentView === 'MERCHANT_DASHBOARD' &&
+
+      {currentView ===
+        'MERCHANT_DASHBOARD' &&
         currentStore && (
           <MerchantDashboard
-            currentStore={currentStore}
-            allStores={merchantStores}
-            onSelectStore={(store) => {
-              setCurrentStore(store);
-              setActiveStore(store);
+            currentStore={
+              currentStore
+            }
+
+            allStores={
+              merchantStores
+            }
+
+            onSelectStore={(
+              store
+            ) => {
+              setCurrentStore(
+                store
+              );
+
+              setActiveStore(
+                store
+              );
             }}
-            onUpdateStore={updateStore}
+
+            onUpdateStore={
+              updateStore
+            }
+
             onNavigateHome={() =>
-              setCurrentView('PLATFORM_HOME')
+              setCurrentView(
+                'PLATFORM_HOME'
+              )
             }
-            onOpenStorefront={(store) =>
-              selectStore(store, 'STORE_FRONT')
+
+            onOpenStorefront={(
+              store
+            ) =>
+              selectStore(
+                store,
+                'STORE_FRONT'
+              )
             }
+
             onOpenInfinityFreeModal={() =>
-              setInfinityFreeOpen(true)
+              setInfinityFreeOpen(
+                true
+              )
             }
           />
         )}
 
       {/* ======================================
+          حماية إضافية من حالة Dashboard
+          بدون متجر
+      ====================================== */}
+
+      {currentView ===
+        'MERCHANT_DASHBOARD' &&
+        !currentStore && (
+          <div
+            style={{
+              padding: '40px',
+              textAlign: 'center',
+            }}
+          >
+            <h2>
+              لا يوجد متجر مرتبط بحسابك
+            </h2>
+
+            <p>
+              يجب إنشاء متجر أولاً
+              للوصول إلى لوحة تحكم البائع.
+            </p>
+
+            <button
+              onClick={() =>
+                setCurrentView(
+                  'CREATE_STORE'
+                )
+              }
+            >
+              إنشاء متجر
+            </button>
+
+            <button
+              onClick={() =>
+                setCurrentView(
+                  'PLATFORM_HOME'
+                )
+              }
+              style={{
+                marginLeft: '10px',
+              }}
+            >
+              العودة للرئيسية
+            </button>
+          </div>
+        )}
+
+      {/* ======================================
           STORE FRONT
       ====================================== */}
-      {currentView === 'STORE_FRONT' &&
+
+      {currentView ===
+        'STORE_FRONT' &&
         currentStore && (
           <StoreFrontView
-            store={currentStore}
-            isLoggedIn={isLoggedIn}
-            onNavigateHome={() =>
-              setCurrentView('PLATFORM_HOME')
+            store={
+              currentStore
             }
-            onNavigateMerchant={(store) =>
+
+            isLoggedIn={
+              isLoggedIn
+            }
+
+            onNavigateHome={() =>
+              setCurrentView(
+                'PLATFORM_HOME'
+              )
+            }
+
+            onNavigateMerchant={(
+              store
+            ) =>
               selectStore(
                 store,
                 'MERCHANT_DASHBOARD'
               )
             }
+
             onOpenMemberAuthModal={() =>
-              openMemberAuth('buyer')
+              openMemberAuth(
+                'buyer'
+              )
             }
           />
         )}
@@ -559,23 +924,42 @@ export default function App() {
       {/* ======================================
           ADMIN DASHBOARD
       ====================================== */}
-      {currentView === 'ADMIN_DASHBOARD' &&
+
+      {currentView ===
+        'ADMIN_DASHBOARD' &&
         isAdminLoggedIn && (
           <AdminDashboard
-            stores={stores}
-            onUpdateStore={updateStore}
-            onNavigateHome={() =>
-              setCurrentView('PLATFORM_HOME')
+            stores={
+              stores
             }
-            onLogoutAdmin={handleAdminLogout}
-            onOpenStorefront={(store) =>
+
+            onUpdateStore={
+              updateStore
+            }
+
+            onNavigateHome={() =>
+              setCurrentView(
+                'PLATFORM_HOME'
+              )
+            }
+
+            onLogoutAdmin={
+              handleAdminLogout
+            }
+
+            onOpenStorefront={(
+              store
+            ) =>
               selectStore(
                 store,
                 'STORE_FRONT'
               )
             }
+
             onOpenInfinityFreeModal={() =>
-              setInfinityFreeOpen(true)
+              setInfinityFreeOpen(
+                true
+              )
             }
           />
         )}
@@ -583,34 +967,64 @@ export default function App() {
       {/* ======================================
           MEMBER AUTH
       ====================================== */}
+
       <MemberAuthModal
-        isOpen={memberAuthOpen}
-        defaultRole={memberAuthRole}
-        onClose={() =>
-          setMemberAuthOpen(false)
+        isOpen={
+          memberAuthOpen
         }
-        onSuccess={handleMemberSuccess}
-        onLoginSuccess={handleMemberSuccess}
+
+        defaultRole={
+          memberAuthRole
+        }
+
+        onClose={() =>
+          setMemberAuthOpen(
+            false
+          )
+        }
+
+        onSuccess={
+          handleMemberSuccess
+        }
+
+        onLoginSuccess={
+          handleMemberSuccess
+        }
       />
 
       {/* ======================================
           ADMIN LOGIN
       ====================================== */}
+
       <AdminLoginModal
-        isOpen={adminLoginOpen}
-        onClose={() =>
-          setAdminLoginOpen(false)
+        isOpen={
+          adminLoginOpen
         }
-        onLoginSuccess={handleAdminSuccess}
+
+        onClose={() =>
+          setAdminLoginOpen(
+            false
+          )
+        }
+
+        onLoginSuccess={
+          handleAdminSuccess
+        }
       />
 
       {/* ======================================
           INFINITY FREE
       ====================================== */}
+
       <InfinityFreeModal
-        isOpen={infinityFreeOpen}
+        isOpen={
+          infinityFreeOpen
+        }
+
         onClose={() =>
-          setInfinityFreeOpen(false)
+          setInfinityFreeOpen(
+            false
+          )
         }
       />
     </>

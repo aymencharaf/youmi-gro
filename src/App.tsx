@@ -700,6 +700,10 @@ export default function App() {
             isLoggedIn
           }
 
+          isAdminLoggedIn={
+            isAdminLoggedIn
+          }
+
           currentMember={
             currentMember
           }

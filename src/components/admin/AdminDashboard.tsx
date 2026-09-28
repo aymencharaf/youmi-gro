@@ -1964,21 +1964,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </label>
             </div>
 
-            <div className="flex gap-2 pt-3">
-              <button type="button" onClick={() => setAnnouncementModalOpen(false)} className="flex-1 py-3 rounded-2xl bg-slate-100 font-bold text-xs text-slate-700">
-                إلغاء
-              </button>
-              <button type="submit" className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20">
-                <Save className="w-4 h-4" />
-                <span>نشر الإعلان</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-          </main>
-        </div>
-      </div>
-    </div>
-  );
+           <div className="flex gap-2 pt-3">
+  <button
+    type="button"
+    onClick={() => setAnnouncementModalOpen(false)}
+    className="flex-1 py-3 rounded-2xl bg-slate-100 font-bold text-xs text-slate-700"
+  >
+    إلغاء
+  </button>
+
+  <button
+    type="submit"
+    className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
+  >
+    <Save className="w-4 h-4" />
+    <span>نشر الإعلان</span>
+  </button>
+</div>
+</form>
+</div>
+)}
+</div>
+</div>
+</div>
+);
 };

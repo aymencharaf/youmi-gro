@@ -449,10 +449,10 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                   setSelectedCategory(cat)
                 }
                 className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold transition shrink-0 ${
-                  selectedCategory === cat
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                }`}
+  selectedCategory === cat
+    ? 'bg-indigo-600 text-white shadow-sm'
+    : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+}`}
               >
                 {cat}
               </button>

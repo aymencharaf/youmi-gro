@@ -35,6 +35,7 @@ import {
   Lock,
   UserCheck,
   LogOut,
+  ChevronDown,
 } from 'lucide-react';
 import { B2BMember } from './MemberAuthModal';
 
@@ -97,6 +98,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>(
     {}
   );
+
+  // قائمة حساب البائع على الهاتف
+  const [isMobileAccountMenuOpen, setIsMobileAccountMenuOpen] =
+    useState(false);
 
   const heroSlides = [
     {
@@ -329,6 +334,22 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
     setActiveProductTab('all');
   };
 
+  // تسجيل الخروج المركزي
+  const handleLogout = () => {
+    setIsMobileAccountMenuOpen(false);
+    setIsCartOpen(false);
+    setSelectedProduct(null);
+    setCartItems([]);
+    onLogoutMember();
+  };
+
+  // فتح لوحة البائع وإغلاق القائمة
+  const handleOpenMerchantDashboard = () => {
+    setIsMobileAccountMenuOpen(false);
+    onOpenMerchantDashboard();
+  };
+
+  // حساب الهاتف
   const handleMobileAccount = () => {
     if (isAdminLoggedIn) {
       onOpenAdminDashboard();
@@ -336,12 +357,12 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
     }
 
     if (currentMember?.role === 'merchant') {
-      onOpenMerchantDashboard();
+      setIsMobileAccountMenuOpen((previous) => !previous);
       return;
     }
 
     if (isLoggedIn) {
-      onLogoutMember();
+      handleLogout();
       return;
     }
 
@@ -408,10 +429,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       {/* MAIN HEADER */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 py-2.5 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+          <div className="relative flex items-center gap-2 sm:gap-3 lg:gap-4">
             {/* LOGO */}
             <button
-              onClick={() => onNavigate('PLATFORM_HOME')}
+              onClick={() => {
+                setIsMobileAccountMenuOpen(false);
+                onNavigate('PLATFORM_HOME');
+              }}
               className="flex items-center gap-2 shrink-0"
             >
               <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-indigo-700 to-blue-500 flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-md">
@@ -477,10 +501,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
             {/* ACCOUNT ACTIONS */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* MOBILE ACCOUNT */}
+              {/* MOBILE ACCOUNT BUTTON */}
               <button
                 onClick={handleMobileAccount}
-                className="sm:hidden w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center"
+                className="sm:hidden flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700"
                 title={
                   isAdminLoggedIn
                     ? 'لوحة الإدارة'
@@ -500,7 +524,92 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 ) : (
                   <User className="w-4 h-4 text-slate-600" />
                 )}
+
+                {currentMember?.role === 'merchant' && (
+                  <>
+                    <span className="text-[10px] font-black">
+                      لوحة البائع
+                    </span>
+
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        isMobileAccountMenuOpen
+                          ? 'rotate-180'
+                          : ''
+                      }`}
+                    />
+                  </>
+                )}
               </button>
+
+              {/* MOBILE MERCHANT MENU */}
+              {currentMember?.role === 'merchant' &&
+                isLoggedIn &&
+                isMobileAccountMenuOpen && (
+                  <div className="sm:hidden absolute top-full left-0 right-0 mt-2 z-50">
+                    <div className="mx-0 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
+                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <StoreIcon className="w-5 h-5 text-indigo-600" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="text-xs font-black text-slate-900 truncate">
+                              {currentMember?.name || 'البائع'}
+                            </div>
+
+                            <div className="text-[9px] text-slate-500">
+                              حساب المورد
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleOpenMerchantDashboard}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-right hover:bg-indigo-50 transition"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                          <StoreIcon className="w-4 h-4 text-indigo-600" />
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-black text-slate-800">
+                            لوحة التحكم
+                          </div>
+
+                          <div className="text-[9px] text-slate-500 mt-0.5">
+                            إدارة المتجر والمنتجات والطلبات
+                          </div>
+                        </div>
+
+                        <ChevronLeft className="w-4 h-4 text-slate-400 mr-auto" />
+                      </button>
+
+                      <div className="border-t border-slate-100" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-right hover:bg-rose-50 transition"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center">
+                          <LogOut className="w-4 h-4 text-rose-600" />
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-black text-rose-600">
+                            تسجيل الخروج
+                          </div>
+
+                          <div className="text-[9px] text-slate-500 mt-0.5">
+                            الخروج من حساب البائع
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
               {isAdminLoggedIn ? (
                 <>
@@ -513,7 +622,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                   </button>
 
                   <button
-                    onClick={onLogoutMember}
+                    onClick={handleLogout}
                     className="hidden sm:block p-2.5 border border-slate-200 rounded-lg hover:bg-rose-50"
                     title="تسجيل خروج Admin"
                   >
@@ -537,8 +646,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                       </div>
 
                       <button
-                        onClick={onLogoutMember}
+                        onClick={handleLogout}
                         className="p-1 text-slate-400 hover:text-rose-600"
+                        title="تسجيل الخروج"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                       </button>
@@ -633,9 +743,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 no-scrollbar snap-x">
             <button
-              onClick={() =>
-                setSelectedCategory('جميع التصنيفات')
-              }
+              onClick={() => setSelectedCategory('جميع التصنيفات')}
               className={`flex items-center gap-1.5 shrink-0 snap-start px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold ${
                 selectedCategory === 'جميع التصنيفات'
                   ? 'bg-indigo-600 text-white'
@@ -652,9 +760,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               return (
                 <button
                   key={cat.nameAr}
-                  onClick={() =>
-                    setSelectedCategory(cat.nameAr)
-                  }
+                  onClick={() => setSelectedCategory(cat.nameAr)}
                   className={`flex items-center gap-1.5 shrink-0 snap-start px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold ${
                     selectedCategory === cat.nameAr
                       ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
@@ -673,7 +779,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       {/* HERO */}
       <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-5">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
-          {/* MAIN BANNER */}
           <div className="lg:col-span-8 min-h-[290px] sm:min-h-[350px] relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-950">
             <img
               src={heroSlides[activeHeroSlide].image}
@@ -762,7 +867,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             </div>
           </div>
 
-          {/* SIDE DEALS */}
           <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
             <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl p-4 sm:p-5">
               <div className="flex items-center gap-2">
@@ -860,9 +964,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               return (
                 <button
                   key={cat.nameAr}
-                  onClick={() =>
-                    setSelectedCategory(cat.nameAr)
-                  }
+                  onClick={() => setSelectedCategory(cat.nameAr)}
                   className={`group p-2.5 sm:p-3 rounded-xl border text-center transition ${
                     selectedCategory === cat.nameAr
                       ? 'border-indigo-400 bg-indigo-50'
@@ -1133,7 +1235,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                       key={`${store.id}-${product.id}`}
                       className="group bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-lg rounded-lg sm:rounded-xl overflow-hidden transition"
                     >
-                      {/* IMAGE */}
                       <div
                         className="relative aspect-square bg-slate-100 overflow-hidden cursor-pointer"
                         onClick={() =>
@@ -1194,7 +1295,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                         </button>
                       </div>
 
-                      {/* INFO */}
                       <div className="p-2 sm:p-3">
                         <div className="flex items-center gap-1 text-[8px] sm:text-[9px] text-indigo-600 font-bold">
                           <StoreIcon className="w-3 h-3 shrink-0" />
@@ -1435,6 +1535,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 text-xs text-indigo-600 font-bold">
                   <StoreIcon className="w-4 h-4" />
+
                   <span className="truncate">
                     {selectedProduct.store.name}
                   </span>
@@ -1758,7 +1859,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.08)]">
         <div className="grid grid-cols-4 h-16">
           <button
-            onClick={() => onNavigate('PLATFORM_HOME')}
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              onNavigate('PLATFORM_HOME');
+            }}
             className="flex flex-col items-center justify-center gap-1 text-indigo-600"
           >
             <Home className="w-5 h-5" />
@@ -1769,7 +1873,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           </button>
 
           <button
-            onClick={scrollToProducts}
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              scrollToProducts();
+            }}
             className="flex flex-col items-center justify-center gap-1 text-slate-500"
           >
             <Menu className="w-5 h-5" />
@@ -1780,7 +1887,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           </button>
 
           <button
-            onClick={() => setIsCartOpen(true)}
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              setIsCartOpen(true);
+            }}
             className="relative flex flex-col items-center justify-center gap-1 text-slate-500"
           >
             <ShoppingBag className="w-5 h-5" />
@@ -1796,9 +1906,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             </span>
           </button>
 
+          {/* MOBILE ACCOUNT / MERCHANT */}
           <button
             onClick={handleMobileAccount}
-            className="flex flex-col items-center justify-center gap-1 text-slate-500"
+            className={`flex flex-col items-center justify-center gap-1 transition ${
+              currentMember?.role === 'merchant' &&
+              isMobileAccountMenuOpen
+                ? 'text-indigo-600 bg-indigo-50'
+                : 'text-slate-500'
+            }`}
           >
             {isAdminLoggedIn ? (
               <ShieldCheck className="w-5 h-5 text-amber-500" />
@@ -1814,7 +1930,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               {isAdminLoggedIn
                 ? 'الإدارة'
                 : currentMember?.role === 'merchant'
-                ? 'البائع'
+                ? 'لوحة البائع'
                 : isLoggedIn
                 ? 'حسابي'
                 : 'دخول'}

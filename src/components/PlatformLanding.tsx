@@ -1,3 +1,4 @@
+console.log('YOUmi NEW PlatformLanding loaded');
 import React, { useState, useMemo } from 'react';
 import { Store, AppView, Product } from '../types';
 import {

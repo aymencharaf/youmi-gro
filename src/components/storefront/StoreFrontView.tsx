@@ -205,10 +205,10 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-4 shadow-sm">
         <div className="max-w-7xl mx-auto w-full">
 
-          {/* Top Header Row */}
+          {/* Header Top Row */}
           <div className="flex items-center justify-between gap-2 sm:gap-4">
 
-            {/* Brand */}
+            {/* Store Brand */}
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <img
                 src={store.logoUrl}
@@ -227,7 +227,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
               </div>
             </div>
 
-            {/* Desktop / Tablet Controls */}
+            {/* Desktop Controls */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-3">
 
               {canManageStore && (
@@ -248,14 +248,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) =>
-                    setSearchQuery(e.target.value)
-                  }
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="ابحث بالمتجر..."
                   className="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition"
                 />
               </div>
 
+              {/* Tracking */}
               <button
                 onClick={() => setIsTrackerOpen(true)}
                 className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
@@ -264,16 +263,16 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                 <span>تتبع شحنتك</span>
               </button>
 
+              {/* Contact */}
               <button
-                onClick={() =>
-                  setIsContactModalOpen(true)
-                }
+                onClick={() => setIsContactModalOpen(true)}
                 className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1.5"
               >
                 <PhoneCall className="w-4 h-4 text-emerald-600" />
                 <span>اتصل بالتاجر</span>
               </button>
 
+              {/* Cart */}
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm relative"
@@ -289,14 +288,12 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
               </button>
             </div>
 
-            {/* Mobile Header Actions */}
+            {/* Mobile Controls */}
             <div className="flex sm:hidden items-center gap-1.5 shrink-0">
 
               {canManageStore && (
                 <button
-                  onClick={() =>
-                    onNavigateMerchant(store)
-                  }
+                  onClick={() => onNavigateMerchant(store)}
                   className="w-9 h-9 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200 flex items-center justify-center"
                   title="لوحة تحكم المتجر"
                 >
@@ -335,9 +332,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) =>
-                setSearchQuery(e.target.value)
-              }
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ابحث عن منتج داخل المتجر..."
               className="w-full pr-9 pl-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition"
             />
@@ -375,7 +370,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         </div>
       </div>
 
-      {/* Hero Banner Section */}
+      {/* Hero */}
       <section className="relative overflow-hidden bg-white py-7 sm:py-10 md:py-16 px-3 sm:px-4 lg:px-8 border-b border-slate-200">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
 
@@ -422,13 +417,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         </div>
       </section>
 
-      {/* Products Catalog Container */}
+      {/* Products */}
       <main
         id="store-products"
         className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-10 flex-1 space-y-6 sm:space-y-8 w-full"
       >
 
-        {/* Category Filters */}
+        {/* Categories */}
         <div className="space-y-3">
 
           <div className="flex items-center justify-between gap-3">
@@ -445,14 +440,12 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() =>
-                  setSelectedCategory(cat)
-                }
+                onClick={() => setSelectedCategory(cat)}
                 className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold transition shrink-0 ${
-  selectedCategory === cat
-    ? 'bg-indigo-600 text-white shadow-sm'
-    : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-}`}
+                  selectedCategory === cat
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                }`}
               >
                 {cat}
               </button>
@@ -471,7 +464,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
           stores={[store]}
         />
 
-        {/* Product Cards Grid */}
+        {/* Product Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6">
 
           {filteredProducts.map((product) => (
@@ -484,9 +477,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
 
                 {/* Product Image */}
                 <div
-                  onClick={() =>
-                    setSelectedProduct(product)
-                  }
+                  onClick={() => setSelectedProduct(product)}
                   className="aspect-square rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 relative cursor-pointer group-hover:scale-[1.02] transition duration-300"
                 >
                   <img
@@ -509,9 +500,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                   </span>
 
                   <h3
-                    onClick={() =>
-                      setSelectedProduct(product)
-                    }
+                    onClick={() => setSelectedProduct(product)}
                     className="text-[11px] sm:text-sm font-bold text-slate-900 font-['Cairo'] line-clamp-2 hover:text-indigo-600 transition cursor-pointer leading-5"
                   >
                     {product.title}
@@ -534,7 +523,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                 </div>
               </div>
 
-              {/* Price & Add */}
+              {/* Price */}
               <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 
                 <div className="min-w-0">
@@ -548,16 +537,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
 
                   {product.compareAtPrice && (
                     <div className="text-[9px] sm:text-[11px] text-slate-400 line-through truncate">
-                      {product.compareAtPrice}{' '}
-                      {store.currency}
+                      {product.compareAtPrice} {store.currency}
                     </div>
                   )}
                 </div>
 
                 <button
-                  onClick={() =>
-                    handleAddToCart(product)
-                  }
+                  onClick={() => handleAddToCart(product)}
                   className="w-full sm:w-auto px-2 sm:px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] sm:text-xs rounded-lg sm:rounded-xl transition flex items-center justify-center gap-1 shadow-sm"
                 >
                   <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -578,7 +564,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         </div>
       </main>
 
-      {/* Storefront Footer */}
+      {/* Footer */}
       <footer
         id="contact-footer"
         className="bg-slate-900 text-white mt-10 sm:mt-16 pt-8 sm:pt-12 pb-8 px-3 sm:px-4 lg:px-8 border-t-4 border-indigo-600 dir-rtl font-['Tajawal']"
@@ -848,7 +834,9 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             className="flex flex-col items-center justify-center gap-1 text-slate-600 active:text-indigo-600"
           >
             <Home className="w-4 h-4" />
-            <span className="text-[9px] font-bold">الرئيسية</span>
+            <span className="text-[9px] font-bold">
+              الرئيسية
+            </span>
           </button>
 
           <button
@@ -856,7 +844,9 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             className="flex flex-col items-center justify-center gap-1 text-indigo-600"
           >
             <StoreIcon className="w-4 h-4" />
-            <span className="text-[9px] font-bold">المنتجات</span>
+            <span className="text-[9px] font-bold">
+              المنتجات
+            </span>
           </button>
 
           <button
@@ -873,7 +863,9 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
               )}
             </div>
 
-            <span className="text-[9px] font-bold">السلة</span>
+            <span className="text-[9px] font-bold">
+              السلة
+            </span>
           </button>
 
           <button
@@ -881,16 +873,17 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             className="flex flex-col items-center justify-center gap-1 text-slate-600"
           >
             <PhoneCall className="w-4 h-4" />
-            <span className="text-[9px] font-bold">تواصل</span>
+            <span className="text-[9px] font-bold">
+              تواصل
+            </span>
           </button>
-
         </div>
       </nav>
 
-      {/* Slide-out Cart Drawer */}
+      {/* Cart Drawer */}
       {isCartOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end transition-opacity"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end"
           onClick={() => setIsCartOpen(false)}
         >
           <div
@@ -915,9 +908,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                   className="px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold text-slate-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl bg-slate-100 transition flex items-center gap-1.5 border border-slate-200 shrink-0"
                 >
                   <X className="w-4 h-4" />
-                  <span className="hidden xs:inline sm:inline">
-                    إغلاق
-                  </span>
+                  <span>إغلاق</span>
                 </button>
               </div>
 
@@ -947,8 +938,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                         width: `${Math.min(
                           100,
                           (cartSubtotal /
-                            store.settings
-                              .freeShippingThreshold) *
+                            store.settings.freeShippingThreshold) *
                             100
                         )}%`,
                       }}
@@ -965,6 +955,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                     key={idx}
                     className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-2"
                   >
+
                     <img
                       src={item.product.images[0]}
                       alt={item.product.title}
@@ -1038,9 +1029,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
                     </p>
 
                     <button
-                      onClick={() =>
-                        setIsCartOpen(false)
-                      }
+                      onClick={() => setIsCartOpen(false)}
                       className="mt-2 px-5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition inline-flex items-center gap-1.5"
                     >
                       <X className="w-4 h-4" />
@@ -1089,7 +1078,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         </div>
       )}
 
-      {/* Product Details */}
+      {/* Product Detail Modal */}
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}
@@ -1101,7 +1090,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         />
       )}
 
-      {/* Checkout */}
+      {/* Checkout Modal */}
       {isCheckoutOpen && (
         <CheckoutModal
           store={store}
@@ -1111,7 +1100,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
         />
       )}
 
-      {/* Order Success */}
+      {/* Order Success Modal */}
       {completedOrder && (
         <OrderSuccessModal
           order={completedOrder}
@@ -1139,15 +1128,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
           <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 border border-slate-200 shadow-2xl relative dir-rtl animate-in fade-in zoom-in-95 duration-200 font-['Tajawal']">
 
             <button
-              onClick={() =>
-                setIsContactModalOpen(false)
-              }
+              onClick={() => setIsContactModalOpen(false)}
               className="absolute top-3 left-3 sm:top-4 sm:left-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {/* Header */}
+            {/* Modal Header */}
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100 pr-1">
 
               <img
@@ -1342,9 +1329,7 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
             {/* Close */}
             <div className="pt-1 sm:pt-2">
               <button
-                onClick={() =>
-                  setIsContactModalOpen(false)
-                }
+                onClick={() => setIsContactModalOpen(false)}
                 className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
               >
                 إغلاق النافذة

@@ -1,4 +1,4 @@
-```tsx
+
 import React, { useState } from 'react';
 import { Store, Product, Order } from '../../types';
 import { getMerchantCode } from '../../lib/storage';
@@ -1341,4 +1341,4 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
     </div>
   );
 };
-```
+

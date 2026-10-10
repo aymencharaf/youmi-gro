@@ -668,12 +668,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setTab(id);
         setSearch('');
       }}
-      className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 border transition shrink-0 ${
-        tab === id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+      className={`w-full px-3.5 py-3 rounded-2xl text-xs font-extrabold flex items-center gap-3 border transition text-right ${
+        tab === id
+          ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10'
+          : 'bg-white text-slate-600 border-transparent hover:border-slate-200 hover:bg-slate-50'
       }`}
     >
-      {icon}
-      <span>{label}</span>
+      <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+        tab === id ? 'bg-white/15' : 'bg-slate-100'
+      }`}>
+        {icon}
+      </span>
+      <span className="truncate">{label}</span>
     </button>
   );
 
@@ -708,24 +714,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </header>
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-8 py-6 space-y-5">
+      <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-6 py-5">
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
+          <aside className="w-full lg:w-64 lg:sticky lg:top-20 shrink-0">
+            <div className="bg-white border border-slate-200 rounded-3xl p-3 shadow-sm">
+              <div className="px-3 pt-2 pb-3 border-b border-slate-100 mb-2">
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-wider">YOUmi Admin</p>
+                <h2 className="text-sm font-black text-slate-900 mt-1">إدارة المنصة</h2>
+                <p className="text-[10px] text-slate-400 mt-1">التحكم الكامل في المتاجر والمنتجات والطلبات</p>
+              </div>
+              <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1.5 max-h-[70vh] lg:overflow-y-auto">
+                {nav('overview', 'نظرة عامة', <TrendingUp className="w-4 h-4" />)}
+                {nav('ads', 'إدارة الإعلانات 📣', <Megaphone className="w-4 h-4 text-amber-500" />)}
+                {nav('announcements', 'شريط المنصة 📢', <Megaphone className="w-4 h-4 text-amber-500" />)}
+                {nav('baridimob', 'بريدي موب المدير 💳', <CreditCard className="w-4 h-4 text-emerald-500" />)}
+                {nav('notifications', 'إشعارات البائعين 🚀', <Bell className="w-4 h-4 text-indigo-500" />)}
+                {nav('merchants', 'البائعون', <Users className="w-4 h-4" />)}
+                {nav('stores', 'المتاجر', <Building2 className="w-4 h-4" />)}
+                {nav('products', 'المنتجات', <Package className="w-4 h-4" />)}
+                {nav('orders', 'الطلبات', <ShoppingBag className="w-4 h-4" />)}
+                {nav('subscriptions', 'الاشتراكات', <CreditCard className="w-4 h-4" />)}
+              </nav>
+            </div>
+          </aside>
+
+          <main className="min-w-0 flex-1 w-full space-y-5">
         {error && <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2"><XCircle className="w-4 h-4"/>{error}</div>}
         {successMsg && <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in"><CheckCircle2 className="w-4 h-4 text-emerald-600"/>{successMsg}</div>}
         {loading && <div className="text-xs font-bold text-indigo-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5 animate-spin"/>جاري تحديث لوحة الإدارة من الخادم...</div>}
-
-        {/* Navigation Tabs Bar */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {nav('overview', 'نظرة عامة', <TrendingUp className="w-4 h-4" />)}
-          {nav('ads', 'إدارة الإعلانات 📣', <Megaphone className="w-4 h-4 text-amber-500 font-bold" />)}
-          {nav('announcements', 'شريط المنصة 📢', <Megaphone className="w-4 h-4 text-amber-500" />)}
-          {nav('baridimob', 'بريدي موب المدير 💳', <CreditCard className="w-4 h-4 text-emerald-500" />)}
-          {nav('notifications', 'إشعارات البائعين 🚀', <Bell className="w-4 h-4 text-indigo-500" />)}
-          {nav('merchants', 'البائعون', <Users className="w-4 h-4" />)}
-          {nav('stores', 'المتاجر', <Building2 className="w-4 h-4" />)}
-          {nav('products', 'المنتجات', <Package className="w-4 h-4" />)}
-          {nav('orders', 'الطلبات', <ShoppingBag className="w-4 h-4" />)}
-          {nav('subscriptions', 'الاشتراكات', <CreditCard className="w-4 h-4" />)}
-        </div>
 
         {tab !== 'overview' && tab !== 'baridimob' && tab !== 'announcements' && tab !== 'notifications' && tab !== 'ads' && (
           <div className="relative">
@@ -1948,18 +1964,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </label>
             </div>
 
-            <div className="flex gap-2 pt-3">
-              <button type="button" onClick={() => setAnnouncementModalOpen(false)} className="flex-1 py-3 rounded-2xl bg-slate-100 font-bold text-xs text-slate-700">
-                إلغاء
-              </button>
-              <button type="submit" className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20">
-                <Save className="w-4 h-4" />
-                <span>نشر الإعلان</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
+           <div className="flex gap-2 pt-3">
+  <button
+    type="button"
+    onClick={() => setAnnouncementModalOpen(false)}
+    className="flex-1 py-3 rounded-2xl bg-slate-100 font-bold text-xs text-slate-700"
+  >
+    إلغاء
+  </button>
+
+  <button
+    type="submit"
+    className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
+  >
+    <Save className="w-4 h-4" />
+    <span>نشر الإعلان</span>
+  </button>
+</div>
+</form>
+</div>
+)}
+</div>
+</div>
+</div>
+);
 };

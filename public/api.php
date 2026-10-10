@@ -667,6 +667,13 @@ function install()
             UNIQUE KEY uq_sub_store(store_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
+        "CREATE TABLE IF NOT EXISTS merchant_wheel_spins (
+            user_id VARCHAR(64) PRIMARY KEY,
+            store_id VARCHAR(64) NOT NULL UNIQUE,
+            prize_days INT NOT NULL,
+            created_at DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
         "CREATE TABLE IF NOT EXISTS subscription_plans (
     id VARCHAR(64) PRIMARY KEY,
     name VARCHAR(190) NOT NULL,
@@ -2947,6 +2954,11 @@ if (
     $s['merchantUserId'] =
         $u['id'];
 
+    // Only stores created through this flow after rollout qualify for the welcome wheel.
+    $s['wheelEligible'] = true;
+    $s['wheelPrizeDays'] = null;
+    $s['wheelPlayedAt'] = null;
+
     if (!$plan) {
         out([
             'status' => 'error',
@@ -2988,6 +3000,111 @@ if (
                 $u['id']
             )
     ]);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Welcome Trial Wheel
+|--------------------------------------------------------------------------
+| The server selects and stores the prize. The browser only animates to it.
+*/
+
+if ($action === 'wheel_status') {
+    $u = requireUser(['merchant']);
+    $q = db()->prepare(
+        'SELECT * FROM stores WHERE merchant_user_id=? ORDER BY created_at DESC LIMIT 1'
+    );
+    $q->execute([$u['id']]);
+    $row = $q->fetch();
+
+    if (!$row) {
+        out(['status' => 'success', 'eligible' => false]);
+    }
+
+    $store = decodeStore($row);
+    out([
+        'status' => 'success',
+        'eligible' => !empty($store['wheelEligible']),
+        'store' => !empty($store['wheelEligible']) ? $store : null
+    ]);
+}
+
+if ($action === 'spin_trial_wheel') {
+    $u = requireUser(['merchant']);
+    $p = db();
+    $p->beginTransaction();
+
+    try {
+        $q = $p->prepare(
+            'SELECT * FROM stores WHERE merchant_user_id=? ORDER BY created_at DESC LIMIT 1 FOR UPDATE'
+        );
+        $q->execute([$u['id']]);
+        $row = $q->fetch();
+
+        if (!$row) {
+            $p->rollBack();
+            out(['status' => 'error', 'message' => 'أنشئ متجرك أولاً قبل تدوير العجلة.'], 404);
+        }
+
+        $store = decodeStore($row);
+
+        if (empty($store['wheelEligible'])) {
+            $p->rollBack();
+            out(['status' => 'error', 'message' => 'لقد استعملت عجلة الحظ أو أن هذا المتجر غير مؤهل.'], 409);
+        }
+
+        $rewards = [15, 20, 25, 30, 10];
+        $prizeDays = $rewards[random_int(0, count($rewards) - 1)];
+        $now = date('Y-m-d H:i:s');
+        $subscription = is_array($store['subscription'] ?? null) ? $store['subscription'] : [];
+
+        $currentExpiry = $subscription['expiresAt'] ?? $subscription['trialEndDate'] ?? null;
+        $expiryTimestamp = $currentExpiry ? strtotime((string)$currentExpiry) : false;
+        $baseTimestamp = ($expiryTimestamp && $expiryTimestamp > time()) ? $expiryTimestamp : time();
+        $newExpiryTimestamp = $baseTimestamp + ($prizeDays * 86400);
+        $newExpiry = date('Y-m-d H:i:s', $newExpiryTimestamp);
+
+        $subscription['expiresAt'] = $newExpiry;
+        $subscription['trialEndDate'] = date('Y-m-d', $newExpiryTimestamp);
+        $subscription['trialDaysLeft'] = max(0, (int)ceil(($newExpiryTimestamp - time()) / 86400));
+        $subscription['durationDays'] = max(0, (int)($subscription['durationDays'] ?? 30)) + $prizeDays;
+        $subscription['wheelBonusDays'] = (int)($subscription['wheelBonusDays'] ?? 0) + $prizeDays;
+        $subscription['wheelBonusGrantedAt'] = $now;
+        $subscription['isTrialActive'] = true;
+        $subscription['status'] = 'active_trial';
+        $subscription['isActive'] = true;
+
+        $store['subscription'] = $subscription;
+        $store['wheelEligible'] = false;
+        $store['wheelPrizeDays'] = $prizeDays;
+        $store['wheelPlayedAt'] = $now;
+
+        // Unique user/store keys guarantee one prize per seller and per store.
+        $p->prepare(
+            'INSERT INTO merchant_wheel_spins (user_id, store_id, prize_days, created_at) VALUES (?,?,?,?)'
+        )->execute([$u['id'], $store['id'], $prizeDays, $now]);
+
+        $savedStore = syncStore($store, $u['id']);
+        $p->commit();
+
+        out([
+            'status' => 'success',
+            'prizeDays' => $prizeDays,
+            'store' => $savedStore
+        ]);
+    } catch (Throwable $e) {
+        if ($p->inTransaction()) {
+            $p->rollBack();
+        }
+
+        // A duplicate-key result means the one allowed attempt has already been used.
+        if ((string)$e->getCode() === '23000') {
+            out(['status' => 'error', 'message' => 'لقد استعملت عجلة الحظ من قبل.'], 409);
+        }
+
+        error_log('spin_trial_wheel failed: ' . $e->getMessage());
+        out(['status' => 'error', 'message' => 'تعذر حفظ نتيجة العجلة. حاول مرة أخرى.'], 500);
+    }
 }
 
 /*
@@ -5100,11 +5217,19 @@ if (
                  FROM stores'
             )->fetchColumn(),
 
-        'products' =>
-    (int)$p->query(
-        'SELECT COUNT(*)
-         FROM products'
-    )->fetchColumn(),
+        'products' => (function () {
+            $all = allStores(false);
+            $count = 0;
+
+            foreach ($all as $store) {
+                $items = $store['products'] ?? [];
+                if (is_array($items)) {
+                    $count += count($items);
+                }
+            }
+
+            return $count;
+        })(),
 
         'orders' =>
             (int)$p->query(

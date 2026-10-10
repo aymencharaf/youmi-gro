@@ -9,3 +9,9 @@ coverage/
 .env
 .env.local
 public/config.php
+
+# Capacitor / Android generated files
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties

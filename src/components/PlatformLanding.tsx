@@ -1,65 +1,51 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Store, AppView, Product } from '../types';
 import {
   ShoppingBag,
   Search,
   Truck,
   ShieldCheck,
-  Headphones,
   User,
-  MapPin,
   ChevronRight,
   ChevronLeft,
-  ChevronDown,
   Star,
   Heart,
   Store as StoreIcon,
   PlusCircle,
-  ExternalLink,
   Flame,
   Menu,
-  Laptop,
   Smartphone,
   Home,
   Shirt,
   Sparkles,
-  Dumbbell,
-  Baby,
   Car,
-  BookOpen,
   Utensils,
   Wrench,
-  Grid,
   X,
   CheckCircle2,
   ArrowRight,
   Package,
-  Clock,
-  Check,
   Building2,
-  Tag,
   ShoppingCart,
-  Phone,
-  HelpCircle,
   CreditCard,
   Award,
   Zap,
-  TrendingUp,
-  Box,
   Eye,
-  SlidersHorizontal,
   Gift,
   Lock,
   UserCheck,
   LogOut,
-  Globe
+  ChevronDown,
 } from 'lucide-react';
 import { B2BMember } from './MemberAuthModal';
 
 interface PlatformLandingProps {
   stores: Store[];
   onNavigate?: (view: AppView) => void;
-  onSelectStore?: (store: Store, view: 'MERCHANT_DASHBOARD' | 'STORE_FRONT') => void;
+  onSelectStore?: (
+    store: Store,
+    view: 'MERCHANT_DASHBOARD' | 'STORE_FRONT'
+  ) => void;
   onOpenLoginModal?: () => void;
   isLoggedIn?: boolean;
   isAdminLoggedIn?: boolean;
@@ -69,294 +55,720 @@ interface PlatformLandingProps {
   onOpenInfinityFreeModal?: () => void;
   onOpenAdminLoginModal?: () => void;
   onOpenAdminDashboard?: () => void;
-
-  // فتح لوحة تحكم البائع مباشرة
   onOpenMerchantDashboard?: () => void;
 }
 
 export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   stores = [],
   onNavigate = (_view: AppView) => {},
-  onSelectStore = (_store: Store, _view: 'MERCHANT_DASHBOARD' | 'STORE_FRONT') => {},
+  onSelectStore = (_store: Store, _view) => {},
   onOpenLoginModal = () => {},
   isLoggedIn = false,
   isAdminLoggedIn = false,
   currentMember = null,
   onOpenMemberAuthModal = () => {},
   onLogoutMember = () => {},
-  onOpenInfinityFreeModal = () => {},
+  onOpenInfinityFreeModal: _onOpenInfinityFreeModal = () => {},
   onOpenAdminLoginModal = () => {},
   onOpenAdminDashboard = () => {},
   onOpenMerchantDashboard = () => {},
 }) => {
   const [lang, setLang] = useState<'AR' | 'FR'>('AR');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('جميع التصنيفات');
+  const [selectedCategory, setSelectedCategory] =
+    useState<string>('جميع التصنيفات');
+
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-  const [activeProductTab, setActiveProductTab] = useState<'all' | 'popular' | 'new' | 'discount'>('all');
-  const [selectedProduct, setSelectedProduct] = useState<{ product: Product; store: Store } | null>(null);
-  const [cartItems, setCartItems] = useState<{ product: Product; store: Store; qty: number }[]>([]);
+
+  const [activeProductTab, setActiveProductTab] = useState<
+    'all' | 'popular' | 'new' | 'discount'
+  >('all');
+
+  const [selectedProduct, setSelectedProduct] = useState<{
+    product: Product;
+    store: Store;
+  } | null>(null);
+
+  const [cartItems, setCartItems] = useState<
+    { product: Product; store: Store; qty: number }[]
+  >([]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>({});
+
+  const [likedProducts, setLikedProducts] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  // قائمة حساب البائع على الهاتف
+  const [isMobileAccountMenuOpen, setIsMobileAccountMenuOpen] =
+    useState(false);
 
   const heroSlides = [
     {
-      title: 'سوق الجملة المباشر الأول بالجزائر 🇩🇿',
-      subtitle: 'ربط مباشر بين كبار المستوردين والمصانع مع تجار التجزئة. أطلب كميات الجملة بأفضل الأسعار مع الشحن لـ 69 ولاية.',
-      badge: 'B2B Wholesale DZ 2026',
-      ctaText: 'استكشف الموردين المعتمدين',
-      bgGradient: 'from-slate-950 via-indigo-950 to-blue-950',
-      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&auto=format&fit=crop&q=80',
+      title: 'اكتشف أسعار الجملة من الموردين مباشرة',
+      subtitle:
+        'منتجات بالجملة من متاجر وموردين داخل الجزائر. قارن المنتجات، اختر الكمية، وتواصل مع المورد المناسب.',
+      badge: 'YOUmi B2B',
+      image:
+        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&auto=format&fit=crop&q=85',
     },
     {
-      title: 'شحن آمن لـ 69 ولاية مع الدفع عند الاستلام',
-      subtitle: 'شحن متاح إلى ولايات الجزائر عبر التوصيل للمنزل أو المكتب (Yalidine Express API). لا حاجة للدفع المسبق!',
-      badge: 'شحن إلى 69 ولاية',
-      ctaText: 'تصفح منتجات الجملة',
-      bgGradient: 'from-slate-950 via-blue-950 to-emerald-950',
-      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&auto=format&fit=crop&q=80',
+      title: 'توصيل إلى 69 ولاية',
+      subtitle:
+        'اطلب من متاجر الجملة عبر YOUmi واستفد من حلول الشحن والتوصيل المتاحة حسب المتجر.',
+      badge: 'شحن داخل الجزائر 🇩🇿',
+      image:
+        'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1400&auto=format&fit=crop&q=85',
     },
     {
-      title: 'افتح متجر جملة خاص بك مجاناً لمدة 30 يوماً',
-      subtitle: 'لوحة تحكم متكاملة، ربط شركات الشحن الفوري، إدارة فواتير الجملة وتتبع المبيعات عبر بريدي موب وبدون عمولات.',
-      badge: 'عرض التجار 🎁 30 يوماً مجاناً',
-      ctaText: 'أنشئ متجرك الإلكتروني الآن',
-      bgGradient: 'from-slate-950 via-amber-950 to-slate-900',
-      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&auto=format&fit=crop&q=80',
+      title: 'هل أنت مورد أو تاجر جملة؟',
+      subtitle:
+        'أنشئ متجرك الخاص واعرض منتجاتك أمام تجار التجزئة والمشترين بالجملة.',
+      badge: '30 يوماً مجاناً',
+      image:
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&auto=format&fit=crop&q=85',
     },
   ];
 
   const wholesaleCategories = [
-    { icon: Wrench, nameAr: 'خردوات ومواد البناء', nameFr: 'Quincaillerie & Matériaux', count: '180+ مورد', color: 'bg-orange-50 text-orange-600 border-orange-200' },
-    { icon: Home, nameAr: 'أواني وأدوات منزلية', nameFr: 'Ustensiles & Arts de Table', count: '130+ مورد', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
-    { icon: Box, nameAr: 'أثاث ومفروشات وديكور', nameFr: 'Meubles & Ameublement', count: '90+ مورد', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-    { icon: Car, nameAr: 'قطع غيار ولوازم السيارات', nameFr: 'Pièces Auto & Accessoires', count: '110+ مورد', color: 'bg-cyan-50 text-cyan-600 border-cyan-200' },
-    { icon: Utensils, nameAr: 'مواد غذائية وسوبرماركت', nameFr: 'Agroalimentaire & Épicerie', count: '210+ مورد', color: 'bg-rose-50 text-rose-600 border-rose-200' },
-    { icon: ShieldCheck, nameAr: 'مستلزمات ومواد طبية', nameFr: 'Matériel Médical & Pharma', count: '75+ مورد', color: 'bg-teal-50 text-teal-600 border-teal-200' },
-    { icon: Smartphone, nameAr: 'إلكترونيات وهواتف', nameFr: 'Électronique & High-Tech', count: '160+ مورد', color: 'bg-blue-50 text-blue-600 border-blue-200' },
-    { icon: Shirt, nameAr: 'ملابس وأقمشة وموضة', nameFr: 'Mode & Textiles', count: '140+ مورد', color: 'bg-purple-50 text-purple-600 border-purple-200' },
-    { icon: Sparkles, nameAr: 'عطور ومستحضرات تجميل', nameFr: 'Parfums & Cosmétiques', count: '95+ مورد', color: 'bg-pink-50 text-pink-600 border-pink-200' },
-    { icon: Gift, nameAr: 'ألعاب وهدايا ومكتبية', nameFr: 'Jouets, Cadeaux & Papeterie', count: '85+ مورد', color: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
+    {
+      icon: Wrench,
+      nameAr: 'خردوات ومواد البناء',
+      nameFr: 'Quincaillerie',
+      keywords: ['خردوات', 'بناء', 'معدات'],
+    },
+    {
+      icon: Home,
+      nameAr: 'أواني وأدوات منزلية',
+      nameFr: 'Maison',
+      keywords: ['أواني', 'أدوات منزلية', 'منزلية'],
+    },
+    {
+      icon: Building2,
+      nameAr: 'أثاث وديكور',
+      nameFr: 'Meubles & Déco',
+      keywords: ['أثاث', 'مفروشات', 'ديكور'],
+    },
+    {
+      icon: Car,
+      nameAr: 'قطع غيار السيارات',
+      nameFr: 'Pièces Auto',
+      keywords: ['سيارات', 'قطع غيار', 'إكسسوارات'],
+    },
+    {
+      icon: Utensils,
+      nameAr: 'مواد غذائية',
+      nameFr: 'Agroalimentaire',
+      keywords: ['غذائية', 'سوبرماركت', 'حلويات', 'أغذية'],
+    },
+    {
+      icon: ShieldCheck,
+      nameAr: 'مواد طبية',
+      nameFr: 'Médical',
+      keywords: ['طبية', 'صيدلية', 'pharma'],
+    },
+    {
+      icon: Smartphone,
+      nameAr: 'إلكترونيات وهواتف',
+      nameFr: 'Électronique',
+      keywords: ['هواتف', 'إلكترونيات', 'سماعات', 'شواحن'],
+    },
+    {
+      icon: Shirt,
+      nameAr: 'ملابس وأقمشة',
+      nameFr: 'Mode & Textiles',
+      keywords: ['ملابس', 'أقمشة', 'عبايات', 'فساتين', 'موضة'],
+    },
+    {
+      icon: Sparkles,
+      nameAr: 'عطور وتجميل',
+      nameFr: 'Parfums & Cosmétiques',
+      keywords: ['عطور', 'تجميل', 'بخور', 'عود', 'cosm'],
+    },
+    {
+      icon: Gift,
+      nameAr: 'ألعاب وهدايا',
+      nameFr: 'Jouets & Cadeaux',
+      keywords: ['ألعاب', 'هدايا', 'مكتبية', 'papeterie'],
+    },
   ];
 
   const allWholesaleProducts = useMemo(() => {
     const list: { product: Product; store: Store }[] = [];
+
     stores.forEach((store) => {
-      if (store.products && store.products.length > 0) {
-        store.products.forEach((prod) => {
-          list.push({ product: prod, store });
+      if (store.products?.length) {
+        store.products.forEach((product) => {
+          list.push({ product, store });
         });
       }
     });
+
     return list;
   }, [stores]);
 
   const filteredWholesaleProducts = useMemo(() => {
     return allWholesaleProducts.filter(({ product, store }) => {
-      const matchesSearch =
-        searchTerm.trim() === '' ||
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        store.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const search = searchTerm.trim().toLowerCase();
 
-      const matchesCat =
+      const matchesSearch =
+        !search ||
+        product.title.toLowerCase().includes(search) ||
+        product.category.toLowerCase().includes(search) ||
+        store.name.toLowerCase().includes(search);
+
+      const selectedCat = wholesaleCategories.find(
+        (cat) => cat.nameAr === selectedCategory
+      );
+
+      const categoryText =
+        `${product.category} ${store.category} ${product.title}`.toLowerCase();
+
+      const matchesCategory =
         selectedCategory === 'جميع التصنيفات' ||
-        product.category.includes(selectedCategory) ||
-        store.category.includes(selectedCategory);
+        (selectedCat
+          ? selectedCat.keywords.some((keyword) =>
+              categoryText.includes(keyword.toLowerCase())
+            )
+          : categoryText.includes(selectedCategory.toLowerCase()));
 
       let matchesTab = true;
-      if (activeProductTab === 'popular') matchesTab = (product.ratings?.score || 0) >= 4.5;
-      if (activeProductTab === 'new') matchesTab = !!product.badge;
-      if (activeProductTab === 'discount') matchesTab = !!product.compareAtPrice && product.compareAtPrice > product.price;
 
-      return matchesSearch && matchesCat && matchesTab;
+      if (activeProductTab === 'popular') {
+        matchesTab = (product.ratings?.score || 0) >= 4.5;
+      }
+
+      if (activeProductTab === 'new') {
+        matchesTab = !!product.badge;
+      }
+
+      if (activeProductTab === 'discount') {
+        matchesTab =
+          !!product.compareAtPrice &&
+          product.compareAtPrice > product.price;
+      }
+
+      return matchesSearch && matchesCategory && matchesTab;
     });
-  }, [allWholesaleProducts, searchTerm, selectedCategory, activeProductTab]);
+  }, [
+    allWholesaleProducts,
+    searchTerm,
+    selectedCategory,
+    activeProductTab,
+  ]);
 
-  const handleAddToCart = (product: Product, store: Store, qtyToAdd?: number) => {
-    if (!isLoggedIn) { onOpenMemberAuthModal(); return; }
-    const minQty = qtyToAdd || product.minOrderQuantity || 1;
-    setCartItems((prev) => {
-      const existingIndex = prev.findIndex((item) => item.product.id === product.id);
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex].qty += minQty;
+  const totalProducts = allWholesaleProducts.length;
+
+  const totalCartItems = cartItems.reduce(
+    (sum, item) => sum + item.qty,
+    0
+  );
+
+  const totalCartPrice = cartItems.reduce(
+    (sum, item) => sum + item.product.price * item.qty,
+    0
+  );
+
+  const scrollToProducts = () => {
+    document
+      .getElementById('wholesale-products')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+  };
+
+  const handleAddToCart = (
+    product: Product,
+    store: Store,
+    qtyToAdd?: number
+  ) => {
+    if (!isLoggedIn) {
+      onOpenMemberAuthModal();
+      return;
+    }
+
+    const quantity = qtyToAdd || product.minOrderQuantity || 1;
+
+    setCartItems((previous) => {
+      const existing = previous.findIndex(
+        (item) =>
+          item.product.id === product.id &&
+          item.store.id === store.id
+      );
+
+      if (existing >= 0) {
+        const updated = [...previous];
+
+        updated[existing] = {
+          ...updated[existing],
+          qty: updated[existing].qty + quantity,
+        };
+
         return updated;
       }
-      return [...prev, { product, store, qty: minQty }];
+
+      return [
+        ...previous,
+        {
+          product,
+          store,
+          qty: quantity,
+        },
+      ];
     });
+
     setIsCartOpen(true);
   };
 
-  const totalCartItemsCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
-  const totalCartPriceDzd = cartItems.reduce((acc, item) => acc + item.product.price * item.qty, 0);
-
   const toggleLike = (id: string) => {
-    setLikedProducts((prev) => ({ ...prev, [id]: !prev[id] }));
+    setLikedProducts((previous) => ({
+      ...previous,
+      [id]: !previous[id],
+    }));
+  };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('جميع التصنيفات');
+    setActiveProductTab('all');
+  };
+
+  // تسجيل الخروج المركزي
+  const handleLogout = () => {
+    setIsMobileAccountMenuOpen(false);
+    setIsCartOpen(false);
+    setSelectedProduct(null);
+    setCartItems([]);
+    onLogoutMember();
+  };
+
+  // فتح لوحة البائع وإغلاق القائمة
+  const handleOpenMerchantDashboard = () => {
+    setIsMobileAccountMenuOpen(false);
+    onOpenMerchantDashboard();
+  };
+
+  // حساب الهاتف
+  const handleMobileAccount = () => {
+    if (isAdminLoggedIn) {
+      onOpenAdminDashboard();
+      return;
+    }
+
+    if (currentMember?.role === 'merchant') {
+      setIsMobileAccountMenuOpen((previous) => !previous);
+      return;
+    }
+
+    if (isLoggedIn) {
+      handleLogout();
+      return;
+    }
+
+    onOpenMemberAuthModal();
   };
 
   return (
-    <div className={`min-h-screen bg-[#F8FAFC] text-slate-800 font-['Tajawal',sans-serif] ${lang === 'AR' ? 'dir-rtl' : 'dir-ltr'} antialiased selection:bg-indigo-600 selection:text-white`}>
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white text-xs py-2 px-4 lg:px-8 border-b border-indigo-900/50 shadow-inner">
-        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 text-center sm:text-right">
-            <span className="px-2 py-0.5 bg-amber-400 text-slate-950 font-black text-[10px] rounded-md shadow-sm flex items-center gap-1 shrink-0">
-              <Building2 className="w-3 h-3" />
-              <span>منصة جملة B2B</span>
+    <div
+      className={`min-h-screen pb-16 md:pb-0 bg-[#f5f5f5] text-slate-800 ${
+        lang === 'AR' ? 'dir-rtl' : 'dir-ltr'
+      }`}
+    >
+      {/* TOP BAR */}
+      <div className="bg-[#111827] text-white text-[10px] sm:text-[11px]">
+        <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 py-1.5 sm:py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="font-black text-amber-300 shrink-0">
+              YOUmi B2B
             </span>
-            <span className="text-slate-200 font-medium">🇩🇿 المنصة الجزائرية الأولى لتجارة الجملة والربط المباشر بين المصنعين والموردين وتجار التجزئة.</span>
+
+            <span className="hidden sm:inline text-slate-300 truncate">
+              سوق الجملة الجزائري
+            </span>
+
+            <span className="hidden md:inline text-slate-500">
+              |
+            </span>
+
+            <span className="hidden md:inline text-slate-300">
+              أسعار الجملة للمسجلين فقط
+            </span>
           </div>
-          <div className="flex items-center gap-3 text-xs font-semibold">
-            <div className="flex items-center gap-1.5 text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-lg">
-              <Gift className="w-3.5 h-3.5" />
-              <span>30 يوماً تجربة مجانية للمتاجر</span>
-            </div>
-            <div className="h-3.5 w-px bg-slate-700 hidden sm:block" />
-            <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-              <button onClick={() => setLang('AR')} className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${lang === 'AR' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}>عربية</button>
-              <button onClick={() => setLang('FR')} className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${lang === 'FR' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}>Français</button>
-            </div>
+
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            <span className="hidden lg:inline text-slate-300">
+              🚚 شحن إلى 69 ولاية
+            </span>
+
+            <button
+              onClick={() => setLang('AR')}
+              className={`px-1.5 sm:px-2 py-1 rounded ${
+                lang === 'AR'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-400'
+              }`}
+            >
+              العربية
+            </button>
+
+            <button
+              onClick={() => setLang('FR')}
+              className={`px-1.5 sm:px-2 py-1 rounded ${
+                lang === 'FR'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-400'
+              }`}
+            >
+              Français
+            </button>
           </div>
         </div>
       </div>
 
-      <header className="bg-white border-b border-slate-200 py-3.5 px-4 lg:px-8 sticky top-0 z-40 shadow-xs backdrop-blur-md bg-white/95">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4 md:gap-8">
-          <div onClick={() => onNavigate('PLATFORM_HOME')} className="flex items-center gap-3 cursor-pointer shrink-0 group">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 group-hover:scale-105 transition">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-black tracking-tight text-slate-900 font-['Cairo'] leading-none">Youmi</span>
-                <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-md border border-indigo-200">Wholesale B2B</span>
+      {/* MAIN HEADER */}
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 py-2.5 sm:py-4">
+          <div className="relative flex items-center gap-2 sm:gap-3 lg:gap-4">
+            {/* LOGO */}
+            <button
+              onClick={() => {
+                setIsMobileAccountMenuOpen(false);
+                onNavigate('PLATFORM_HOME');
+              }}
+              className="flex items-center gap-2 shrink-0"
+            >
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-indigo-700 to-blue-500 flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-md">
+                Y
               </div>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">سوق تجارة الجملة والربط المباشر بالجزائر</p>
-            </div>
-          </div>
 
-          <div className="flex-1 max-w-2xl hidden md:flex items-center bg-slate-50 border border-slate-300 rounded-2xl overflow-hidden focus-within:border-indigo-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 transition shadow-xs">
-            <div className="px-3.5 text-slate-400"><Search className="w-4 h-4" /></div>
-            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="ابحث عن منتجات بالجملة، مصنعين، أو موردين معتمدين..." className="flex-1 bg-transparent py-2.5 text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
-            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="bg-slate-100 border-r border-slate-200 text-slate-700 text-xs px-3 py-2.5 focus:outline-none font-semibold cursor-pointer hover:bg-slate-200 transition">
-              <option value="جميع التصنيفات">جميع التصنيفات</option>
-              <option value="هواتف وإلكترونيات">هواتف وإلكترونيات</option>
-              <option value="أزياء وقماش بالجملة">أزياء وقماش بالجملة</option>
-              <option value="عطور ومواد التجميل">عطور ومواد التجميل</option>
-              <option value="أجهزة كهرومنزلي">أجهزة كهرومنزلي</option>
-              <option value="أدوات ومعدات البناء">أدوات ومعدات البناء</option>
-              <option value="مواد غذائية وحلويات">مواد غذائية وحلويات</option>
-            </select>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 text-xs font-bold transition flex items-center gap-1.5 shrink-0"><span>بحث الجملة</span></button>
-          </div>
+              <div className="hidden lg:block text-right">
+                <div className="text-xl font-black text-slate-900 leading-none">
+                  YOUmi
+                </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
-            {isAdminLoggedIn ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={onOpenAdminDashboard}
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm border border-slate-800"
+                <div className="text-[9px] text-indigo-600 font-bold mt-1">
+                  WHOLESALE MARKET
+                </div>
+              </div>
+            </button>
+
+            {/* DESKTOP SEARCH */}
+            <div className="hidden md:block flex-1 max-w-3xl">
+              <div className="h-12 flex items-stretch border-2 border-indigo-600 rounded-xl overflow-hidden bg-white">
+                <div className="flex items-center px-3 text-slate-400">
+                  <Search className="w-5 h-5" />
+                </div>
+
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      scrollToProducts();
+                    }
+                  }}
+                  placeholder="ابحث عن منتج، مورد أو متجر..."
+                  className="flex-1 min-w-0 outline-none text-sm"
+                />
+
+                <select
+                  value={selectedCategory}
+                  onChange={(e) =>
+                    setSelectedCategory(e.target.value)
+                  }
+                  className="hidden lg:block border-r border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span className="hidden lg:inline">لوحة تحكم Admin</span>
-                  <span className="lg:hidden">Admin</span>
-                </button>
-                <button onClick={onLogoutMember} title="تسجيل خروج Admin" className="p-2 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition">
-                  <LogOut className="w-4 h-4" />
+                  <option value="جميع التصنيفات">
+                    جميع التصنيفات
+                  </option>
+
+                  {wholesaleCategories.map((cat) => (
+                    <option key={cat.nameAr} value={cat.nameAr}>
+                      {cat.nameAr}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={scrollToProducts}
+                  className="px-5 lg:px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm"
+                >
+                  بحث
                 </button>
               </div>
-            ) : (
-              <>
-                {isLoggedIn ? (
-                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-emerald-900 text-xs font-bold shadow-xs">
-                    <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div className="flex flex-col text-right hidden sm:flex">
-                      <span className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[120px]">{currentMember?.name || 'عضو مسجل'}</span>
-                      <span className="text-[9px] text-emerald-700 font-semibold">أسعار الجملة مفعلة 🔓</span>
+            </div>
+
+            {/* ACCOUNT ACTIONS */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* MOBILE ACCOUNT BUTTON */}
+              <button
+                onClick={handleMobileAccount}
+                className="sm:hidden flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700"
+                title={
+                  isAdminLoggedIn
+                    ? 'لوحة الإدارة'
+                    : currentMember?.role === 'merchant'
+                    ? 'لوحة البائع'
+                    : isLoggedIn
+                    ? 'تسجيل الخروج'
+                    : 'تسجيل الدخول'
+                }
+              >
+                {isAdminLoggedIn ? (
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                ) : currentMember?.role === 'merchant' ? (
+                  <StoreIcon className="w-4 h-4 text-indigo-600" />
+                ) : isLoggedIn ? (
+                  <UserCheck className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <User className="w-4 h-4 text-slate-600" />
+                )}
+
+                {currentMember?.role === 'merchant' && (
+                  <>
+                    <span className="text-[10px] font-black">
+                      لوحة البائع
+                    </span>
+
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        isMobileAccountMenuOpen
+                          ? 'rotate-180'
+                          : ''
+                      }`}
+                    />
+                  </>
+                )}
+              </button>
+
+              {/* MOBILE MERCHANT MENU */}
+              {currentMember?.role === 'merchant' &&
+                isLoggedIn &&
+                isMobileAccountMenuOpen && (
+                  <div className="sm:hidden absolute top-full left-0 right-0 mt-2 z-50">
+                    <div className="mx-0 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
+                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <StoreIcon className="w-5 h-5 text-indigo-600" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="text-xs font-black text-slate-900 truncate">
+                              {currentMember?.name || 'البائع'}
+                            </div>
+
+                            <div className="text-[9px] text-slate-500">
+                              حساب المورد
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleOpenMerchantDashboard}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-right hover:bg-indigo-50 transition"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                          <StoreIcon className="w-4 h-4 text-indigo-600" />
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-black text-slate-800">
+                            لوحة التحكم
+                          </div>
+
+                          <div className="text-[9px] text-slate-500 mt-0.5">
+                            إدارة المتجر والمنتجات والطلبات
+                          </div>
+                        </div>
+
+                        <ChevronLeft className="w-4 h-4 text-slate-400 mr-auto" />
+                      </button>
+
+                      <div className="border-t border-slate-100" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-right hover:bg-rose-50 transition"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center">
+                          <LogOut className="w-4 h-4 text-rose-600" />
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-black text-rose-600">
+                            تسجيل الخروج
+                          </div>
+
+                          <div className="text-[9px] text-slate-500 mt-0.5">
+                            الخروج من حساب البائع
+                          </div>
+                        </div>
+                      </button>
                     </div>
-                    <button onClick={onLogoutMember} title="تسجيل الخروج" className="p-1 hover:bg-emerald-100 rounded-lg text-slate-400 hover:text-rose-600 transition"><LogOut className="w-3.5 h-3.5" /></button>
                   </div>
-                ) : (
-                  <button onClick={onOpenMemberAuthModal} className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm border border-amber-300 animate-pulse">
-                    <Lock className="w-4 h-4 text-slate-950" />
-                    <span className="hidden sm:inline">عرض أسعار الجملة 🔓</span>
-                    <span className="sm:hidden">تسجيل B2B</span>
-                  </button>
                 )}
 
-                {/* Merchant / Seller Dashboard Access */}
-                {currentMember?.role === 'merchant' ? (
+              {isAdminLoggedIn ? (
+                <>
                   <button
-                    onClick={onOpenMerchantDashboard}
-                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm border border-indigo-600"
+                    onClick={onOpenAdminDashboard}
+                    className="hidden md:flex items-center gap-2 px-3 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold"
                   >
-                    <UserCheck className="w-4 h-4 text-amber-300" />
-                    <span className="hidden lg:inline">لوحة تحكم البائع</span>
-                    <span className="lg:hidden">لوحتي</span>
+                    <ShieldCheck className="w-4 h-4 text-amber-400" />
+                    Admin
                   </button>
-                ) : (
+
                   <button
-                    onClick={onOpenLoginModal}
-                    className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm border border-slate-800"
+                    onClick={handleLogout}
+                    className="hidden sm:block p-2.5 border border-slate-200 rounded-lg hover:bg-rose-50"
+                    title="تسجيل خروج Admin"
                   >
-                    <User className="w-4 h-4 text-amber-400" />
-                    <span className="hidden lg:inline">دخول الموردين</span>
-                    <span className="lg:hidden">التُجار</span>
+                    <LogOut className="w-4 h-4 text-slate-500" />
                   </button>
+                </>
+              ) : (
+                <>
+                  {isLoggedIn ? (
+                    <div className="hidden lg:flex items-center gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 rounded-lg">
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+
+                      <div className="text-right">
+                        <div className="text-[11px] font-bold">
+                          {currentMember?.name || 'عضو'}
+                        </div>
+
+                        <div className="text-[9px] text-emerald-700">
+                          أسعار الجملة مفعلة
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="p-1 text-slate-400 hover:text-rose-600"
+                        title="تسجيل الخروج"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={onOpenMemberAuthModal}
+                      className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-xs font-black"
+                    >
+                      <Lock className="w-4 h-4" />
+                      أسعار الجملة
+                    </button>
+                  )}
+
+                  {currentMember?.role === 'merchant' ? (
+                    <button
+                      onClick={onOpenMerchantDashboard}
+                      className="hidden lg:flex items-center gap-1.5 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      لوحة البائع
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onOpenLoginModal}
+                      className="hidden lg:flex items-center gap-1.5 px-3 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold"
+                    >
+                      <User className="w-4 h-4 text-amber-400" />
+                      دخول الموردين
+                    </button>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={() => onNavigate('CREATE_STORE')}
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold"
+              >
+                <PlusCircle className="w-4 h-4" />
+                إنشاء متجر
+              </button>
+
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 sm:p-2.5 border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50"
+                aria-label="السلة"
+              >
+                <ShoppingBag className="w-5 h-5 text-indigo-600" />
+
+                {totalCartItems > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[9px] flex items-center justify-center font-black">
+                    {totalCartItems}
+                  </span>
                 )}
-              </>
-            )}
+              </button>
+            </div>
+          </div>
 
-            <button onClick={() => onNavigate('CREATE_STORE')} className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-extrabold text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20">
-              <PlusCircle className="w-4 h-4" />
-              <span className="hidden xl:inline">إنشاء متجر جملة</span>
-            </button>
+          {/* MOBILE SEARCH */}
+          <div className="mt-2.5 md:hidden">
+            <div className="flex h-11 border-2 border-indigo-500 rounded-lg overflow-hidden bg-white">
+              <div className="flex items-center px-2.5 text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
 
-            <button onClick={() => setIsCartOpen(true)} className="relative p-2.5 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition text-slate-700 flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-indigo-600" />
-              {totalCartItemsCount > 0 && <span className="bg-indigo-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">{totalCartItemsCount}</span>}
-            </button>
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    scrollToProducts();
+                  }
+                }}
+                placeholder="ابحث عن منتج أو مورد..."
+                className="flex-1 min-w-0 px-1 text-xs outline-none"
+              />
+
+              <button
+                onClick={scrollToProducts}
+                className="px-4 bg-indigo-600 text-white"
+                aria-label="بحث"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="md:hidden px-4 py-3 bg-white border-b border-slate-200">
-        <div className="flex items-center bg-slate-50 border border-slate-300 rounded-2xl overflow-hidden focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-500/15">
-          <Search className="w-4 h-4 text-slate-400 mx-3 shrink-0" />
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                document.getElementById('wholesale-products')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            placeholder="ابحث عن منتج أو مورد..."
-            className="min-w-0 flex-1 bg-transparent py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => document.getElementById('wholesale-products')?.scrollIntoView({ behavior: 'smooth' })}
-            className="bg-indigo-600 text-white px-4 py-2.5 text-xs font-bold"
-          >
-            بحث
-          </button>
-        </div>
-      </div>
+      {/* CATEGORY BAR */}
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 no-scrollbar snap-x">
+            <button
+              onClick={() => setSelectedCategory('جميع التصنيفات')}
+              className={`flex items-center gap-1.5 shrink-0 snap-start px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold ${
+                selectedCategory === 'جميع التصنيفات'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <Menu className="w-4 h-4" />
+              جميع التصنيفات
+            </button>
 
-      <nav className="bg-white border-b border-slate-200 py-2.5 px-4 lg:px-8 shadow-xs">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 shrink-0"><Menu className="w-4 h-4 text-indigo-600" /><span>تصنيفات الجملة المعتمدة:</span></div>
-          <div className="flex items-center gap-2 overflow-x-auto py-1">
-            <button onClick={() => setSelectedCategory('جميع التصنيفات')} className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${selectedCategory === 'جميع التصنيفات' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>الكل</button>
-            {wholesaleCategories.map((cat, idx) => {
-              const isSelected = selectedCategory === cat.nameAr;
-              const IconComp = cat.icon;
+            {wholesaleCategories.map((cat) => {
+              const Icon = cat.icon;
+
               return (
-                <button key={idx} onClick={() => setSelectedCategory(cat.nameAr)} className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${isSelected ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-50 text-slate-700 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50'}`}>
-                  <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-indigo-600'}`} />
-                  <span>{cat.nameAr}</span>
+                <button
+                  key={cat.nameAr}
+                  onClick={() => setSelectedCategory(cat.nameAr)}
+                  className={`flex items-center gap-1.5 shrink-0 snap-start px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold ${
+                    selectedCategory === cat.nameAr
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {cat.nameAr}
                 </button>
               );
             })}
@@ -364,214 +776,1168 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         </div>
       </nav>
 
-      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          <div className="lg:col-span-8 bg-slate-950 rounded-3xl overflow-hidden shadow-xl border border-slate-800 relative min-h-[380px] flex flex-col justify-between p-6 md:p-10 text-white">
-            <img src={heroSlides[activeHeroSlide].image} alt="Hero Banner" className="absolute inset-0 w-full h-full object-cover opacity-35" />
-            <div className={`absolute inset-0 bg-gradient-to-r ${heroSlides[activeHeroSlide].bgGradient} opacity-80`} />
-            <div className="relative z-10 flex items-center justify-between">
-              <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow-sm inline-flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /><span>{heroSlides[activeHeroSlide].badge}</span></span>
-              <span className="text-xs font-mono text-slate-300 bg-slate-900/60 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-700">69 ولاية شحن ومتابعة</span>
-            </div>
-            <div className="relative z-10 my-auto py-6 space-y-4 max-w-2xl">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-['Cairo'] leading-tight">{heroSlides[activeHeroSlide].title}</h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">{heroSlides[activeHeroSlide].subtitle}</p>
-              <div className="pt-2 flex flex-wrap items-center gap-3">
-                <button onClick={() => onNavigate('CREATE_STORE')} className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-lg transition flex items-center gap-2 group"><span>{heroSlides[activeHeroSlide].ctaText}</span><ArrowRight className="w-4 h-4 group-hover:-translate-x-1 transition" /></button>
-                <a href="#suppliers" className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition border border-white/20 backdrop-blur-md">عرض قائمة الموردين والمصانع</a>
+      {/* HERO */}
+      <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+          <div className="lg:col-span-8 min-h-[290px] sm:min-h-[350px] relative overflow-hidden rounded-xl sm:rounded-2xl bg-slate-950">
+            <img
+              src={heroSlides[activeHeroSlide].image}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+            />
+
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-indigo-950/40" />
+
+            <div className="relative z-10 h-full min-h-[290px] sm:min-h-[350px] p-5 sm:p-7 md:p-10 flex flex-col justify-between">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-amber-400 text-slate-950 rounded-md text-[10px] sm:text-xs font-black">
+                  <Zap className="w-3.5 h-3.5" />
+                  {heroSlides[activeHeroSlide].badge}
+                </span>
+
+                <h1 className="mt-4 sm:mt-5 max-w-2xl text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight">
+                  {heroSlides[activeHeroSlide].title}
+                </h1>
+
+                <p className="mt-3 sm:mt-4 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-slate-300">
+                  {heroSlides[activeHeroSlide].subtitle}
+                </p>
+
+                <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-2">
+                  <button
+                    onClick={scrollToProducts}
+                    className="px-5 sm:px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-xs font-black"
+                  >
+                    تسوق منتجات الجملة
+                  </button>
+
+                  <button
+                    onClick={() => onNavigate('CREATE_STORE')}
+                    className="px-5 sm:px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg text-xs font-bold"
+                  >
+                    أنشئ متجرك
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-5">
+                <div className="flex gap-1.5">
+                  {heroSlides.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setActiveHeroSlide(index)}
+                      aria-label={`الشريحة ${index + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        activeHeroSlide === index
+                          ? 'w-8 bg-amber-400'
+                          : 'w-2 bg-white/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      setActiveHeroSlide((current) =>
+                        current === 0
+                          ? heroSlides.length - 1
+                          : current - 1
+                      )
+                    }
+                    className="w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setActiveHeroSlide((current) =>
+                        current === heroSlides.length - 1
+                          ? 0
+                          : current + 1
+                      )
+                    }
+                    className="w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="relative z-10 flex items-center justify-between pt-4 border-t border-slate-800/80">
-              <div className="flex items-center gap-2">{heroSlides.map((_, idx) => <button key={idx} onClick={() => setActiveHeroSlide(idx)} className={`h-2 rounded-full transition-all ${activeHeroSlide === idx ? 'w-8 bg-amber-400' : 'w-2 bg-slate-700'}`} />)}</div>
+          </div>
+
+          <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
+            <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl p-4 sm:p-5">
               <div className="flex items-center gap-2">
-                <button onClick={() => setActiveHeroSlide((prev) => (prev === 0 ? heroSlides.length - 1 : prev - 1))} className="w-8 h-8 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white flex items-center justify-center border border-slate-700 transition"><ChevronRight className="w-4 h-4" /></button>
-                <button onClick={() => setActiveHeroSlide((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1))} className="w-8 h-8 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white flex items-center justify-center border border-slate-700 transition"><ChevronLeft className="w-4 h-4" /></button>
-              </div>
-            </div>
-          </div>
+                <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-amber-600" />
+                </div>
 
-          <div className="lg:col-span-4 flex flex-col justify-between gap-4">
-            <div className="p-6 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl border border-indigo-800 shadow-md flex-1 flex flex-col justify-between space-y-4 relative overflow-hidden">
-              <div className="space-y-2 relative z-10">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-400/20 border border-amber-400/30 text-amber-300 text-[11px] font-bold rounded-lg"><Gift className="w-3.5 h-3.5" /><span>تجار ومستوردو الجملة</span></div>
-                <h3 className="text-lg font-black font-['Cairo']">هل تملك سلعة أو مصنع بالجملة؟</h3>
-                <p className="text-xs text-indigo-200 leading-relaxed">أنشئ متجرك الإلكتروني للبيع بالجملة مجاناً لمدة 30 يوماً. تحكم كامل في الأسعار، فواتير الشراء، وربط تلقائي لشركة الشحن.</p>
-              </div>
-              <button onClick={() => onNavigate('CREATE_STORE')} className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 relative z-10"><PlusCircle className="w-4 h-4" /><span>أنشئ متجرك (تجربة 30 يوماً مجاناً)</span></button>
-            </div>
-
-            <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-sm space-y-3">
-              <h4 className="text-xs font-bold text-slate-800 font-['Cairo'] flex items-center gap-1.5"><Award className="w-4 h-4 text-indigo-600" /><span>إحصائيات منصة يومي بالجملة (2026)</span></h4>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100"><p className="font-extrabold text-indigo-600 text-sm font-mono">+1,200</p><p className="text-[10px] text-slate-500 font-medium">مورد معتمد</p></div>
-                <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100"><p className="font-extrabold text-emerald-600 text-sm font-mono">69 ولاية</p><p className="text-[10px] text-slate-500 font-medium">شحن وتوصيل</p></div>
-                <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100"><p className="font-extrabold text-amber-600 text-sm font-mono">الدفع عند الاستلام</p><p className="text-[10px] text-slate-500 font-medium">دفع عند الاستلام</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="suppliers" className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg mb-1"><Building2 className="w-3.5 h-3.5" /><span>المحلات والمصانع المعتمدة</span></div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 font-['Cairo'] leading-snug">متاجر وموردو الجملة المعتمدون بالجزائر</h2>
-          </div>
-          <button
-            onClick={currentMember?.role === 'merchant' ? onOpenMerchantDashboard : onOpenLoginModal}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition"
-          >
-            <span>{currentMember?.role === 'merchant' ? 'فتح لوحة تحكم البائع ←' : 'دخول لوحة تحكم التاجر ←'}</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stores.map((s) => (
-            <div key={s.id} className="bg-white border border-slate-200 hover:border-indigo-400 rounded-3xl p-5 shadow-xs hover:shadow-md transition space-y-4 flex flex-col justify-between group">
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <img src={s.logoUrl} alt={s.name} className="w-12 h-12 rounded-2xl object-cover bg-slate-100 border border-slate-200 shrink-0 group-hover:scale-105 transition" />
-                    <div><h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition font-['Cairo']">{s.name}</h3><p className="text-[11px] text-slate-500 font-medium">{s.category}</p></div>
+                <div>
+                  <div className="text-[10px] text-slate-500">
+                    عرض خاص للموردين
                   </div>
-                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-lg border border-emerald-200 flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span>مورد معتمد</span></span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{s.slogan || s.description}</p>
-                <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-1.5 text-slate-700"><Truck className="w-3.5 h-3.5 text-indigo-600 shrink-0" /><span className="truncate font-semibold">شحن 69 ولاية (Yalidine)</span></div>
-                  <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-1.5 text-slate-700"><Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" /><span className="truncate font-semibold">أدنى حد: {s.settings?.minWholesaleCartTotal ? `${s.settings.minWholesaleCartTotal.toLocaleString()} دج` : '10,000 دج'}</span></div>
+
+                  <div className="text-sm font-black">
+                    افتح متجرك الآن
+                  </div>
                 </div>
               </div>
-              <button onClick={() => onSelectStore(s, 'STORE_FRONT')} className="w-full py-2.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-900 hover:text-white font-bold text-xs rounded-2xl border border-indigo-200 transition flex items-center justify-center gap-2 group/btn"><span>زيارة متجر الجملة والتسوق</span><ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition" /></button>
+
+              <p className="mt-4 text-xs leading-6 text-slate-500">
+                30 يوماً مجاناً لتجربة متجر الجملة وإدارة منتجاتك وطلباتك.
+              </p>
+
+              <button
+                onClick={() => onNavigate('CREATE_STORE')}
+                className="mt-4 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
+              >
+                إنشاء متجر جملة
+              </button>
             </div>
-          ))}
+
+            <div className="bg-indigo-700 text-white rounded-xl sm:rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <Award className="w-6 h-6 text-amber-300" />
+
+                <div className="font-black text-sm">
+                  YOUmi B2B
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mt-5">
+                <div className="bg-white/10 rounded-lg p-2 text-center">
+                  <div className="font-black text-lg">
+                    {stores.length}
+                  </div>
+
+                  <div className="text-[9px] text-indigo-200">
+                    متجر
+                  </div>
+                </div>
+
+                <div className="bg-white/10 rounded-lg p-2 text-center">
+                  <div className="font-black text-lg">
+                    {totalProducts}
+                  </div>
+
+                  <div className="text-[9px] text-indigo-200">
+                    منتج
+                  </div>
+                </div>
+
+                <div className="bg-white/10 rounded-lg p-2 text-center">
+                  <div className="font-black text-lg">
+                    69
+                  </div>
+
+                  <div className="text-[9px] text-indigo-200">
+                    ولاية
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="wholesale-products" className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 space-y-6">
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-xs space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      {/* QUICK CATEGORIES */}
+      <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg mb-1"><Flame className="w-3.5 h-3.5" /><span>عروض الجملة المباشرة</span></div>
-              <h2 className="text-xl md:text-2xl font-black text-slate-900 font-['Cairo'] leading-snug">منتجات الجملة المتاحة للطلب الآن</h2>
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
+                تسوق حسب التصنيف
+              </h2>
+
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1">
+                اكتشف منتجات الجملة حسب نشاطك التجاري
+              </p>
             </div>
-            <div className="flex items-center gap-2 overflow-x-auto py-1">
-              {[{ id: 'all', label: 'جميع المنتجات' }, { id: 'popular', label: 'الأعلى تقييماً' }, { id: 'new', label: 'جديد المصانع' }, { id: 'discount', label: 'تخفيضات الكرتونة' }].map((tab) => (
-                <button key={tab.id} onClick={() => setActiveProductTab(tab.id as any)} className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${activeProductTab === tab.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{tab.label}</button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2 sm:gap-3">
+            {wholesaleCategories.map((cat) => {
+              const Icon = cat.icon;
+
+              return (
+                <button
+                  key={cat.nameAr}
+                  onClick={() => setSelectedCategory(cat.nameAr)}
+                  className={`group p-2.5 sm:p-3 rounded-xl border text-center transition ${
+                    selectedCategory === cat.nameAr
+                      ? 'border-indigo-400 bg-indigo-50'
+                      : 'border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50'
+                  }`}
+                >
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 mx-auto rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:scale-105 transition">
+                    <Icon className="w-5 h-5 text-indigo-600" />
+                  </div>
+
+                  <div className="mt-2 text-[9px] sm:text-[10px] font-bold text-slate-700 leading-4">
+                    {cat.nameAr}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* FLASH DEALS */}
+      <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 mt-4 sm:mt-5">
+        <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl">
+          <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-rose-500" />
+
+              <div>
+                <h2 className="font-black text-base sm:text-lg">
+                  عروض الجملة
+                </h2>
+
+                <p className="text-[9px] sm:text-[10px] text-slate-500">
+                  أفضل المنتجات المتاحة حالياً
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setActiveProductTab('discount');
+                scrollToProducts();
+              }}
+              className="text-[10px] sm:text-xs font-bold text-indigo-600"
+            >
+              مشاهدة الكل ←
+            </button>
+          </div>
+
+          <div className="p-2.5 sm:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            {allWholesaleProducts
+              .filter(
+                ({ product }) =>
+                  product.compareAtPrice &&
+                  product.compareAtPrice > product.price
+              )
+              .slice(0, 4)
+              .map(({ product, store }) => (
+                <button
+                  key={product.id}
+                  onClick={() =>
+                    setSelectedProduct({ product, store })
+                  }
+                  className="text-right group min-w-0"
+                >
+                  <div className="aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative">
+                    <img
+                      src={product.images?.[0]}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition"
+                    />
+
+                    <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-rose-500 text-white px-1.5 sm:px-2 py-1 rounded-md text-[8px] sm:text-[9px] font-black">
+                      تخفيض
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-[10px] sm:text-xs font-bold line-clamp-2">
+                    {product.title}
+                  </div>
+
+                  <div className="mt-1 text-[9px] sm:text-[10px] text-slate-500 truncate">
+                    {store.name}
+                  </div>
+                </button>
               ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SUPPLIERS */}
+      <section
+        id="suppliers"
+        className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 mt-4 sm:mt-5"
+      >
+        <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl">
+          <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black">
+                موردو ومتاجر الجملة
+              </h2>
+
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1">
+                اكتشف المتاجر التي توفر منتجات بالجملة
+              </p>
+            </div>
+
+            <button
+              onClick={
+                currentMember?.role === 'merchant'
+                  ? onOpenMerchantDashboard
+                  : onOpenLoginModal
+              }
+              className="text-[10px] sm:text-xs font-bold text-indigo-600 whitespace-nowrap"
+            >
+              {currentMember?.role === 'merchant'
+                ? 'لوحة البائع ←'
+                : 'دخول الموردين ←'}
+            </button>
+          </div>
+
+          <div className="p-3 sm:p-4 flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto md:overflow-visible no-scrollbar">
+            {stores.slice(0, 8).map((store) => (
+              <div
+                key={store.id}
+                className="min-w-[270px] md:min-w-0 border border-slate-200 rounded-xl p-3 sm:p-4 hover:border-indigo-400 hover:shadow-md transition"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={store.logoUrl}
+                    alt={store.name}
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover bg-slate-100 border border-slate-200 shrink-0"
+                  />
+
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm truncate">
+                      {store.name}
+                    </h3>
+
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {store.category}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center gap-1 text-[10px] text-emerald-700">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  مورد معتمد
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold text-slate-600">
+                    <Package className="w-3 h-3 text-indigo-500 mb-1" />
+                    {store.products?.length || 0} منتج
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold text-slate-600">
+                    <Truck className="w-3 h-3 text-indigo-500 mb-1" />
+                    69 ولاية
+                  </div>
+                </div>
+
+                <button
+                  onClick={() =>
+                    onSelectStore(store, 'STORE_FRONT')
+                  }
+                  className="mt-3 w-full py-2.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white rounded-lg text-[10px] font-black transition"
+                >
+                  زيارة المتجر
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRODUCTS */}
+      <section
+        id="wholesale-products"
+        className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 mt-4 sm:mt-5"
+      >
+        <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl">
+          <div className="p-3 sm:p-5 border-b border-slate-100">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-rose-500" />
+
+                  <h2 className="text-lg sm:text-xl font-black">
+                    منتجات الجملة
+                  </h2>
+
+                  <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[9px] sm:text-[10px] font-bold">
+                    {filteredWholesaleProducts.length}
+                  </span>
+                </div>
+
+                <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1">
+                  الأسعار بالجملة متاحة للأعضاء المسجلين
+                </p>
+              </div>
+
+              <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                {[
+                  ['all', 'الكل'],
+                  ['popular', 'الأعلى تقييماً'],
+                  ['new', 'جديد'],
+                  ['discount', 'التخفيضات'],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() =>
+                      setActiveProductTab(
+                        id as
+                          | 'all'
+                          | 'popular'
+                          | 'new'
+                          | 'discount'
+                      )
+                    }
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold whitespace-nowrap ${
+                      activeProductTab === id
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {filteredWholesaleProducts.length === 0 ? (
-            <div className="py-12 text-center space-y-3">
-              <Package className="w-10 h-10 text-slate-300 mx-auto" />
-              <p className="text-xs font-bold text-slate-600">لا توجد منتجات جملة مطابقة للبحث حالياً</p>
-              <button onClick={() => { setSearchTerm(''); setSelectedCategory('جميع التصنيفات'); setActiveProductTab('all'); }} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl">إعادة ضبط خيارات البحث</button>
+            <div className="py-20 text-center">
+              <Package className="w-12 h-12 text-slate-300 mx-auto" />
+
+              <p className="mt-3 text-sm font-bold text-slate-600">
+                لا توجد منتجات مطابقة
+              </p>
+
+              <button
+                onClick={resetFilters}
+                className="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold"
+              >
+                إعادة ضبط البحث
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-              {filteredWholesaleProducts.map(({ product, store }) => {
-                const isLiked = likedProducts[product.id];
-                return (
-                  <div key={product.id} className="bg-slate-50/60 border border-slate-200 hover:border-indigo-400 hover:bg-white rounded-2xl p-3.5 transition flex flex-col justify-between space-y-3 group shadow-2xs hover:shadow-md">
-                    <div className="space-y-2">
-                      <div className="aspect-square rounded-xl bg-white overflow-hidden relative border border-slate-200/80">
-                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                        {product.badge && <span className="absolute top-2 right-2 bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-md shadow-xs">{product.badge}</span>}
-                        <button onClick={() => toggleLike(product.id)} className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-slate-600 flex items-center justify-center shadow-xs backdrop-blur-sm transition"><Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} /></button>
-                        <button onClick={() => setSelectedProduct({ product, store })} className="absolute bottom-2 left-2 right-2 py-1.5 bg-slate-900/80 hover:bg-slate-900 text-white text-[11px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition backdrop-blur-xs flex items-center justify-center gap-1"><Eye className="w-3.5 h-3.5" /><span>معاينة تفاصيل الجملة</span></button>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-600"><StoreIcon className="w-3 h-3 text-indigo-500" /><span className="truncate">{store.name}</span></div>
-                        <h3 className="text-xs font-bold text-slate-900 line-clamp-2 mt-0.5 font-['Cairo']">{product.title}</h3>
-                        <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500 font-semibold"><Package className="w-3 h-3 text-amber-600" /><span>أدنى طلب: <strong className="text-slate-800">{product.minOrderQuantity || 1} {product.packageUnit || 'قطع'}</strong></span></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2 pt-2 border-t border-slate-200">
-                      <div className="flex items-center justify-between">
-                        {isLoggedIn ? (
-                          <div><span className="text-sm font-black text-rose-600 block leading-none font-mono">{product.price.toLocaleString()} دج</span>{product.compareAtPrice && product.compareAtPrice > product.price && <span className="text-[10px] text-slate-400 line-through font-mono">{product.compareAtPrice.toLocaleString()} دج</span>}</div>
-                        ) : (
-                          <button onClick={onOpenMemberAuthModal} className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 text-amber-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-2xs group" title="انقر لتسجيل الدخول ورؤية سعر الجملة"><Lock className="w-3 h-3 text-amber-600 group-hover:scale-110 transition" /><span>الأسعار للمسجلين فقط 🔐</span></button>
+            <div className="p-2 sm:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+              {filteredWholesaleProducts.map(
+                ({ product, store }) => {
+                  const liked = likedProducts[product.id];
+
+                  const discount =
+                    product.compareAtPrice &&
+                    product.compareAtPrice > product.price
+                      ? Math.round(
+                          (1 -
+                            product.price /
+                              product.compareAtPrice) *
+                            100
+                        )
+                      : 0;
+
+                  return (
+                    <div
+                      key={`${store.id}-${product.id}`}
+                      className="group bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-lg rounded-lg sm:rounded-xl overflow-hidden transition"
+                    >
+                      <div
+                        className="relative aspect-square bg-slate-100 overflow-hidden cursor-pointer"
+                        onClick={() =>
+                          setSelectedProduct({
+                            product,
+                            store,
+                          })
+                        }
+                      >
+                        <img
+                          src={product.images?.[0]}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+
+                        {discount > 0 && (
+                          <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-rose-500 text-white px-1.5 sm:px-2 py-1 rounded-md text-[8px] sm:text-[9px] font-black">
+                            -{discount}%
+                          </span>
                         )}
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">دفع عند الاستلام</span>
+
+                        {product.badge && (
+                          <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 max-w-[45%] truncate bg-amber-400 text-slate-950 px-1.5 sm:px-2 py-1 rounded-md text-[8px] sm:text-[9px] font-black">
+                            {product.badge}
+                          </span>
+                        )}
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLike(product.id);
+                          }}
+                          className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 flex items-center justify-center shadow-md"
+                          aria-label="إضافة للمفضلة"
+                        >
+                          <Heart
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                              liked
+                                ? 'fill-rose-500 text-rose-500'
+                                : 'text-slate-500'
+                            }`}
+                          />
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            setSelectedProduct({
+                              product,
+                              store,
+                            });
+                          }}
+                          className="hidden sm:flex absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition bg-slate-900/90 text-white px-2.5 py-1.5 rounded-md text-[9px] font-bold items-center gap-1"
+                        >
+                          <Eye className="w-3 h-3" />
+                          التفاصيل
+                        </button>
                       </div>
-                      <button onClick={() => handleAddToCart(product, store)} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center justify-center gap-1.5"><ShoppingCart className="w-3.5 h-3.5" /><span>طلب بالجملة</span></button>
+
+                      <div className="p-2 sm:p-3">
+                        <div className="flex items-center gap-1 text-[8px] sm:text-[9px] text-indigo-600 font-bold">
+                          <StoreIcon className="w-3 h-3 shrink-0" />
+
+                          <span className="truncate">
+                            {store.name}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-1 text-[11px] sm:text-xs font-bold text-slate-800 line-clamp-2 min-h-[32px]">
+                          {product.title}
+                        </h3>
+
+                        <div className="mt-2 flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1 text-amber-500 min-w-0">
+                            <Star className="w-3 h-3 fill-current shrink-0" />
+
+                            <span className="text-[8px] sm:text-[9px] font-bold">
+                              {product.ratings?.score?.toFixed(1) ||
+                                '0.0'}
+                            </span>
+
+                            <span className="hidden sm:inline text-[8px] text-slate-400">
+                              ({product.ratings?.count || 0})
+                            </span>
+                          </div>
+
+                          <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold whitespace-nowrap">
+                            MOQ {product.minOrderQuantity || 1}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 sm:mt-3 pt-2 border-t border-slate-100">
+                          {isLoggedIn ? (
+                            <div>
+                              <div className="text-sm sm:text-base font-black text-rose-600 truncate">
+                                {product.price.toLocaleString()} دج
+                              </div>
+
+                              {product.compareAtPrice &&
+                                product.compareAtPrice >
+                                  product.price && (
+                                  <div className="text-[8px] sm:text-[9px] text-slate-400 line-through truncate">
+                                    {product.compareAtPrice.toLocaleString()}{' '}
+                                    دج
+                                  </div>
+                                )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={onOpenMemberAuthModal}
+                              className="w-full flex items-center justify-center gap-1 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[8px] sm:text-[9px] text-amber-800 font-black leading-4"
+                            >
+                              <Lock className="w-3 h-3 shrink-0" />
+                              الأسعار للمسجلين فقط
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() =>
+                              handleAddToCart(
+                                product,
+                                store
+                              )
+                            }
+                            className="mt-2 w-full py-2 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-black flex items-center justify-center gap-1.5"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+
+                            <span className="sm:hidden">
+                              طلب
+                            </span>
+
+                            <span className="hidden sm:inline">
+                              طلب بالجملة
+                            </span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           )}
         </div>
       </section>
 
-      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8">
-        <div className="bg-slate-900 text-white rounded-3xl p-8 shadow-xl border border-slate-800 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="px-3 py-1 bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-xs rounded-full inline-block">منظومة تجارة الجملة المتكاملة بالجزائر</span>
-            <h2 className="text-2xl md:text-3xl font-black font-['Cairo']">لماذا يفضل التُجّار والموردون منصة يومي؟</h2>
-            <p className="text-xs text-slate-400">نوفر البيئة الآمنة والتكنولوجية الأحدث لتسريع مبايعات الجملة والشحن المباشر لـ 69 ولاية.</p>
+      {/* TRUST STRIP */}
+      <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 mt-4 sm:mt-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+              <Truck className="w-5 h-5 text-indigo-600" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-xs font-black">
+                شحن 69 ولاية
+              </div>
+
+              <div className="text-[8px] sm:text-[9px] text-slate-500">
+                حلول توصيل داخل الجزائر
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700 space-y-3"><div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30"><ShieldCheck className="w-5 h-5" /></div><h3 className="text-sm font-bold text-white font-['Cairo']">1. الدفع عند الاستلام (COD)</h3><p className="text-xs text-slate-400 leading-relaxed">سداد قيمة طلبية الجملة نقداً لمندوب الشحن عند المعاينة والاستلام في عنوان التاجر دون مخاطرة الدفع المسبق.</p></div>
-            <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700 space-y-3"><div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30"><Truck className="w-5 h-5" /></div><h3 className="text-sm font-bold text-white font-['Cairo']">2. ربط شركات الشحن الفوري</h3><p className="text-xs text-slate-400 leading-relaxed">إدخال مفتاح API لشركة الشحن المعتمدة للتاجر (Yalidine, ZR Express) وتوليد ورقات الشحن والتتبع الفوري.</p></div>
-            <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700 space-y-3"><div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30"><Gift className="w-5 h-5" /></div><h3 className="text-sm font-bold text-white font-['Cairo']">3. تجربة مجانية 30 يوماً</h3><p className="text-xs text-slate-400 leading-relaxed">استمتع بـ 30 يوماً مجاناً لتجربة كافة أدوات المتجر، ثم التجديد بـ 3,500 دج شهرياً عبر بريدي موب.</p></div>
-            <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700 space-y-3"><div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30"><Building2 className="w-5 h-5" /></div><h3 className="text-sm font-bold text-white font-['Cairo']">4. أسعار جملة ومصانع مباشرة</h3><p className="text-xs text-slate-400 leading-relaxed">تعامل مباشر بين أصحاب المحلات والموردين بالعملة الوطنية (دج) بدون وسائط أو عمولات خفية.</p></div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-xs font-black">
+                موردون ومتاجر
+              </div>
+
+              <div className="text-[8px] sm:text-[9px] text-slate-500">
+                سوق B2B موحد
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5 text-amber-600" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-xs font-black">
+                أسعار الجملة
+              </div>
+
+              <div className="text-[8px] sm:text-[9px] text-slate-500">
+                للمشترين المسجلين
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+              <CreditCard className="w-5 h-5 text-purple-600" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-xs font-black">
+                BaridiMob
+              </div>
+
+              <div className="text-[8px] sm:text-[9px] text-slate-500">
+                اشتراكات البائعين
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* WHY YOUmi */}
+      <section className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-8 mt-4 sm:mt-5">
+        <div className="bg-slate-900 rounded-xl sm:rounded-2xl p-5 sm:p-7 text-white">
+          <div className="text-center max-w-xl mx-auto">
+            <span className="text-amber-400 text-[10px] sm:text-xs font-bold">
+              YOUmi B2B MARKET
+            </span>
+
+            <h2 className="mt-2 text-xl sm:text-2xl font-black">
+              منصة واحدة لتجارة الجملة
+            </h2>
+
+            <p className="mt-2 text-[10px] sm:text-xs text-slate-400 leading-6">
+              اجمع الموردين والمتاجر والمنتجات بالجملة في مكان واحد.
+            </p>
+          </div>
+
+          <div className="mt-6 sm:mt-7 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
+              <Building2 className="w-6 h-6 text-indigo-400" />
+
+              <h3 className="mt-3 font-bold text-sm">
+                للموردين والبائعين
+              </h3>
+
+              <p className="mt-2 text-xs text-slate-400 leading-6">
+                أنشئ متجرك واعرض منتجاتك أمام المشترين بالجملة.
+              </p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
+              <ShoppingBag className="w-6 h-6 text-amber-400" />
+
+              <h3 className="mt-3 font-bold text-sm">
+                للمشترين بالجملة
+              </h3>
+
+              <p className="mt-2 text-xs text-slate-400 leading-6">
+                ابحث وقارن المنتجات واكتشف المورد المناسب لنشاطك.
+              </p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
+              <Truck className="w-6 h-6 text-emerald-400" />
+
+              <h3 className="mt-3 font-bold text-sm">
+                توصيل داخل الجزائر
+              </h3>
+
+              <p className="mt-2 text-xs text-slate-400 leading-6">
+                حلول شحن وتوصيل حسب المتجر وشركة الشحن المعتمدة.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRODUCT DETAILS MODAL */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full p-6 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setSelectedProduct(null)} className="absolute top-4 left-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition"><X className="w-5 h-5" /></button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200"><img src={selectedProduct.product.images[0]} alt={selectedProduct.product.title} className="w-full h-full object-cover" /></div>
-              <div className="space-y-4">
-                <div className="space-y-1"><div className="flex items-center gap-1.5 text-xs font-bold text-indigo-600"><StoreIcon className="w-3.5 h-3.5" /><span>متجر: {selectedProduct.store.name}</span></div><h3 className="text-lg font-black text-slate-900 font-['Cairo']">{selectedProduct.product.title}</h3><p className="text-xs text-slate-500">التصنيف: {selectedProduct.product.category}</p></div>
-                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1"><p className="font-bold flex items-center gap-1"><Package className="w-4 h-4 text-amber-600" /><span>شروط كميات الجملة:</span></p><p className="text-[11px]">الحد الأدنى للطلب: <strong className="font-bold">{selectedProduct.product.minOrderQuantity || 1} {selectedProduct.product.packageUnit || 'قطعة'}</strong></p></div>
-                <div>
-                  {isLoggedIn ? <div><span className="text-2xl font-black text-rose-600 font-mono">{selectedProduct.product.price.toLocaleString()} دج</span><span className="text-xs text-slate-400 mr-2">للقطعة / العلبة</span></div> : <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-2"><div className="flex items-center gap-2 text-xs font-bold text-amber-900"><Lock className="w-4 h-4 text-amber-600 shrink-0" /><span>سعر الجملة محمي: يظهر للأعضاء المسجلين فقط</span></div><button onClick={onOpenMemberAuthModal} className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition shadow-xs">دخول / تسجيل</button></div>}
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+          <div className="relative w-full max-w-4xl max-h-[95vh] sm:max-h-[92vh] overflow-y-auto bg-white rounded-xl sm:rounded-2xl shadow-2xl">
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-md hover:bg-slate-100"
+              aria-label="إغلاق"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="grid md:grid-cols-2">
+              <div className="bg-slate-100 p-2 sm:p-5">
+                <div className="aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-white border border-slate-200">
+                  <img
+                    src={selectedProduct.product.images?.[0]}
+                    alt={selectedProduct.product.title}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">{selectedProduct.product.description}</p>
-                <button onClick={() => { handleAddToCart(selectedProduct.product, selectedProduct.store); setSelectedProduct(null); }} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"><ShoppingCart className="w-4 h-4" /><span>إضافة للسلّة وطلب الجملة</span></button>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 text-xs text-indigo-600 font-bold">
+                  <StoreIcon className="w-4 h-4" />
+
+                  <span className="truncate">
+                    {selectedProduct.store.name}
+                  </span>
+                </div>
+
+                <h2 className="mt-3 text-lg sm:text-xl font-black text-slate-900 leading-7 sm:leading-8">
+                  {selectedProduct.product.title}
+                </h2>
+
+                <div className="mt-2 text-xs text-slate-500">
+                  {selectedProduct.product.category}
+                </div>
+
+                <div className="mt-4 sm:mt-5 p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-indigo-600" />
+
+                    <span className="text-xs font-bold">
+                      الحد الأدنى للطلب
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-sm font-black">
+                    {selectedProduct.product.minOrderQuantity || 1}{' '}
+                    {selectedProduct.product.packageUnit || 'قطعة'}
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  {isLoggedIn ? (
+                    <>
+                      <div className="text-2xl sm:text-3xl font-black text-rose-600">
+                        {selectedProduct.product.price.toLocaleString()}{' '}
+                        دج
+                      </div>
+
+                      {selectedProduct.product.compareAtPrice &&
+                        selectedProduct.product.compareAtPrice >
+                          selectedProduct.product.price && (
+                          <div className="text-xs text-slate-400 line-through mt-1">
+                            {selectedProduct.product.compareAtPrice.toLocaleString()}{' '}
+                            دج
+                          </div>
+                        )}
+                    </>
+                  ) : (
+                    <div className="p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <div className="flex items-center gap-2 text-sm font-bold text-amber-900">
+                        <Lock className="w-5 h-5 text-amber-600" />
+                        سعر الجملة محمي
+                      </div>
+
+                      <p className="mt-2 text-xs text-amber-800">
+                        سجّل الدخول أو أنشئ حساب B2B لرؤية سعر الجملة.
+                      </p>
+
+                      <button
+                        onClick={onOpenMemberAuthModal}
+                        className="mt-3 px-4 py-2 bg-amber-400 text-slate-950 rounded-lg text-xs font-black"
+                      >
+                        تسجيل / دخول
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {selectedProduct.product.description && (
+                  <p className="mt-5 text-sm text-slate-600 leading-7">
+                    {selectedProduct.product.description}
+                  </p>
+                )}
+
+                <button
+                  onClick={() => {
+                    handleAddToCart(
+                      selectedProduct.product,
+                      selectedProduct.store
+                    );
+                    setSelectedProduct(null);
+                  }}
+                  className="mt-6 w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  إضافة للسلة وطلب بالجملة
+                </button>
+
+                <button
+                  onClick={() => {
+                    onSelectStore(
+                      selectedProduct.store,
+                      'STORE_FRONT'
+                    );
+                    setSelectedProduct(null);
+                  }}
+                  className="mt-2 w-full py-3 border border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl font-bold text-xs"
+                >
+                  زيارة متجر المورد
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* CART */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end dir-rtl">
-          <div className="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between space-y-4">
-            <div className="space-y-4 flex-1 overflow-y-auto">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200"><div className="flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-indigo-600" /><h3 className="text-base font-bold text-slate-900 font-['Cairo']">سلّة طلبات الجملة</h3></div><button onClick={() => setIsCartOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg bg-slate-100"><X className="w-5 h-5" /></button></div>
-              {cartItems.length === 0 ? <div className="py-16 text-center space-y-3"><ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" /><p className="text-xs font-bold text-slate-600">سلّة طلبات الجملة فارغة حالياً</p><p className="text-[11px] text-slate-400">تصفح المتاجر والمنتجات وأضف كميات الجملة للطلب</p></div> : <div className="space-y-3">{cartItems.map((item, idx) => <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3"><img src={item.product.images[0]} alt={item.product.title} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" /><div className="min-w-0 flex-1"><h4 className="text-xs font-bold text-slate-800 truncate">{item.product.title}</h4><p className="text-[10px] text-slate-500">{item.store.name}</p><p className="text-xs font-black text-rose-600 font-mono mt-0.5">{item.product.price.toLocaleString()} دج × {item.qty}</p></div><button onClick={() => setCartItems((prev) => prev.filter((_, i) => i !== idx))} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"><X className="w-4 h-4" /></button></div>)}</div>}
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex justify-end">
+          <div className="w-full max-w-md bg-white h-full flex flex-col">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-indigo-600" />
+
+                <h3 className="font-black">
+                  سلة طلبات الجملة
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setIsCartOpen(false)}
+                className="p-2 bg-slate-100 rounded-lg"
+                aria-label="إغلاق السلة"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            {cartItems.length > 0 && <div className="pt-4 border-t border-slate-200 space-y-3"><div className="flex items-center justify-between text-xs font-bold text-slate-800"><span>المجموع الإجمالي للطلبية:</span><span className="text-base text-rose-600 font-mono font-black">{totalCartPriceDzd.toLocaleString()} دج</span></div><div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" /><span>طريقة السداد: الدفع عند الاستلام حسب شروط المتجر وشركة الشحن</span></div><button onClick={() => { if (cartItems.length > 0) { onSelectStore(cartItems[0].store, 'STORE_FRONT'); setIsCartOpen(false); } }} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"><span>متابعة إتمام الطلب بالمتجر المختص</span><ArrowRight className="w-4 h-4" /></button></div>}
+
+            <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+              {cartItems.length === 0 ? (
+                <div className="py-20 text-center">
+                  <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
+
+                  <p className="mt-3 text-sm font-bold text-slate-600">
+                    السلة فارغة
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cartItems.map((item, index) => (
+                    <div
+                      key={`${item.product.id}-${index}`}
+                      className="flex gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                    >
+                      <img
+                        src={item.product.images?.[0]}
+                        alt={item.product.title}
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold truncate">
+                          {item.product.title}
+                        </h4>
+
+                        <p className="text-[10px] text-slate-500 mt-1 truncate">
+                          {item.store.name}
+                        </p>
+
+                        <p className="text-xs font-black text-rose-600 mt-1">
+                          {item.product.price.toLocaleString()} دج ×{' '}
+                          {item.qty}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setCartItems((previous) =>
+                            previous.filter(
+                              (_, itemIndex) =>
+                                itemIndex !== index
+                            )
+                          )
+                        }
+                        className="text-rose-500 p-1 shrink-0"
+                        aria-label="حذف المنتج"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {cartItems.length > 0 && (
+              <div className="p-4 sm:p-5 border-t border-slate-200">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold">
+                    إجمالي الطلب
+                  </span>
+
+                  <span className="text-lg sm:text-xl font-black text-rose-600">
+                    {totalCartPrice.toLocaleString()} دج
+                  </span>
+                </div>
+
+                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-800">
+                  الدفع عند الاستلام حسب شروط المتجر وشركة الشحن.
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (cartItems.length > 0) {
+                      onSelectStore(
+                        cartItems[0].store,
+                        'STORE_FRONT'
+                      );
+
+                      setIsCartOpen(false);
+                    }
+                  }}
+                  className="mt-3 w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2"
+                >
+                  متابعة الطلب
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <footer className="bg-slate-950 text-slate-400 text-xs py-10 px-4 lg:px-8 border-t border-slate-800 mt-12">
-        <div className="max-w-[1400px] mx-auto space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold">Y</div><span className="text-white font-black text-lg font-['Cairo']">Youmi B2B Market</span></div><p className="text-xs text-slate-400 leading-relaxed">منصة تجارة الجملة والربط المباشر بين المصنعين والموردين وأصحاب المحلات بالجزائر.</p></div>
-            <div className="space-y-2"><h4 className="text-xs font-bold text-white font-['Cairo']">روابط الاستضافة والدعم</h4><ul className="space-y-1.5 text-slate-400"><li><button onClick={() => onNavigate('CREATE_STORE')} className="hover:text-amber-400 transition">أنشئ متجر جملة (30 يوماً مجاناً)</button></li><li><a href="#suppliers" className="hover:text-amber-400 transition">دليل الموردين والمصانع</a></li><li><button onClick={currentMember?.role === 'merchant' ? onOpenMerchantDashboard : onOpenLoginModal} className="hover:text-amber-400 transition">{currentMember?.role === 'merchant' ? 'لوحة تحكم البائع' : 'لوحة تحكم التجّار'}</button></li></ul></div>
-            <div className="space-y-2"><h4 className="text-xs font-bold text-white font-['Cairo']">الشحن والدفع</h4><ul className="space-y-1.5 text-slate-400"><li className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5 text-indigo-400" /><span>شحن 69 ولاية عبر Yalidine API</span></li><li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /><span>الدفع عند الاستلام (COD)</span></li><li className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-amber-400" /><span>سداد الاشتراكات عبر BaridiMob</span></li></ul></div>
-            <div className="space-y-2"><h4 className="text-xs font-bold text-white font-['Cairo']">الدعم والمساعدة</h4><p className="text-xs text-slate-400">فريق خدمة العملاء متواجد لمساعدتك في إنشاء وافتتاح متجرك بالجملة.</p></div>
+      {/* FOOTER */}
+      <footer className="mt-6 sm:mt-8 bg-slate-950 text-slate-400">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-8 py-8 sm:py-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black">
+                  Y
+                </div>
+
+                <span className="text-white font-black text-lg">
+                  YOUmi B2B
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs leading-6">
+                منصة تجارة الجملة الجزائرية التي تربط الموردين والبائعين
+                بالمشترين بالجملة.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-white text-xs font-black">
+                الموردون
+              </h4>
+
+              <button
+                onClick={onOpenLoginModal}
+                className="mt-3 text-xs hover:text-white"
+              >
+                دخول الموردين
+              </button>
+
+              <button
+                onClick={() => onNavigate('CREATE_STORE')}
+                className="block mt-2 text-xs hover:text-white"
+              >
+                إنشاء متجر
+              </button>
+            </div>
+
+            <div>
+              <h4 className="text-white text-xs font-black">
+                المشترون
+              </h4>
+
+              <button
+                onClick={onOpenMemberAuthModal}
+                className="mt-3 block text-xs hover:text-white"
+              >
+                تسجيل B2B
+              </button>
+
+              <a
+                href="#wholesale-products"
+                className="block mt-2 text-xs hover:text-white"
+              >
+                منتجات الجملة
+              </a>
+            </div>
+
+            <div>
+              <h4 className="text-white text-xs font-black">
+                الشحن والدفع
+              </h4>
+
+              <div className="mt-3 flex items-center gap-2 text-xs">
+                <Truck className="w-4 h-4 text-indigo-400" />
+                شحن إلى 69 ولاية
+              </div>
+
+              <div className="mt-2 flex items-center gap-2 text-xs">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                اشتراكات البائعين عبر BaridiMob
+              </div>
+            </div>
           </div>
-          <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]"><p>جميع الحقوق محفوظة © 2026 لمنصة يومي لتجارة الجملة بالجزائر (Youmi Market DZ)</p><div className="flex items-center gap-4"><button
-                    type="button"
-                    onClick={onOpenAdminLoginModal}
-                    aria-label="دخول إدارة المنصة"
-                    title="دخول إدارة المنصة"
-                    className="bg-transparent border-0 p-0 m-0 text-inherit font-inherit cursor-default focus:outline-none"
-                  >🇩🇿 تغطية كاملة لـ 69 ولاية</button><span>•</span><span>100% دفع عند الاستلام</span></div><button type="button" onClick={onOpenAdminLoginModal} aria-label="إدارة المنصة" title="إدارة المنصة" className="text-[9px] text-slate-700/40 hover:text-slate-400 transition px-1 py-0.5">إدارة</button></div>
+
+          <div className="mt-8 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px]">
+            <span>
+              © 2026 YOUmi B2B Market - جميع الحقوق محفوظة
+            </span>
+
+            <div className="flex items-center gap-3">
+              <span>🇩🇿 الجزائر</span>
+
+              <button
+                type="button"
+                onClick={onOpenAdminLoginModal}
+                className="text-slate-700 hover:text-slate-300"
+              >
+                إدارة المنصة
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.08)]">
+        <div className="grid grid-cols-4 h-16">
+          <button
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              onNavigate('PLATFORM_HOME');
+            }}
+            className="flex flex-col items-center justify-center gap-1 text-indigo-600"
+          >
+            <Home className="w-5 h-5" />
+
+            <span className="text-[9px] font-bold">
+              الرئيسية
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              scrollToProducts();
+            }}
+            className="flex flex-col items-center justify-center gap-1 text-slate-500"
+          >
+            <Menu className="w-5 h-5" />
+
+            <span className="text-[9px] font-bold">
+              المنتجات
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsMobileAccountMenuOpen(false);
+              setIsCartOpen(true);
+            }}
+            className="relative flex flex-col items-center justify-center gap-1 text-slate-500"
+          >
+            <ShoppingBag className="w-5 h-5" />
+
+            {totalCartItems > 0 && (
+              <span className="absolute top-1.5 left-1/2 translate-x-1 min-w-4 h-4 px-1 bg-rose-500 text-white rounded-full text-[8px] flex items-center justify-center font-black">
+                {totalCartItems}
+              </span>
+            )}
+
+            <span className="text-[9px] font-bold">
+              السلة
+            </span>
+          </button>
+
+          {/* MOBILE ACCOUNT / MERCHANT */}
+          <button
+            onClick={handleMobileAccount}
+            className={`flex flex-col items-center justify-center gap-1 transition ${
+              currentMember?.role === 'merchant' &&
+              isMobileAccountMenuOpen
+                ? 'text-indigo-600 bg-indigo-50'
+                : 'text-slate-500'
+            }`}
+          >
+            {isAdminLoggedIn ? (
+              <ShieldCheck className="w-5 h-5 text-amber-500" />
+            ) : currentMember?.role === 'merchant' ? (
+              <StoreIcon className="w-5 h-5 text-indigo-600" />
+            ) : isLoggedIn ? (
+              <UserCheck className="w-5 h-5 text-emerald-600" />
+            ) : (
+              <User className="w-5 h-5" />
+            )}
+
+            <span className="text-[9px] font-bold">
+              {isAdminLoggedIn
+                ? 'الإدارة'
+                : currentMember?.role === 'merchant'
+                ? 'لوحة البائع'
+                : isLoggedIn
+                ? 'حسابي'
+                : 'دخول'}
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

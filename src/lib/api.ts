@@ -112,6 +112,13 @@ export const api = {
   status: () =>
     request('status'),
 
+  // Welcome wheel: eligibility and prize are decided by the server.
+  wheelStatus: () =>
+    request('wheel_status'),
+
+  spinTrialWheel: () =>
+    post('spin_trial_wheel', {}),
+
   login: (
     payload: any
   ) =>

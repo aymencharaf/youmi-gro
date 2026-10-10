@@ -148,6 +148,8 @@ export interface Store {
   name: string;
   slug: string;
   category: string;
+  /** Custom product categories managed by this merchant for their store. */
+  productCategories?: string[];
   description: string;
   slogan: string;
   logoUrl: string;
@@ -160,6 +162,10 @@ export interface Store {
    * those variants into this canonical field.
    */
   merchantUserId?: string;
+  /** Server-controlled welcome wheel eligibility for newly created stores. */
+  wheelEligible?: boolean;
+  wheelPrizeDays?: number | null;
+  wheelPlayedAt?: string | null;
   merchantName: string;
   email: string;
   phone: string;

@@ -15,6 +15,7 @@ import { api } from './lib/api';
 import { PlatformLanding } from './components/PlatformLanding';
 import { CreateStoreWizard } from './components/CreateStoreWizard';
 import { MerchantDashboard } from './components/merchant/MerchantDashboard';
+import { WelcomeWheelModal } from './components/merchant/WelcomeWheelModal';
 import { StoreFrontView } from './components/storefront/StoreFrontView';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
@@ -107,6 +108,9 @@ export default function App() {
 
   const [infinityFreeOpen, setInfinityFreeOpen] =
     useState(false);
+
+  const [wheelStore, setWheelStore] =
+    useState<Store | null>(null);
 
   const isAdminLoggedIn = !!adminUser;
 
@@ -213,6 +217,30 @@ export default function App() {
     };
   }, []);
 
+  // Re-open the welcome wheel after refresh/login if a newly created store
+  // is still eligible and the seller has not used their one spin.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (currentMember?.role !== 'merchant') {
+      setWheelStore(null);
+      return;
+    }
+
+    api.wheelStatus().then((result) => {
+      if (cancelled) return;
+      if (result.ok && result.data?.eligible && result.data?.store) {
+        setWheelStore(result.data.store as Store);
+      }
+    }).catch(() => {
+      // The wheel is optional if the API is temporarily unavailable.
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentMember?.id, currentMember?.role]);
+
   /**
    * فتح تسجيل الدخول للأعضاء.
    */
@@ -281,6 +309,7 @@ export default function App() {
 
     setCurrentMember(null);
     setCurrentStore(null);
+    setWheelStore(null);
 
     setCurrentView('PLATFORM_HOME');
 
@@ -325,6 +354,7 @@ export default function App() {
     setAdminUser(null);
     setCurrentMember(null);
     setCurrentStore(null);
+    setWheelStore(null);
 
     setCurrentView('PLATFORM_HOME');
 
@@ -776,6 +806,10 @@ export default function App() {
               store
             );
 
+            if (store.wheelEligible) {
+              setWheelStore(store);
+            }
+
             setCurrentView(
               'MERCHANT_DASHBOARD'
             );
@@ -896,6 +930,13 @@ export default function App() {
           <StoreFrontView
             store={
               currentStore
+            }
+
+            canManageStore={
+              isStoreOwnedByMember(
+                currentStore,
+                currentMember
+              )
             }
 
             isLoggedIn={
@@ -1031,6 +1072,18 @@ export default function App() {
           )
         }
       />
+
+      {wheelStore && currentMember?.role === 'merchant' && (
+        <WelcomeWheelModal
+          store={wheelStore}
+          onClose={() => setWheelStore(null)}
+          onStoreUpdated={(updatedStore) => {
+            updateStore(updatedStore);
+            setCurrentStore(updatedStore);
+            setActiveStore(updatedStore);
+          }}
+        />
+      )}
     </>
   );
 }

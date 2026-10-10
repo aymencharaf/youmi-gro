@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Store, Product, ProductTierPrice, ProductVariant } from '../../types';
-import { saveProductToStore, deleteProductFromStore } from '../../lib/storage';
+import { saveProductToStore, deleteProductFromStore, saveStore } from '../../lib/storage';
 import { BUSINESS_CATEGORIES } from '../../data/algeriaData';
 import { ImageUploadInput } from '../common/ImageUploadInput';
 import { 
@@ -23,6 +23,8 @@ interface ProductsTabProps {
 
 export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryMessage, setCategoryMessage] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -43,6 +45,53 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
   const [tierPrices, setTierPrices] = useState<ProductTierPrice[]>([]);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
+  const customCategories = Array.from(new Set(
+    (store.productCategories || []).map((name) => name.trim()).filter(Boolean)
+  ));
+
+  const productCategoryOptions = Array.from(new Set([
+    ...customCategories,
+    ...BUSINESS_CATEGORIES,
+    store.category,
+    ...store.products.map((product) => product.category),
+  ].map((name) => (name || '').trim()).filter(Boolean)));
+
+  const handleAddCategory = (categoryName?: string) => {
+    const name = (categoryName ?? newCategoryName).trim();
+    if (!name) {
+      setCategoryMessage('اكتب اسم التصنيف أولاً.');
+      return;
+    }
+    if (customCategories.some((item) => item.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+      setCategoryMessage('هذا التصنيف موجود بالفعل.');
+      return;
+    }
+    const updated: Store = {
+      ...store,
+      productCategories: [...customCategories, name],
+    };
+    saveStore(updated);
+    onUpdateStore(updated);
+    setNewCategoryName('');
+    setCategoryMessage('تمت إضافة التصنيف إلى متجرك.');
+  };
+
+  const handleDeleteCategory = (name: string) => {
+    const inUse = store.products.some((product) => product.category === name);
+    if (inUse) {
+      setCategoryMessage('لا يمكن حذف هذا التصنيف لأنه مستخدم في منتجات. غيّر تصنيف المنتجات أولاً.');
+      return;
+    }
+    if (!window.confirm(`هل تريد حذف تصنيف "${name}" من متجرك؟`)) return;
+    const updated: Store = {
+      ...store,
+      productCategories: customCategories.filter((item) => item !== name),
+    };
+    saveStore(updated);
+    onUpdateStore(updated);
+    setCategoryMessage('تم حذف التصنيف.');
+  };
+
   const filteredProducts = store.products.filter((p) =>
     p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,7 +101,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
   const openAddModal = () => {
     setEditingProduct(null);
     setTitle('');
-    setCategory(store.category);
+    setCategory((store.productCategories || [])[0] || store.category);
     setPrice(3500);
     setCompareAtPrice(undefined);
     setMinOrderQuantity(10);
@@ -177,6 +226,81 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
           <span>إضافة منتج جديد</span>
         </button>
       </div>
+
+      {/* Merchant-managed product categories */}
+      <section className="bg-white p-5 md:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900">تصنيفات منتجات متجرك</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              أنشئ تصنيفات تناسب اختصاص متجرك. يمكنك كتابة اسم خاص أو اختيار اقتراح جاهز لمتاجر الأبواب والنوافذ.
+            </p>
+          </div>
+        </div>
+
+        <form
+          className="flex flex-col sm:flex-row gap-2"
+          onSubmit={(event) => { event.preventDefault(); handleAddCategory(); }}
+        >
+          <input
+            type="text"
+            value={newCategoryName}
+            onChange={(event) => { setNewCategoryName(event.target.value); setCategoryMessage(''); }}
+            maxLength={60}
+            placeholder="اكتب اسم تصنيف جديد..."
+            className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-600"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            إضافة التصنيف
+          </button>
+        </form>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold text-slate-600">اقتراحات جاهزة لمتاجر الأبواب والنوافذ:</p>
+          <div className="flex flex-wrap gap-2">
+            {['أبواب', 'نوافذ', 'أبواب كبيرة', 'شبابيك الحدائق'].filter((name) =>
+              !customCategories.some((existing) => existing.toLocaleLowerCase() === name.toLocaleLowerCase())
+            ).map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => handleAddCategory(name)}
+                className="px-3 py-2 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 rounded-xl text-xs font-bold transition"
+              >
+                <span className="inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />{name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {categoryMessage && <p className="text-xs text-indigo-700">{categoryMessage}</p>}
+
+        <div className="flex flex-wrap gap-2">
+          {customCategories.length > 0 ? customCategories.map((name) => (
+            <span key={name} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-800 border border-indigo-100 rounded-xl text-xs font-bold">
+              {name}
+              <button
+                type="button"
+                onClick={() => handleDeleteCategory(name)}
+                aria-label={`حذف تصنيف ${name}`}
+                title="حذف التصنيف"
+                className="text-rose-500 hover:text-rose-700"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )) : (
+            <p className="text-[11px] text-slate-400">لم تضف تصنيفات مخصصة بعد. يمكنك إضافة تصنيفات حسب نشاطك التجاري.</p>
+          )}
+        </div>
+      </section>
 
       {/* Search Input */}
       <div className="relative max-w-md">
@@ -392,7 +516,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ store, onUpdateStore }
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition font-medium"
                   >
-                    {BUSINESS_CATEGORIES.map((cat) => (
+                    {productCategoryOptions.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>

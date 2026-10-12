@@ -1848,7 +1848,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 onClick={onOpenAdminLoginModal}
                 className="text-slate-700 hover:text-slate-300"
               >
-                إدارة المنصة
+                حقوق النشر
               </button>
             </div>
           </div>

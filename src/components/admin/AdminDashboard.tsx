@@ -39,7 +39,10 @@ import {
   CalendarDays,
   Clock,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Download,
+  Smartphone,
+  Upload
 } from 'lucide-react';
 import {
   AdminBaridimobDetails,
@@ -64,7 +67,7 @@ interface AdminDashboardProps {
   onOpenInfinityFreeModal: () => void;
 }
 
-type Tab = 'overview' | 'ads' | 'merchants' | 'stores' | 'products' | 'orders' | 'subscriptions' | 'announcements' | 'baridimob' | 'notifications';
+type Tab = 'overview' | 'ads' | 'merchants' | 'stores' | 'products' | 'orders' | 'subscriptions' | 'announcements' | 'baridimob' | 'notifications' | 'android';
 const statuses = ['جديد', 'قيد المعالجة', 'تم الشحن', 'تم التوصيل', 'ملغي'];
 
 type SubscriptionPlan = {
@@ -115,6 +118,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [baridimobForm, setBaridimobForm] = useState<AdminBaridimobDetails>(getAdminBaridimob());
   const [announcements, setAnnouncements] = useState<PlatformAnnouncement[]>(getPlatformAnnouncements());
   const [notificationsList, setNotificationsList] = useState<MerchantNotification[]>(getMerchantNotifications());
+  const [androidAppUrl, setAndroidAppUrl] = useState('');
+  const [uploadingAndroidApp, setUploadingAndroidApp] = useState(false);
 
   // Subscription plans management
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
@@ -192,6 +197,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (sData.baridimob) setBaridimobForm(sData.baridimob);
         if (sData.announcements) setAnnouncements(sData.announcements);
         if (sData.notifications) setNotificationsList(sData.notifications);
+        if (typeof sData.androidAppUrl === 'string') setAndroidAppUrl(sData.androidAppUrl);
       }
 
       await loadSubscriptionPlans();
@@ -662,6 +668,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
+  const handleAndroidAppUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.apk')) {
+      setError('يرجى اختيار ملف تطبيق بامتداد APK.');
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      setError('يجب ألا يتجاوز حجم التطبيق 100 ميغابايت.');
+      return;
+    }
+
+    setError('');
+    setUploadingAndroidApp(true);
+    try {
+      const result = await api.uploadAndroidApp(file);
+      if (!result.ok) throw new Error(result.error || 'تعذر رفع التطبيق.');
+
+      const uploadedUrl = result.data?.androidAppUrl;
+      if (typeof uploadedUrl !== 'string' || !uploadedUrl) {
+        throw new Error('تم رفع الملف لكن لم يصل رابط التنزيل من الخادم.');
+      }
+
+      setAndroidAppUrl(uploadedUrl);
+      showTempSuccess('تم رفع تطبيق أندرويد وتحديث رابط التنزيل في الصفحة الرئيسية.');
+    } catch (uploadError: any) {
+      setError(uploadError.message || 'تعذر رفع التطبيق.');
+    } finally {
+      setUploadingAndroidApp(false);
+    }
+  };
+
   const nav = (id: Tab, label: string, icon: React.ReactNode) => (
     <button
       onClick={() => {
@@ -728,6 +769,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {nav('ads', 'إدارة الإعلانات 📣', <Megaphone className="w-4 h-4 text-amber-500" />)}
                 {nav('announcements', 'شريط المنصة 📢', <Megaphone className="w-4 h-4 text-amber-500" />)}
                 {nav('baridimob', 'بريدي موب المدير 💳', <CreditCard className="w-4 h-4 text-emerald-500" />)}
+                {nav('android', 'تطبيق أندرويد', <Smartphone className="w-4 h-4 text-emerald-500" />)}
                 {nav('notifications', 'إشعارات البائعين 🚀', <Bell className="w-4 h-4 text-indigo-500" />)}
                 {nav('merchants', 'البائعون', <Users className="w-4 h-4" />)}
                 {nav('stores', 'المتاجر', <Building2 className="w-4 h-4" />)}
@@ -743,7 +785,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {successMsg && <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in"><CheckCircle2 className="w-4 h-4 text-emerald-600"/>{successMsg}</div>}
         {loading && <div className="text-xs font-bold text-indigo-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5 animate-spin"/>جاري تحديث لوحة الإدارة من الخادم...</div>}
 
-        {tab !== 'overview' && tab !== 'baridimob' && tab !== 'announcements' && tab !== 'notifications' && tab !== 'ads' && (
+        {tab !== 'overview' && tab !== 'baridimob' && tab !== 'announcements' && tab !== 'notifications' && tab !== 'ads' && tab !== 'android' && (
           <div className="relative">
             <Search className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
             <input
@@ -753,6 +795,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="w-full pr-10 pl-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm outline-none focus:border-indigo-500"
             />
           </div>
+        )}
+
+        {tab === 'android' && (
+          <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-sm">
+            <div className="relative overflow-hidden bg-gradient-to-r from-indigo-950 via-violet-900 to-emerald-700 p-6 text-white sm:p-8">
+              <div className="absolute -left-10 -top-16 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl" />
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="max-w-2xl">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-black text-emerald-100">
+                    <Smartphone className="h-4 w-4" />
+                    YOUmi Android
+                  </span>
+                  <h2 className="mt-3 text-xl font-black sm:text-2xl">إدارة تطبيق أندرويد</h2>
+                  <p className="mt-2 text-xs leading-6 text-indigo-100 sm:text-sm">
+                    ارفع ملف APK الرسمي ليظهر زر تنزيله تلقائياً في الصفحة الرئيسية للمنصة.
+                    الحد الأقصى لحجم الملف 100 ميغابايت.
+                  </p>
+                </div>
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center self-start rounded-3xl border border-white/20 bg-white/10 shadow-lg sm:self-center">
+                  <Download className="h-9 w-9 text-emerald-200" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-5 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-black text-slate-900">
+                  {androidAppUrl ? 'التطبيق متاح للتنزيل' : 'لم يتم رفع التطبيق بعد'}
+                </p>
+                <p className="mt-1 text-xs leading-6 text-slate-500">
+                  {androidAppUrl
+                    ? 'رفع إصدار جديد سيستبدل الملف الحالي ويحدّث رابط التنزيل على الصفحة الرئيسية.'
+                    : 'اختر ملف APK صالحاً من جهازك لبدء إتاحته لزوار المنصة.'}
+                </p>
+                {androidAppUrl && (
+                  <a
+                    href={androidAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 break-all text-xs font-bold text-indigo-700 underline decoration-indigo-200 underline-offset-4 hover:text-indigo-900"
+                  >
+                    <Download className="h-4 w-4 shrink-0" />
+                    تنزيل النسخة الحالية
+                  </a>
+                )}
+              </div>
+
+              <label className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-violet-700 ${uploadingAndroidApp ? 'pointer-events-none opacity-60' : ''}`}>
+                <Upload className="h-4 w-4" />
+                {uploadingAndroidApp ? 'جارٍ رفع التطبيق...' : androidAppUrl ? 'رفع إصدار جديد' : 'اختر ملف APK وارفعه'}
+                <input
+                  type="file"
+                  accept=".apk,application/vnd.android.package-archive"
+                  onChange={handleAndroidAppUpload}
+                  disabled={uploadingAndroidApp}
+                  className="sr-only"
+                />
+              </label>
+            </div>
+          </section>
         )}
 
         {/* 1. OVERVIEW TAB */}

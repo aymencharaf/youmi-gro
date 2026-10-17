@@ -9,6 +9,8 @@ This project is prepared to wrap the existing YOUmi website in an Android app wh
 - Hosted platform: `https://youmi.wuaze.com`
 - Capacitor: 7.x
 - Existing website and PHP backend remain the source of truth.
+- The Android back button closes the current dialog or overlay first, returns to the platform home from inner screens, and exits only from the home screen.
+- The mobile platform navigation includes a direct shortcut to the reels feed.
 
 ## Create the Android project (one time)
 
@@ -24,11 +26,17 @@ npm run android:open
 
 Android Studio is required to build and sign the APK/AAB. In Android Studio, wait for Gradle sync to finish, then use **Build > Build Bundle(s) / APK(s)** for testing. For Google Play, create a signed **Android App Bundle (.aab)** using **Build > Generate Signed Bundle / APK**.
 
-After frontend/config changes, run:
+The Android app loads `https://youmi.wuaze.com`, so publish the website first to make the latest platform interface available in the app. After native plugin, frontend, or Capacitor config changes, run:
 
 ```bash
 npm run android:sync
 ```
+
+Increment the Android `versionCode` and `versionName` in `android/app/build.gradle` before distributing an updated APK/AAB.
+
+## Publish the APK for visitors
+
+After building the release APK, sign in to the YOUmi admin dashboard and open **تطبيق أندرويد**. Upload the `.apk` file there (maximum 100 MB). The server stores it in `public/downloads/youmi-app.apk`, and the homepage download button is linked to the newly uploaded version automatically. The hosting account must allow PHP uploads and writing to `public/downloads`; check the host's PHP upload limit if a large APK is rejected.
 
 ## Important release notes
 

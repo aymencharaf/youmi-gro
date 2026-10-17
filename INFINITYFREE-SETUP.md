@@ -14,10 +14,10 @@
 لا ترفع `config.php` إلى GitHub.
 
 ## 2) رفع الملفات
-ارفع محتويات `dist/` إلى `htdocs/`. يجب أيضًا أن يكون `api.php` داخل نفس المسار الذي تستعمله الواجهة، لذلك تأكد أن `public/api.php` يدخل إلى `dist/api.php` أثناء البناء/النشر. إذا لم ينسخه Vite، انسخه إلى `dist/` قبل الرفع.
+شغّل `npm run build` ثم ارفع محتويات `dist/` إلى `htdocs/`، مع استبدال الملفات القديمة. يتضمن البناء `api.php` و`.htaccess`؛ تأكد من وجودهما في جذر `htdocs/`. يحتوي `.htaccess` على استثناء يمنع توجيه طلب `/api.php` إلى `index.html`.
 
 ## 3) الاختبار
-افتح `/api.php?action=status`. يجب أن يظهر `database: connected`.
+افتح `/api.php?action=status`. يجب أن يظهر JSON يتضمن `database: connected`. إذا ظهرت صفحة الموقع بدل JSON، ارفع `api.php` و`.htaccess` من البناء الأخير إلى جذر `htdocs/` وتأكد أن PHP مفعّل على الاستضافة.
 ثم افتح الموقع؛ أول طلب إلى `/api.php?action=stores` ينشئ البيانات الأولية إذا كانت القاعدة فارغة.
 
 ## 4) GitHub Actions

@@ -7,6 +7,7 @@ import { CheckoutModal } from './CheckoutModal';
 import { OrderSuccessModal } from './OrderSuccessModal';
 import { OrderTrackerModal } from './OrderTrackerModal';
 import { AdPlacement } from '../ads/AdPlacement';
+import { ReelsSection } from '../ReelsSection';
 import {
   ShoppingBag,
   Search,
@@ -76,6 +77,40 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleBack = (event: Event) => {
+      if (selectedProduct) {
+        event.preventDefault();
+        setSelectedProduct(null);
+      } else if (completedOrder) {
+        event.preventDefault();
+        setCompletedOrder(null);
+      } else if (isCheckoutOpen) {
+        event.preventDefault();
+        setIsCheckoutOpen(false);
+      } else if (isCartOpen) {
+        event.preventDefault();
+        setIsCartOpen(false);
+      } else if (isTrackerOpen) {
+        event.preventDefault();
+        setIsTrackerOpen(false);
+      } else if (isContactModalOpen) {
+        event.preventDefault();
+        setIsContactModalOpen(false);
+      }
+    };
+
+    window.addEventListener('youmi:android-back', handleBack);
+    return () => window.removeEventListener('youmi:android-back', handleBack);
+  }, [
+    selectedProduct,
+    completedOrder,
+    isCheckoutOpen,
+    isCartOpen,
+    isTrackerOpen,
+    isContactModalOpen,
+  ]);
 
   const categories = [
     'الكل',
@@ -424,6 +459,13 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
           </div>
         </div>
       </section>
+
+      <ReelsSection
+        id="store-reels"
+        title={`ريلز ${store.name}`}
+        items={(store.reels || []).map((reel) => ({ reel, store }))}
+        onSelectProduct={(product) => setSelectedProduct(product)}
+      />
 
       {/* Products */}
       <main
@@ -1349,4 +1391,3 @@ export const StoreFrontView: React.FC<StoreFrontViewProps> = ({
     </div>
   );
 };
-

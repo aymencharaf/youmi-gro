@@ -98,8 +98,7 @@ set_exception_handler(function (Throwable $e) {
 
     echo json_encode([
         'status' => 'error',
-        'message' => 'خطأ PHP في الخادم.',
-        'debug' => $e->getMessage()
+        'message' => 'خطأ PHP في الخادم.'
     ], JSON_UNESCAPED_UNICODE);
 
     exit;
@@ -141,10 +140,7 @@ register_shutdown_function(function () {
 
         echo json_encode([
             'status' => 'error',
-            'message' => 'حدث خطأ داخلي في الخادم.',
-            'debug' => $e['message'],
-            'file' => basename($e['file']),
-            'line' => $e['line']
+            'message' => 'حدث خطأ داخلي في الخادم.'
         ], JSON_UNESCAPED_UNICODE);
     }
 });
@@ -285,9 +281,7 @@ function db()
         out([
             'status' => 'error',
             'message' =>
-                'تعذر الاتصال بقاعدة البيانات.',
-            'debug' =>
-                $e->getMessage()
+                'تعذر الاتصال بقاعدة البيانات.'
         ], 500);
     }
 
@@ -1181,9 +1175,7 @@ function tenantDb($storeId)
         out([
             'status' => 'error',
             'message' =>
-                'تعذر الاتصال بقاعدة بيانات المتجر.',
-            'debug' =>
-                $e->getMessage()
+                'تعذر الاتصال بقاعدة بيانات المتجر.'
         ], 500);
     }
 }
@@ -1920,9 +1912,7 @@ try {
     out([
         'status' => 'error',
         'message' =>
-            'حدث خطأ أثناء تهيئة قاعدة البيانات.',
-        'debug' =>
-            $e->getMessage()
+            'حدث خطأ أثناء تهيئة قاعدة البيانات.'
     ], 500);
 }
 
@@ -3394,6 +3384,13 @@ if (
         $r
             ? decodeStore($r)
             : [];
+
+    if (
+        !isset($s['reels']) &&
+        isset($old['reels'])
+    ) {
+        $s['reels'] = $old['reels'];
+    }
 
     $s['orders'] =
         $old['orders'] ?? [];
@@ -5184,9 +5181,7 @@ if (
         out([
             'status' => 'error',
             'message' =>
-                'تعذر حفظ الطلب.',
-            'debug' =>
-                $e->getMessage()
+                'تعذر حفظ الطلب.'
         ], 500);
     }
 
@@ -6150,6 +6145,13 @@ if (
             : [];
 
     if (
+        !isset($s['reels']) &&
+        isset($old['reels'])
+    ) {
+        $s['reels'] = $old['reels'];
+    }
+
+    if (
         isset(
             $old['orders']
         ) &&
@@ -6249,6 +6251,97 @@ if (
 |--------------------------------------------------------------------------
 */
 
+if ($action === 'admin_upload_android_app') {
+
+    admin();
+
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        out([
+            'status' => 'error',
+            'message' => 'طريقة رفع الملف غير صالحة.'
+        ], 405);
+    }
+
+    $upload = $_FILES['app'] ?? null;
+    if (!is_array($upload)) {
+        out([
+            'status' => 'error',
+            'message' => 'لم يصل ملف التطبيق. تحقق من حد الرفع في الاستضافة.'
+        ], 400);
+    }
+
+    if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $message = ($upload['error'] ?? null) === UPLOAD_ERR_INI_SIZE
+            || ($upload['error'] ?? null) === UPLOAD_ERR_FORM_SIZE
+            ? 'حجم التطبيق يتجاوز الحد المسموح به في الاستضافة.'
+            : 'تعذر استقبال ملف التطبيق. حاول رفعه مجدداً.';
+
+        out([
+            'status' => 'error',
+            'message' => $message
+        ], 400);
+    }
+
+    $maxSize = 100 * 1024 * 1024;
+    $tmpPath = $upload['tmp_name'] ?? '';
+    $fileSize = (int) ($upload['size'] ?? 0);
+    $extension = strtolower(pathinfo($upload['name'] ?? '', PATHINFO_EXTENSION));
+    $signature = $tmpPath && is_uploaded_file($tmpPath)
+        ? file_get_contents($tmpPath, false, null, 0, 4)
+        : false;
+
+    if (
+        $extension !== 'apk'
+        || $fileSize < 4
+        || $fileSize > $maxSize
+        || $signature !== "PK\x03\x04"
+    ) {
+        out([
+            'status' => 'error',
+            'message' => 'اختر ملف APK صالحاً لا يتجاوز حجمه 100 ميغابايت.'
+        ], 400);
+    }
+
+    $downloadDirectory = __DIR__ . '/downloads';
+    if (
+        !is_dir($downloadDirectory)
+        && !mkdir($downloadDirectory, 0755, true)
+        && !is_dir($downloadDirectory)
+    ) {
+        out([
+            'status' => 'error',
+            'message' => 'تعذر تجهيز مجلد تنزيل التطبيق على الخادم.'
+        ], 500);
+    }
+
+    $destination = $downloadDirectory . '/youmi-app.apk';
+    if (!move_uploaded_file($tmpPath, $destination)) {
+        out([
+            'status' => 'error',
+            'message' => 'تعذر حفظ التطبيق على الخادم. تحقق من صلاحيات مجلد التنزيل.'
+        ], 500);
+    }
+
+    $version = hash_file('sha256', $destination);
+    if (!is_string($version)) {
+        out([
+            'status' => 'error',
+            'message' => 'تعذر إنشاء رابط إصدار التطبيق بعد رفعه.'
+        ], 500);
+    }
+
+    db()->prepare(
+        "INSERT INTO settings (k,v)
+         VALUES ('android_app_version',?)
+         ON DUPLICATE KEY UPDATE v=VALUES(v)"
+    )->execute([$version]);
+
+    out([
+        'status' => 'success',
+        'androidAppUrl' => '/downloads/youmi-app.apk?v=' . rawurlencode($version)
+    ]);
+}
+
 if (
     $action ===
         'get_platform_settings'
@@ -6276,6 +6369,13 @@ if (
             "SELECT v
              FROM settings
              WHERE k='merchant_notifications'"
+        )->fetchColumn();
+
+    $androidAppVersion =
+        $p->query(
+            "SELECT v
+             FROM settings
+             WHERE k='android_app_version'"
         )->fetchColumn();
 
     $b =
@@ -6314,7 +6414,12 @@ if (
         'notifications' =>
             is_array($n)
                 ? $n
-                : []
+                : [],
+
+        'androidAppUrl' =>
+            $androidAppVersion
+                ? '/downloads/youmi-app.apk?v=' . rawurlencode((string) $androidAppVersion)
+                : ''
     ]);
 }
 

@@ -33,6 +33,7 @@ export const InfinityFreeModal: React.FC<InfinityFreeModalProps> = ({ isOpen, on
   RewriteEngine On
   RewriteBase /
   RewriteRule ^index\\.html$ - [L]
+  RewriteRule ^api\\.php$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-l
@@ -61,14 +62,34 @@ export const InfinityFreeModal: React.FC<InfinityFreeModalProps> = ({ isOpen, on
     setTestResult(null);
     try {
       const res = await fetch('/api.php?action=status');
-      if (res.ok) {
-        const data = await res.json();
-        setTestResult(`✅ تم الاتصال بنجاح بـ PHP Bridge:\n${JSON.stringify(data, null, 2)}`);
-      } else {
-        setTestResult(`⚠️ الاستجابة غير مباشرة (${res.status}). سيتم العمل محلياً كـ SPA.`);
+      const responseText = await res.text();
+      let data: unknown;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        setTestResult(
+          `❌ أعاد الخادم استجابة غير صالحة بصيغة JSON (HTTP ${res.status}). غالباً يعرض index.html بدلاً من api.php. ارفع api.php وملف .htaccess المحدّث من dist/ إلى htdocs/.`
+        );
+        return;
       }
-    } catch {
-      setTestResult('ℹ️ التطبيق يعمل كـ React SPA متكامل. عند الرفع على InfinityFree سيتم تفعيل سيرفر PHP تلقائياً.');
+
+      const status =
+        data && typeof data === 'object' && 'status' in data
+          ? data.status
+          : undefined;
+
+      if (!res.ok || status !== 'success') {
+        setTestResult(
+          `❌ فشل اختبار PHP (HTTP ${res.status}):\n${JSON.stringify(data, null, 2)}`
+        );
+        return;
+      }
+
+      setTestResult(`✅ تم الاتصال بنجاح بـ PHP Bridge:\n${JSON.stringify(data, null, 2)}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setTestResult(`❌ تعذر الاتصال بـ PHP API: ${message}`);
     } finally {
       setLoadingTest(false);
     }
@@ -173,7 +194,7 @@ export const InfinityFreeModal: React.FC<InfinityFreeModalProps> = ({ isOpen, on
                   <span>رفع المحتويات في htdocs</span>
                 </div>
                 <p className="text-slate-600 text-[11px]">
-                  قم برفع جميع محتويات مجلد <code className="bg-slate-200 px-1 rounded font-mono">dist</code> مباشرة داخل <code className="bg-slate-200 px-1 rounded font-mono">htdocs</code> مع التأكد من وجود ملف <code className="bg-slate-200 px-1 rounded font-mono">.htaccess</code>.
+                  ارفع جميع محتويات <code className="bg-slate-200 px-1 rounded font-mono">dist</code> إلى <code className="bg-slate-200 px-1 rounded font-mono">htdocs</code>، بما فيها <code className="bg-slate-200 px-1 rounded font-mono">api.php</code> و<code className="bg-slate-200 px-1 rounded font-mono">.htaccess</code> المحدّث.
                 </p>
               </div>
 

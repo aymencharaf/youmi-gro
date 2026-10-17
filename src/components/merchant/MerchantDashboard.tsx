@@ -11,6 +11,7 @@ import { CouponsTab } from './CouponsTab';
 import { AiAssistantTab } from './AiAssistantTab';
 import { MerchantAdsTab } from './MerchantAdsTab';
 import { MerchantReelsTab } from './MerchantReelsTab';
+import { ReelsTab } from './ReelsTab';
 import { SubscriptionModal } from './SubscriptionModal';
 import { getAdminBaridimob, getMerchantNotifications, MerchantNotification, markNotificationAsRead } from '../../lib/adminSettings';
 import { 
@@ -53,7 +54,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   onOpenStorefront = (_store: Store) => {},
   onOpenInfinityFreeModal = () => {},
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customizer' | 'coupons' | 'ai' | 'ads' | 'reels'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customizer' | 'coupons' | 'ai' | 'ads' | 'reels' | 'store-reels'>('overview');
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showAdminNotifsModal, setShowAdminNotifsModal] = useState(false);
@@ -340,6 +341,23 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
             <span>فيديوهاتي Reels</span>
           </button>
 
+          <button
+            onClick={() => setActiveTab('store-reels')}
+            className={`w-full px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-between ${
+              activeTab === 'store-reels'
+                ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20'
+                : 'text-rose-700 hover:bg-white'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Video className="w-4 h-4" />
+              <span>ريلز روابط المتجر</span>
+            </span>
+            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] text-rose-700">
+              {currentStore.reels?.length || 0}
+            </span>
+          </button>
+
           <div className="pt-4 border-t border-slate-200">
             <button
               onClick={() => setShowSubscriptionModal(true)}
@@ -397,6 +415,9 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
 
           {activeTab === 'ai' && <AiAssistantTab store={currentStore} />}
           {activeTab === 'reels' && <MerchantReelsTab store={currentStore} />}
+          {activeTab === 'store-reels' && (
+            <ReelsTab store={currentStore} onUpdateStore={onUpdateStore} />
+          )}
         </main>
       </div>
 

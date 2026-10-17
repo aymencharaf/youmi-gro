@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">YOUmi</string>
-    <string name="title_activity_main">YOUmi</string>
+    <string name="app_name">YOUmi B2B</string>
+    <string name="title_activity_main">YOUmi B2B</string>
     <string name="package_name">com.youmi.gro</string>
     <string name="custom_url_scheme">com.youmi.gro</string>
 </resources>

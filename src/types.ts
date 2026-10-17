@@ -82,6 +82,14 @@ export interface Product {
   };
 }
 
+export interface StoreReel {
+  id: string;
+  videoUrl: string;
+  caption: string;
+  productId?: string;
+  createdAt: string;
+}
+
 export interface OrderItem {
   productId: string;
   productTitle: string;
@@ -172,6 +180,7 @@ export interface Store {
   currency: string;           // دائماً "دج" (دينار جزائري)
   createdAt: string;
   subscription?: MerchantSubscription; // اشتراك التاجر في المنصة (30 يوماً مجاناً + بريدي موب)
+  reels?: StoreReel[];
   settings: StoreSettings;
   products: Product[];
   orders: Order[];
@@ -261,5 +270,4 @@ export interface AdSettings {
   maxAdsPerPosition: number;
   defaultAdDurationDays: number;
 }
-
 

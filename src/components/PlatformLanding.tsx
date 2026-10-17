@@ -39,8 +39,10 @@ import {
   Phone,
   HelpCircle,
   Play,
+  Download,
 } from 'lucide-react';
 import { B2BMember } from './MemberAuthModal';
+import { ReelsSection } from './ReelsSection';
 import { getPlatformAnnouncements, PlatformAnnouncement } from '../lib/adminSettings';
 import { AdPlacement } from './ads/AdPlacement';
 import { GoogleAd } from './ads/GoogleAd';
@@ -98,6 +100,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [heroSlide, setHeroSlide] = useState(0);
+  const [activeProductTab, setActiveProductTab] = useState<
+    'all' | 'popular' | 'new' | 'discount'
+  >('all');
+  const [androidAppUrl, setAndroidAppUrl] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<{ product: Product; store: Store } | null>(null);
   const [cartItems, setCartItems] = useState<{ product: Product; store: Store; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -130,6 +136,29 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
     };
     window.addEventListener('youmi_settings_updated', update);
     return () => window.removeEventListener('youmi_settings_updated', update);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void api.getPlatformSettings().then((result) => {
+      if (!isMounted) return;
+      if (!result.ok) {
+        console.warn('تعذر تحميل رابط تطبيق أندرويد:', result.error);
+        return;
+      }
+
+      const url = result.data?.androidAppUrl;
+      setAndroidAppUrl(typeof url === 'string' ? url : '');
+    }).catch((error: unknown) => {
+      if (isMounted) {
+        console.warn('تعذر تحميل رابط تطبيق أندرويد:', error);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const categories = [
@@ -177,6 +206,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
     return result;
   }, [stores]);
 
+  const allStoreReels = useMemo(
+    () =>
+      stores.flatMap((store) =>
+        (store.reels || []).map((reel) => ({ reel, store }))
+      ),
+    [stores]
+  );
+
   const filteredProducts = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return allProducts.filter(({ product, store }) => {
@@ -189,9 +226,19 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         selectedCategory === 'الكل' ||
         product.category.includes(selectedCategory) ||
         store.category.includes(selectedCategory);
-      return matchesSearch && matchesCategory;
+
+      const matchesTab =
+        activeProductTab === 'all' ||
+        (activeProductTab === 'popular' &&
+          (product.ratings?.score || 0) >= 4.5) ||
+        (activeProductTab === 'new' && !!product.badge) ||
+        (activeProductTab === 'discount' &&
+          !!product.compareAtPrice &&
+          product.compareAtPrice > product.price);
+
+      return matchesSearch && matchesCategory && matchesTab;
     });
-  }, [allProducts, searchTerm, selectedCategory]);
+  }, [allProducts, searchTerm, selectedCategory, activeProductTab]);
 
   const featuredProducts = useMemo(() => {
     const source = filteredProducts.length ? filteredProducts : allProducts;
@@ -522,6 +569,16 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         )}
       </section>
 
+      <ReelsSection
+        id="store-reels"
+        title="ريلز المتاجر"
+        items={allStoreReels}
+        onSelectStore={(store) => onSelectStore(store, 'STORE_FRONT')}
+        onSelectProduct={(product, store) =>
+          setSelectedProduct({ product, store })
+        }
+      />
+
       {/* Categories */}
       <section id="categories" className="max-w-[1240px] mx-auto px-4 py-7 scroll-mt-28">
         <div className="flex items-center justify-between mb-5">
@@ -570,6 +627,31 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           <button onClick={() => setSelectedCategory('الكل')} className="text-[#6B3FA0] font-bold text-xs flex items-center gap-1">
             عرض الكل <ArrowLeft className="w-3.5 h-3.5" />
           </button>
+        </div>
+
+        <div className="mb-4 flex gap-2 overflow-x-auto">
+          {[
+            ['all', 'الكل'],
+            ['popular', 'الأعلى تقييماً'],
+            ['new', 'جديد'],
+            ['discount', 'التخفيضات'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() =>
+                setActiveProductTab(
+                  id as 'all' | 'popular' | 'new' | 'discount'
+                )
+              }
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+                activeProductTab === id
+                  ? 'bg-[#35204A] text-white'
+                  : 'bg-white text-[#5D5365] hover:bg-[#F7F1FA]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {featuredProducts.length === 0 ? (
@@ -720,6 +802,35 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
       <section id="offers" className="max-w-[1240px] mx-auto px-4 py-6 scroll-mt-28">
         <AdPlacement placement="sponsored_grid" stores={stores} onSelectStore={(s) => onSelectStore(s, 'STORE_FRONT')} />
+      </section>
+
+      <section className="mx-auto max-w-[1240px] px-4 py-4">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-gradient-to-r from-indigo-950 via-violet-950 to-slate-950 p-5 text-white sm:flex-row sm:items-center sm:p-7">
+          <div>
+            <p className="text-xs font-black text-amber-300">YOUmi للأندرويد</p>
+            <h2 className="mt-2 text-lg font-black sm:text-xl">
+              تسوّق وأدر متجرك من تطبيق YOUmi
+            </h2>
+            <p className="mt-1 text-xs leading-6 text-indigo-100">
+              وصول أسرع إلى المتاجر والمنتجات والطلبات أينما كنت.
+            </p>
+          </div>
+          {androidAppUrl ? (
+            <a
+              href={androidAppUrl}
+              download
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-300 px-5 py-3 text-xs font-black text-indigo-950 transition hover:bg-emerald-200"
+            >
+              <Download className="h-5 w-5" />
+              تحميل تطبيق أندرويد
+            </a>
+          ) : (
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-xs font-bold text-white/75">
+              <Smartphone className="h-5 w-5" />
+              التطبيق قريباً
+            </span>
+          )}
+        </div>
       </section>
 
       <div className="max-w-[1240px] mx-auto px-4 py-4">

@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { Store, AppView } from './types';
 
 import {
@@ -125,6 +127,54 @@ export default function App() {
       setCurrentView('REELS');
     }
   }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let isMounted = true;
+    let removeListener: (() => void) | undefined;
+
+    void CapacitorApp.addListener('backButton', () => {
+      const backEvent = new Event('youmi:android-back', {
+        cancelable: true,
+      });
+      window.dispatchEvent(backEvent);
+      if (backEvent.defaultPrevented) return;
+
+      if (wheelStore) {
+        setWheelStore(null);
+      } else if (infinityFreeOpen) {
+        setInfinityFreeOpen(false);
+      } else if (memberAuthOpen) {
+        setMemberAuthOpen(false);
+      } else if (adminLoginOpen) {
+        setAdminLoginOpen(false);
+      } else if (currentView !== 'PLATFORM_HOME') {
+        setCurrentView('PLATFORM_HOME');
+      } else {
+        void CapacitorApp.exitApp();
+      }
+    }).then((listener) => {
+      if (isMounted) {
+        removeListener = () => {
+          void listener.remove();
+        };
+      } else {
+        void listener.remove();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      removeListener?.();
+    };
+  }, [
+    currentView,
+    wheelStore,
+    infinityFreeOpen,
+    memberAuthOpen,
+    adminLoginOpen,
+  ]);
 
   /**
    * تحميل المتاجر العامة.

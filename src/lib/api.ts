@@ -9,13 +9,18 @@ async function request<T = any>(
   init: RequestInit = {}
 ): Promise<ApiResult<T>> {
   try {
+    const isFormData =
+      typeof FormData !== 'undefined' &&
+      init.body instanceof FormData;
     const res = await fetch(
       `/api.php?action=${encodeURIComponent(action)}`,
       {
         credentials: 'include',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json',
+          ...(!isFormData && init.body
+            ? { 'Content-Type': 'application/json' }
+            : {}),
           ...(init.headers || {}),
         },
         ...init,
@@ -482,6 +487,15 @@ export const api = {
     request(
       'get_platform_settings'
     ),
+
+  uploadAndroidApp: (file: File) => {
+    const formData = new FormData();
+    formData.append('app', file);
+    return request('admin_upload_android_app', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 
   savePlatformSettings: (
     payload: any

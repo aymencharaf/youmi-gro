@@ -1,0 +1,14 @@
+Options -Indexes
+
+<IfModule mod_mime.c>
+  AddType application/vnd.android.package-archive .apk
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header set Content-Disposition "attachment"
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+<FilesMatch "\.(php[0-9]?|phtml|phar)$">
+  Require all denied
+</FilesMatch>

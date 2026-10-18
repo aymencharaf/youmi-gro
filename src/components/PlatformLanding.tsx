@@ -162,16 +162,16 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   }, []);
 
   const categories = [
-    { name: 'إلكترونيات', icon: Laptop, bg: 'bg-[#F7F1FA]', color: 'text-[#6B3FA0]' },
-    { name: 'هواتف وملحقاتها', icon: Smartphone, bg: 'bg-[#F0E8F7]', color: 'text-[#6B3FA0]' },
+    { name: 'إلكترونيات', icon: Laptop, bg: 'bg-[#E8F3ED]', color: 'text-[#176653]' },
+    { name: 'هواتف وملحقاتها', icon: Smartphone, bg: 'bg-[#E8F3ED]', color: 'text-[#176653]' },
     { name: 'أزياء وموضة', icon: Shirt, bg: 'bg-orange-50', color: 'text-orange-500' },
-    { name: 'أحذية وحقائب', icon: Footprints, bg: 'bg-violet-50', color: 'text-violet-600' },
+    { name: 'أحذية وحقائب', icon: Footprints, bg: 'bg-teal-50', color: 'text-teal-700' },
     { name: 'منزل ومطبخ', icon: Home, bg: 'bg-emerald-50', color: 'text-emerald-600' },
     { name: 'أدوات ومواد البناء', icon: Wrench, bg: 'bg-rose-50', color: 'text-rose-500' },
     { name: 'تجميل وصحة', icon: Sparkles, bg: 'bg-pink-50', color: 'text-pink-500' },
     { name: 'رياضة وترفيه', icon: Dumbbell, bg: 'bg-cyan-50', color: 'text-cyan-600' },
     { name: 'أطفال ورضع', icon: Baby, bg: 'bg-sky-50', color: 'text-sky-600' },
-    { name: 'مستلزمات مكتبية', icon: Sofa, bg: 'bg-[#F0E8F7]', color: 'text-[#5D5365]' },
+    { name: 'مستلزمات مكتبية', icon: Sofa, bg: 'bg-[#E8F3ED]', color: 'text-[#176653]' },
   ];
 
   const heroSlides = [
@@ -275,17 +275,17 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
   return (
     <div
       dir={lang === 'AR' ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-[#FFF8F0] text-[#27232D] font-['Tajawal',sans-serif] antialiased"
+      className="min-h-screen bg-[#F6FAF7] text-[#202C28] font-['Tajawal',sans-serif] antialiased"
     >
       {/* Announcement bar */}
-      <div className="bg-[#241431] text-white text-[12px]">
+      <div className="bg-[#12332D] text-white text-[12px]">
         <div className="max-w-[1240px] mx-auto px-4 py-2 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[#F2B544] text-[#241431] px-2.5 py-1 font-black shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[#F4C95D] text-[#12332D] px-2.5 py-1 font-black shrink-0">
               <Flame className="w-3 h-3" />
               {announcements[0]?.badge || 'إعلان المنصة'}
             </span>
-            <span className="truncate text-[#E5D9F2]">
+            <span className="truncate text-[#D4E8DD]">
               {announcements[0]
                 ? `${announcements[0].title}: ${announcements[0].content}`
                 : 'منصة Youmi الجزائرية للتجارة والبيع بالجملة'}
@@ -304,11 +304,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       </div>
 
       {/* Main header */}
-      <header className="bg-white border-b border-[#F0E8F7] sticky top-0 z-40 shadow-[0_2px_15px_rgba(15,23,42,0.04)]">
+      <header className="bg-white border-b border-[#D9E8DF] sticky top-0 z-40 shadow-[0_2px_15px_rgba(15,23,42,0.04)]">
         <div className="max-w-[1240px] mx-auto px-4 h-[76px] flex items-center gap-5">
           <button
             onClick={() => setMobileMenuOpen((v) => !v)}
-            className="lg:hidden w-10 h-10 rounded-xl bg-[#FFF8F0] flex items-center justify-center"
+            className="lg:hidden w-10 h-10 rounded-xl bg-[#F1F7F3] flex items-center justify-center"
             aria-label="القائمة"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -319,17 +319,17 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           </button>
 
           <div className="hidden md:flex flex-1 max-w-[520px] relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#93899A] pointer-events-none" />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#74847B] pointer-events-none" />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && scrollTo('featured-products')}
               placeholder="إبحث عن منتج، متجر أو فئة..."
-              className="w-full h-12 rounded-full border border-[#E5D9F2] bg-[#FFF8F0] pr-12 pl-14 text-sm outline-none focus:border-[#8B5CC7] focus:bg-white transition"
+              className="w-full h-12 rounded-full border border-[#D9E8DF] bg-[#F6FAF7] pr-12 pl-14 text-sm outline-none focus:border-[#27866C] focus:bg-white transition"
             />
             <button
               onClick={() => scrollTo('featured-products')}
-              className="absolute left-1 top-1 w-10 h-10 rounded-full bg-[#35204A] text-white flex items-center justify-center hover:bg-[#241431] transition"
+              className="absolute left-1 top-1 w-10 h-10 rounded-full bg-[#176653] text-white flex items-center justify-center hover:bg-[#12332D] transition"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -339,14 +339,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             {currentMember?.isLoggedIn ? (
               <button
                 onClick={onLogoutMember}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#42394A] hover:text-[#35204A]"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#52635A] hover:text-[#176653]"
               >
                 <LogOut className="w-4 h-4" /> خروج
               </button>
             ) : (
               <button
                 onClick={onOpenMemberAuthModal}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#42394A] hover:text-[#35204A]"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#52635A] hover:text-[#176653]"
               >
                 <User className="w-4 h-4" /> تسجيل الدخول
               </button>
@@ -354,7 +354,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
             <button
               onClick={() => setCartOpen(true)}
-              className="relative w-11 h-11 rounded-full hover:bg-[#F7F1FA] flex items-center justify-center"
+              className="relative w-11 h-11 rounded-full hover:bg-[#E8F3ED] flex items-center justify-center"
               aria-label="السلة"
             >
               <ShoppingCart className="w-5 h-5 text-[#42394A]" />
@@ -367,7 +367,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
             <button
               onClick={() => onNavigate('CREATE_STORE')}
-              className="hidden lg:flex items-center gap-2 bg-[#35204A] hover:bg-[#241431] text-white font-black text-xs rounded-xl px-5 py-3 shadow-sm transition"
+              className="hidden lg:flex items-center gap-2 bg-[#176653] hover:bg-[#12332D] text-white font-black text-xs rounded-xl px-5 py-3 shadow-sm transition"
             >
               <StoreIcon className="w-4 h-4" />
               إنشاء متجر مجاني
@@ -376,40 +376,40 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         </div>
 
         {/* Desktop navigation */}
-        <nav className="hidden lg:block border-t border-[#F0E8F7]">
+        <nav className="hidden lg:block border-t border-[#D9E8DF]">
           <div className="max-w-[1240px] mx-auto h-12 px-4 flex items-center gap-8 text-[13px] font-bold">
-            <button onClick={() => scrollTo('categories')} className="flex items-center gap-2 hover:text-[#35204A]">
+            <button onClick={() => scrollTo('categories')} className="flex items-center gap-2 hover:text-[#176653]">
               <Menu className="w-4 h-4" /> جميع الفئات
             </button>
-            <button onClick={() => scrollTo('featured-products')} className="hover:text-[#35204A]">المنتجات</button>
-            <button onClick={() => scrollTo('featured-stores')} className="hover:text-[#35204A]">المتاجر</button>
-            <button onClick={() => scrollTo('b2b')} className="flex items-center gap-1.5 hover:text-[#35204A]">
+            <button onClick={() => scrollTo('featured-products')} className="hover:text-[#176653]">المنتجات</button>
+            <button onClick={() => scrollTo('featured-stores')} className="hover:text-[#176653]">المتاجر</button>
+            <button onClick={() => scrollTo('b2b')} className="flex items-center gap-1.5 hover:text-[#176653]">
               <Package className="w-4 h-4" /> البيع بالجملة
             </button>
-            <button onClick={() => scrollTo('offers')} className="flex items-center gap-1.5 hover:text-[#35204A]">
+            <button onClick={() => scrollTo('offers')} className="flex items-center gap-1.5 hover:text-[#176653]">
               <Tag className="w-4 h-4" /> العروض
             </button>
-            <button onClick={onOpenReels} className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-700 to-violet-700 px-3 py-1.5 text-white shadow-sm hover:opacity-90">
+            <button onClick={onOpenReels} className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-700 to-teal-600 px-3 py-1.5 text-white shadow-sm hover:opacity-90">
               <Play className="w-4 h-4" /> Reels
             </button>
-            <button onClick={() => scrollTo('support')} className="flex items-center gap-1.5 hover:text-[#35204A]">
+            <button onClick={() => scrollTo('support')} className="flex items-center gap-1.5 hover:text-[#176653]">
               <Headphones className="w-4 h-4" /> اتصل بنا
             </button>
-            <button onClick={() => onNavigate('PLATFORM_HOME')} className="mr-auto w-9 h-9 rounded-full bg-[#F7F1FA] text-[#6B3FA0] flex items-center justify-center">
+            <button onClick={() => onNavigate('PLATFORM_HOME')} className="mr-auto w-9 h-9 rounded-full bg-[#E8F3ED] text-[#176653] flex items-center justify-center">
               <Home className="w-4 h-4" />
             </button>
           </div>
         </nav>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#F0E8F7] bg-white px-4 py-4 space-y-2">
+          <div className="lg:hidden border-t border-[#D9E8DF] bg-white px-4 py-4 space-y-2">
             <div className="relative mb-3">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#93899A]" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#74847B]" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="ابحث عن منتج أو متجر..."
-                className="w-full h-11 bg-[#FFF8F0] rounded-xl pr-10 pl-3 text-sm outline-none"
+                className="w-full h-11 bg-[#F6FAF7] rounded-xl pr-10 pl-3 text-sm outline-none"
               />
             </div>
             {[
@@ -420,12 +420,12 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               ['offers', 'العروض'],
               ['support', 'اتصل بنا'],
             ].map(([id, label]) => (
-              <button key={id} onClick={() => scrollTo(id)} className="w-full text-right px-3 py-2.5 rounded-lg hover:bg-[#F7F1FA] font-bold text-sm">
+              <button key={id} onClick={() => scrollTo(id)} className="w-full text-right px-3 py-2.5 rounded-lg hover:bg-[#E8F3ED] font-bold text-sm">
                 {label}
               </button>
             ))}
-            <button onClick={() => { onOpenReels(); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-700 to-violet-700 px-3 py-3 text-sm font-black text-white"><Play className="h-4 w-4"/> مشاهدة YOUmi Reels</button>
-            <button onClick={onOpenMemberAuthModal} className="w-full text-right px-3 py-2.5 rounded-lg bg-[#F7F1FA] text-[#35204A] font-bold text-sm">
+            <button onClick={() => { onOpenReels(); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-600 px-3 py-3 text-sm font-black text-white"><Play className="h-4 w-4"/> مشاهدة YOUmi Reels</button>
+            <button onClick={onOpenMemberAuthModal} className="w-full text-right px-3 py-2.5 rounded-lg bg-[#E8F3ED] text-[#176653] font-bold text-sm">
               تسجيل الدخول
             </button>
           </div>
@@ -433,14 +433,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[#241431]">
+      <section className="relative overflow-hidden bg-[#12332D]">
         <div className="relative min-h-[410px] md:min-h-[455px]">
           <img
             src={heroSlides[heroSlide].image}
             alt="Youmi Marketplace"
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#241431]/95 via-[#35204A]/75 to-[#6B3FA0]/35" />
+          <div className="absolute inset-0 bg-gradient-to-l from-[#12332D]/95 via-[#176653]/75 to-[#27866C]/35" />
           <div className="relative max-w-[1240px] mx-auto px-5 md:px-8 min-h-[410px] md:min-h-[455px] flex items-center">
             <div className="max-w-[650px] text-white py-12">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 backdrop-blur px-4 py-2 text-xs font-bold mb-5">
@@ -463,7 +463,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                   placeholder="إبحث عن منتج، متجر أو فئة..."
                   className="flex-1 min-w-0 text-sm text-[#27232D] outline-none"
                 />
-                <button onClick={() => scrollTo('featured-products')} className="bg-[#35204A] hover:bg-[#241431] text-white rounded-lg px-5 font-black text-sm">
+                <button onClick={() => scrollTo('featured-products')} className="bg-[#176653] hover:bg-[#12332D] text-white rounded-lg px-5 font-black text-sm">
                   بحث
                 </button>
               </div>
@@ -471,13 +471,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => scrollTo('featured-products')}
-                  className="bg-[#35204A] hover:bg-[#241431] px-6 py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center gap-2"
+                  className="bg-[#176653] hover:bg-[#12332D] px-6 py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center gap-2"
                 >
                   استكشف المنتجات <ArrowLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onNavigate('CREATE_STORE')}
-                  className="bg-white text-[#27232D] hover:bg-[#F0E8F7] px-6 py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center gap-2"
+                  className="bg-white text-[#202C28] hover:bg-[#E8F3ED] px-6 py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center gap-2"
                 >
                   افتح متجرك مجاناً <StoreIcon className="w-4 h-4" />
                 </button>
@@ -510,7 +510,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       </section>
 
       {/* Trust strip */}
-      <section className="border-b border-[#F0E8F7] bg-white">
+      <section className="border-b border-[#D9E8DF] bg-white">
         <div className="max-w-[1240px] mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             [ShieldCheck, 'متاجر موثوقة', 'نبني الثقة بين المشترين والبائعين'],
@@ -519,7 +519,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             [Lock, 'دفع آمن', 'خيارات دفع متعددة حسب المتجر'],
           ].map(([Icon, title, text]) => (
             <div key={String(title)} className="flex items-center justify-center gap-3 text-center md:text-right">
-              <div className="w-11 h-11 rounded-full bg-[#F7F1FA] text-[#6B3FA0] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-[#E8F3ED] text-[#176653] flex items-center justify-center shrink-0">
                 {React.createElement(Icon as React.ElementType, { className: 'w-5 h-5' })}
               </div>
               <div>
@@ -535,21 +535,21 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       <section className="mx-auto max-w-[1240px] px-4 py-8 md:py-10">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
-            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.18em] text-[#8B5CC7]">YOUmi Social Commerce</p>
+            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.18em] text-[#27866C]">YOUmi Social Commerce</p>
             <h2 className="flex items-center gap-2 text-xl font-black text-[#27232D] md:text-2xl">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white shadow-md"><Play className="h-5 w-5 fill-current" /></span>
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md"><Play className="h-5 w-5 fill-current" /></span>
               اكتشف المنتجات عبر Reels
             </h2>
             <p className="mt-1 text-xs text-[#746A7B] md:text-sm">شاهد فيديوهات الموردين ومنتجاتهم مباشرة من الصفحة الرئيسية.</p>
           </div>
-          <button onClick={onOpenReels} className="shrink-0 rounded-full bg-gradient-to-r from-fuchsia-700 to-violet-700 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+          <button onClick={onOpenReels} className="shrink-0 rounded-full bg-gradient-to-r from-emerald-700 to-teal-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
             مشاهدة الكل <ArrowLeft className="mr-1 inline h-4 w-4" />
           </button>
         </div>
         {homeReels.length > 0 ? (
           <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3">
             {homeReels.map((reel) => (
-              <button key={reel.id} onClick={onOpenReels} className="group relative h-[270px] w-[165px] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#241431] text-right shadow-md ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl sm:h-[320px] sm:w-[195px] md:h-[350px] md:w-[215px]">
+              <button key={reel.id} onClick={onOpenReels} className="group relative h-[270px] w-[165px] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#12332D] text-right shadow-md ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl sm:h-[320px] sm:w-[195px] md:h-[350px] md:w-[215px]">
                 <video src={reelMediaUrl(reel.videoUrl)} muted loop autoPlay playsInline preload="metadata" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/15" />
                 <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur"><Play className="h-3 w-3 fill-current" /> REELS</span>
@@ -562,9 +562,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             ))}
           </div>
         ) : (
-          <button onClick={onOpenReels} className="flex w-full items-center justify-between gap-4 rounded-2xl border border-dashed border-[#DCCBEA] bg-white p-5 text-right transition hover:border-[#8B5CC7] hover:bg-[#FCF8FF] md:p-7">
-            <span className="flex items-center gap-3"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-fuchsia-600 to-violet-700 text-white"><Play className="h-6 w-6 fill-current" /></span><span><span className="block font-black text-[#35204A]">مساحة فيديوهات YOUmi Reels</span><span className="mt-1 block text-xs leading-5 text-[#746A7B]">ستظهر هنا فيديوهات الموردين المنشورة. افتح Reels لمشاهدتها أو أضف فيديو من لوحة البائع.</span></span></span>
-            <ArrowLeft className="h-5 w-5 shrink-0 text-[#6B3FA0]" />
+          <button onClick={onOpenReels} className="flex w-full items-center justify-between gap-4 rounded-2xl border border-dashed border-[#D9E8DF] bg-white p-5 text-right transition hover:border-[#27866C] hover:bg-[#F1F7F3] md:p-7">
+            <span className="flex items-center gap-3"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white"><Play className="h-6 w-6 fill-current" /></span><span><span className="block font-black text-[#176653]">مساحة فيديوهات YOUmi Reels</span><span className="mt-1 block text-xs leading-5 text-[#68776F]">ستظهر هنا فيديوهات الموردين المنشورة. افتح Reels لمشاهدتها أو أضف فيديو من لوحة البائع.</span></span></span>
+            <ArrowLeft className="h-5 w-5 shrink-0 text-[#176653]" />
           </button>
         )}
       </section>
@@ -582,10 +582,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       {/* Categories */}
       <section id="categories" className="max-w-[1240px] mx-auto px-4 py-7 scroll-mt-28">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl md:text-2xl font-black font-['Cairo',sans-serif] text-[#27232D] flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-black font-['Cairo',sans-serif] text-[#202C28] flex items-center gap-2">
             <Flame className="w-5 h-5 text-orange-500" /> الفئات الرئيسية
           </h2>
-          <button onClick={() => setSelectedCategory('الكل')} className="text-[#6B3FA0] font-bold text-xs flex items-center gap-1">
+          <button onClick={() => setSelectedCategory('الكل')} className="text-[#176653] font-bold text-xs flex items-center gap-1">
             عرض الكل <ArrowLeft className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -602,10 +602,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 }}
                 className="group flex flex-col items-center gap-2"
               >
-                <span className={`w-[68px] h-[68px] rounded-full ${category.bg} ${category.color} ${active ? 'ring-2 ring-[#8B5CC7] ring-offset-2' : ''} flex items-center justify-center transition group-hover:-translate-y-1`}>
+                <span className={`w-[68px] h-[68px] rounded-full ${category.bg} ${category.color} ${active ? 'ring-2 ring-[#27866C] ring-offset-2' : ''} flex items-center justify-center transition group-hover:-translate-y-1`}>
                   <Icon className="w-7 h-7" />
                 </span>
-                <span className={`text-[11px] sm:text-xs font-bold text-center leading-5 ${active ? 'text-[#6B3FA0]' : 'text-[#42394A]'}`}>
+                <span className={`text-[11px] sm:text-xs font-bold text-center leading-5 ${active ? 'text-[#176653]' : 'text-[#52635A]'}`}>
                   {category.name}
                 </span>
               </button>
@@ -624,7 +624,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           <h2 className="text-xl md:text-2xl font-black font-['Cairo',sans-serif] text-[#27232D] flex items-center gap-2">
             <Flame className="w-5 h-5 text-orange-500" /> منتجات مميزة
           </h2>
-          <button onClick={() => setSelectedCategory('الكل')} className="text-[#6B3FA0] font-bold text-xs flex items-center gap-1">
+          <button onClick={() => setSelectedCategory('الكل')} className="text-[#176653] font-bold text-xs flex items-center gap-1">
             عرض الكل <ArrowLeft className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -645,8 +645,8 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
               }
               className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
                 activeProductTab === id
-                  ? 'bg-[#35204A] text-white'
-                  : 'bg-white text-[#5D5365] hover:bg-[#F7F1FA]'
+                  ? 'bg-[#176653] text-white'
+                  : 'bg-white text-[#52635A] hover:bg-[#E8F3ED]'
               }`}
             >
               {label}
@@ -655,7 +655,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
         </div>
 
         {featuredProducts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#E5D9F2] py-16 text-center text-[#746A7B]">
+          <div className="rounded-2xl border border-dashed border-[#D9E8DF] py-16 text-center text-[#68776F]">
             لا توجد منتجات متاحة حاليًا.
           </div>
         ) : (
@@ -665,8 +665,8 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                 ? Math.round((1 - product.price / product.compareAtPrice) * 100)
                 : 0;
               return (
-                <article key={`${store.id}-${product.id}`} className="group bg-white rounded-xl border border-[#E5D9F2] overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                  <div className="relative aspect-square bg-[#FFF8F0] overflow-hidden">
+                <article key={`${store.id}-${product.id}`} className="group bg-white rounded-xl border border-[#D9E8DF] overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                  <div className="relative aspect-square bg-[#F1F7F3] overflow-hidden">
                     <button
                       onClick={() => setLiked((p) => ({ ...p, [product.id]: !p[product.id] }))}
                       className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm"
@@ -703,20 +703,20 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                     <div className="mt-2 min-h-[46px]">
                       {canViewWholesalePrices ? (
                         <>
-                          <div className="font-black text-[#35204A] text-sm">{formatDzd(product.price)}</div>
+                          <div className="font-black text-[#176653] text-sm">{formatDzd(product.price)}</div>
                           {product.compareAtPrice && product.compareAtPrice > product.price && (
                             <div className="text-[10px] text-[#93899A] line-through mt-0.5">{formatDzd(product.compareAtPrice)}</div>
                           )}
                         </>
                       ) : (
-                        <button onClick={onOpenMemberAuthModal} className="text-[10px] text-[#6B3FA0] font-bold flex items-center gap-1">
+                        <button onClick={onOpenMemberAuthModal} className="text-[10px] text-[#176653] font-bold flex items-center gap-1">
                           <Lock className="w-3 h-3" /> سجل الدخول لرؤية سعر الجملة
                         </button>
                       )}
                     </div>
                     <button
                       onClick={() => addToCart(product, store)}
-                      className="w-full mt-2 h-9 rounded-lg border border-[#E5D9F2] bg-[#F7F1FA] text-[#35204A] hover:bg-[#241431] hover:text-white font-black text-[10px] transition flex items-center justify-center gap-1.5"
+                      className="w-full mt-2 h-9 rounded-lg border border-[#D9E8DF] bg-[#E8F3ED] text-[#176653] hover:bg-[#12332D] hover:text-white font-black text-[10px] transition flex items-center justify-center gap-1.5"
                     >
                       <ShoppingCart className="w-3.5 h-3.5" /> أضف للسلة
                     </button>
@@ -738,7 +738,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           <h2 className="text-xl md:text-2xl font-black font-['Cairo',sans-serif] text-[#27232D] flex items-center gap-2">
             <Flame className="w-5 h-5 text-orange-500" /> متاجر مميزة
           </h2>
-          <button onClick={() => onOpenMemberAuthModal()} className="text-[#6B3FA0] font-bold text-xs flex items-center gap-1">
+          <button onClick={() => onOpenMemberAuthModal()} className="text-[#176653] font-bold text-xs flex items-center gap-1">
             عرض الكل <ArrowLeft className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -746,9 +746,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           {featuredStores.map((store) => {
             const firstProduct = store.products?.[0];
             return (
-              <article key={store.id} className="rounded-xl border border-[#E5D9F2] bg-white p-3 hover:shadow-lg transition">
+              <article key={store.id} className="rounded-xl border border-[#D9E8DF] bg-white p-3 hover:shadow-lg transition">
                 <div className="flex items-center gap-3">
-                  <div className="w-20 h-20 rounded-xl bg-[#FFF8F0] border border-[#F0E8F7] overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-xl bg-[#F1F7F3] border border-[#D9E8DF] overflow-hidden shrink-0 flex items-center justify-center">
                     <img src={store.logoUrl || firstProduct?.images?.[0] || '/logo.svg'} alt={store.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -761,7 +761,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                     </div>
                   </div>
                 </div>
-                <button onClick={() => onSelectStore(store, 'STORE_FRONT')} className="w-full mt-3 rounded-lg bg-[#F7F1FA] hover:bg-[#241431] hover:text-white text-[#35204A] py-2 text-xs font-black transition">
+                <button onClick={() => onSelectStore(store, 'STORE_FRONT')} className="w-full mt-3 rounded-lg bg-[#E8F3ED] hover:bg-[#12332D] hover:text-white text-[#176653] py-2 text-xs font-black transition">
                   زيارة المتجر
                 </button>
               </article>
@@ -773,15 +773,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       {/* B2B role strip */}
       <section id="b2b" className="max-w-[1240px] mx-auto px-4 py-4 scroll-mt-28">
         <div className="rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3">
-          <div className="bg-[#35204A] text-white p-6 flex flex-col justify-between min-h-[150px]">
+          <div className="bg-[#12332D] text-white p-6 flex flex-col justify-between min-h-[150px]">
             <div>
               <p className="text-[11px] font-bold opacity-80">للتجار والمشترين</p>
               <h3 className="text-xl font-black mt-1">البيع بالجملة</h3>
               <p className="text-xs opacity-85 mt-2">أسعار الجملة متاحة للأعضاء المسجلين.</p>
             </div>
-            <button onClick={onOpenMemberAuthModal} className="mt-4 self-start bg-white text-[#35204A] px-4 py-2 rounded-lg text-xs font-black">تسجيل الدخول</button>
+            <button onClick={onOpenMemberAuthModal} className="mt-4 self-start bg-white text-[#12332D] px-4 py-2 rounded-lg text-xs font-black">تسجيل الدخول</button>
           </div>
-          <div className="bg-[#6B3FA0] text-white p-6 flex flex-col justify-between min-h-[150px]">
+          <div className="bg-[#176653] text-white p-6 flex flex-col justify-between min-h-[150px]">
             <div>
               <p className="text-[11px] font-bold opacity-80">للموردين والتجار</p>
               <h3 className="text-xl font-black mt-1">افتح متجرك</h3>
@@ -789,13 +789,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             </div>
             <button onClick={() => onNavigate('CREATE_STORE')} className="mt-4 self-start bg-white text-emerald-700 px-4 py-2 rounded-lg text-xs font-black">أنشئ متجرك مجاناً</button>
           </div>
-          <div className="bg-[#8B5CC7] text-white p-6 flex flex-col justify-between min-h-[150px]">
+          <div className="bg-[#27866C] text-white p-6 flex flex-col justify-between min-h-[150px]">
             <div>
               <p className="text-[11px] font-bold opacity-80">عروض المنصة</p>
               <h3 className="text-xl font-black mt-1">خصومات تصل إلى 50%</h3>
               <p className="text-xs opacity-85 mt-2">اكتشف المنتجات والعروض المتاحة الآن.</p>
             </div>
-            <button onClick={() => scrollTo('featured-products')} className="mt-4 self-start bg-white text-fuchsia-700 px-4 py-2 rounded-lg text-xs font-black">تسوق الآن</button>
+            <button onClick={() => scrollTo('featured-products')} className="mt-4 self-start bg-white text-emerald-800 px-4 py-2 rounded-lg text-xs font-black">تسوق الآن</button>
           </div>
         </div>
       </section>
@@ -805,13 +805,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       </section>
 
       <section className="mx-auto max-w-[1240px] px-4 py-4">
-        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-gradient-to-r from-indigo-950 via-violet-950 to-slate-950 p-5 text-white sm:flex-row sm:items-center sm:p-7">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 p-5 text-white sm:flex-row sm:items-center sm:p-7">
           <div>
             <p className="text-xs font-black text-amber-300">YOUmi للأندرويد</p>
             <h2 className="mt-2 text-lg font-black sm:text-xl">
               تسوّق وأدر متجرك من تطبيق YOUmi
             </h2>
-            <p className="mt-1 text-xs leading-6 text-indigo-100">
+            <p className="mt-1 text-xs leading-6 text-emerald-100">
               وصول أسرع إلى المتاجر والمنتجات والطلبات أينما كنت.
             </p>
           </div>
@@ -819,7 +819,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             <a
               href={androidAppUrl}
               download
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-300 px-5 py-3 text-xs font-black text-indigo-950 transition hover:bg-emerald-200"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-300 px-5 py-3 text-xs font-black text-emerald-950 transition hover:bg-emerald-200"
             >
               <Download className="h-5 w-5" />
               تحميل تطبيق أندرويد
@@ -838,7 +838,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
       </div>
 
       {/* Footer */}
-      <footer id="support" className="mt-8 bg-[#FFF8F0] border-t border-[#E5D9F2] scroll-mt-28">
+      <footer id="support" className="mt-8 bg-[#F1F7F3] border-t border-[#D9E8DF] scroll-mt-28">
         <div className="max-w-[1240px] mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <YoumiLogo variant="full" size="md" />
@@ -849,17 +849,17 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
           <div>
             <h4 className="font-black text-sm mb-4">روابط مهمة</h4>
             <div className="space-y-2 text-xs text-[#5D5365]">
-              <button onClick={() => onNavigate('CREATE_STORE')} className="block hover:text-[#35204A]">إنشاء متجر مجاني</button>
-              <button onClick={() => scrollTo('featured-products')} className="block hover:text-[#35204A]">تصفح المنتجات</button>
-              <button onClick={() => scrollTo('featured-stores')} className="block hover:text-[#35204A]">المتاجر</button>
+              <button onClick={() => onNavigate('CREATE_STORE')} className="block hover:text-[#176653]">إنشاء متجر مجاني</button>
+              <button onClick={() => scrollTo('featured-products')} className="block hover:text-[#176653]">تصفح المنتجات</button>
+              <button onClick={() => scrollTo('featured-stores')} className="block hover:text-[#176653]">المتاجر</button>
             </div>
           </div>
           <div>
             <h4 className="font-black text-sm mb-4">خدمة العملاء</h4>
             <div className="space-y-3 text-xs text-[#5D5365]">
-              <div className="flex items-center gap-2"><Headphones className="w-4 h-4 text-[#6B3FA0]" /> مركز المساعدة</div>
-              <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-[#6B3FA0]" /> تواصل معنا</div>
-              <div className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-[#6B3FA0]" /> الأسئلة الشائعة</div>
+              <div className="flex items-center gap-2"><Headphones className="w-4 h-4 text-[#176653]" /> مركز المساعدة</div>
+              <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-[#176653]" /> تواصل معنا</div>
+              <div className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-[#176653]" /> الأسئلة الشائعة</div>
             </div>
           </div>
           <div>
@@ -867,7 +867,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             <p className="text-xs text-[#746A7B] leading-6">منصة تسوق جزائرية تهدف إلى تسهيل الشراء والبيع وربط التجار بالموردين في جميع أنحاء الوطن 🇩🇿.</p>
           </div>
         </div>
-        <div className="border-t border-[#E5D9F2]">
+        <div className="border-t border-[#D9E8DF]">
           <div className="max-w-[1240px] mx-auto px-4 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between text-[10px] text-[#93899A]">
             <span>© 2026 Youmi — جميع الحقوق محفوظة</span>
             <div className="flex items-center gap-3">
@@ -880,26 +880,26 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
       {/* Product detail */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-[70] bg-[#241431]/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
+        <div className="fixed inset-0 z-[70] bg-[#12332D]/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="font-black text-sm">تفاصيل المنتج</h3>
-              <button onClick={() => setSelectedProduct(null)} className="w-9 h-9 rounded-full bg-[#F0E8F7] flex items-center justify-center"><X className="w-4 h-4" /></button>
+              <button onClick={() => setSelectedProduct(null)} className="w-9 h-9 rounded-full bg-[#E8F3ED] flex items-center justify-center"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 grid md:grid-cols-2 gap-6">
-              <div className="aspect-square bg-[#FFF8F0] rounded-xl overflow-hidden">
+              <div className="aspect-square bg-[#F1F7F3] rounded-xl overflow-hidden">
                 <img src={selectedProduct.product.images?.[0] || '/logo.svg'} alt={selectedProduct.product.title} className="w-full h-full object-contain p-5" />
               </div>
               <div className="flex flex-col">
-                <p className="text-xs text-[#6B3FA0] font-bold">{selectedProduct.store.name}</p>
+                <p className="text-xs text-[#176653] font-bold">{selectedProduct.store.name}</p>
                 <h2 className="text-2xl font-black mt-2">{selectedProduct.product.title}</h2>
                 <div className="flex items-center gap-2 mt-3"><Star className="w-4 h-4 fill-[#F2B544] text-[#F2B544]" /><span className="font-bold">{selectedProduct.product.ratings?.score || 0}</span><span className="text-xs text-[#93899A]">({selectedProduct.product.ratings?.count || 0})</span></div>
                 <p className="text-sm text-[#5D5365] leading-7 mt-5">{selectedProduct.product.description}</p>
                 <div className="mt-auto pt-6">
                   {canViewWholesalePrices ? (
-                    <div className="text-2xl font-black text-[#35204A]">{formatDzd(selectedProduct.product.price)}</div>
+                    <div className="text-2xl font-black text-[#176653]">{formatDzd(selectedProduct.product.price)}</div>
                   ) : (
-                    <button onClick={onOpenMemberAuthModal} className="text-sm font-bold text-[#6B3FA0] flex items-center gap-2"><Lock className="w-4 h-4" /> سجل الدخول لرؤية سعر الجملة</button>
+                    <button onClick={onOpenMemberAuthModal} className="text-sm font-bold text-[#176653] flex items-center gap-2"><Lock className="w-4 h-4" /> سجل الدخول لرؤية سعر الجملة</button>
                   )}
                   <p className="text-xs text-[#746A7B] mt-2">الحد الأدنى للطلب: {selectedProduct.product.minOrderQuantity || 1} {selectedProduct.product.packageUnit || 'قطعة'}</p>
                   <button
@@ -911,11 +911,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                       addToCart(selectedProduct.product, selectedProduct.store);
                       setSelectedProduct(null);
                     }}
-                    className="w-full mt-5 py-3.5 rounded-xl bg-[#35204A] hover:bg-[#241431] text-white font-black text-sm flex items-center justify-center gap-2"
+                    className="w-full mt-5 py-3.5 rounded-xl bg-[#176653] hover:bg-[#12332D] text-white font-black text-sm flex items-center justify-center gap-2"
                   >
                     <ShoppingCart className="w-5 h-5" /> إضافة إلى السلة
                   </button>
-                  <button onClick={() => onSelectStore(selectedProduct.store, 'STORE_FRONT')} className="w-full mt-2 py-3 rounded-xl border border-[#E5D9F2] font-bold text-sm">زيارة المتجر</button>
+                  <button onClick={() => onSelectStore(selectedProduct.store, 'STORE_FRONT')} className="w-full mt-2 py-3 rounded-xl border border-[#D9E8DF] font-bold text-sm">زيارة المتجر</button>
                 </div>
               </div>
             </div>
@@ -925,29 +925,29 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
 
       {/* Cart */}
       {cartOpen && (
-        <div className="fixed inset-0 z-[80] bg-[#241431]/50" onClick={() => setCartOpen(false)}>
+        <div className="fixed inset-0 z-[80] bg-[#12332D]/50" onClick={() => setCartOpen(false)}>
           <aside className="absolute top-0 bottom-0 right-0 w-full max-w-md bg-white shadow-2xl p-5 flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-black flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-[#6B3FA0]" /> السلة ({cartCount})</h3>
-              <button onClick={() => setCartOpen(false)} className="w-9 h-9 rounded-full bg-[#F0E8F7] flex items-center justify-center"><X className="w-4 h-4" /></button>
+              <h3 className="font-black flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-[#176653]" /> السلة ({cartCount})</h3>
+              <button onClick={() => setCartOpen(false)} className="w-9 h-9 rounded-full bg-[#E8F3ED] flex items-center justify-center"><X className="w-4 h-4" /></button>
             </div>
             <div className="flex-1 overflow-y-auto py-4 space-y-3">
               {cartItems.length === 0 ? (
                 <div className="py-20 text-center text-[#93899A]"><ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-40" /><p className="text-sm font-bold">السلة فارغة</p></div>
               ) : cartItems.map((item, index) => (
-                <div key={`${item.product.id}-${index}`} className="flex gap-3 p-3 rounded-xl bg-[#FFF8F0] border border-[#F0E8F7]">
+                <div key={`${item.product.id}-${index}`} className="flex gap-3 p-3 rounded-xl bg-[#F1F7F3] border border-[#D9E8DF]">
                   <img src={item.product.images?.[0] || '/logo.svg'} alt={item.product.title} className="w-16 h-16 rounded-lg object-contain bg-white" />
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-xs line-clamp-2">{item.product.title}</p>
                     <p className="text-[10px] text-[#93899A] mt-1">{item.store.name}</p>
-                    <p className="text-xs text-[#35204A] font-black mt-1">{formatDzd(item.product.price)} × {item.qty}</p>
+                    <p className="text-xs text-[#176653] font-black mt-1">{formatDzd(item.product.price)} × {item.qty}</p>
                   </div>
                   <button onClick={() => setCartItems((items) => items.filter((_, i) => i !== index))} className="text-rose-500 self-start"><X className="w-4 h-4" /></button>
                 </div>
               ))}
             </div>
             <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-4 font-black text-sm"><span>الإجمالي</span><span className="text-[#35204A]">{formatDzd(cartTotal)}</span></div>
+              <div className="flex items-center justify-between mb-4 font-black text-sm"><span>الإجمالي</span><span className="text-[#176653]">{formatDzd(cartTotal)}</span></div>
               <button
                 disabled={cartItems.length === 0}
                 onClick={() => {
@@ -956,7 +956,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
                     setCartOpen(false);
                   }
                 }}
-                className="w-full py-3.5 rounded-xl bg-[#35204A] disabled:bg-[#E5D9F2] disabled:text-[#93899A] text-white font-black text-sm"
+                className="w-full py-3.5 rounded-xl bg-[#176653] disabled:bg-[#D9E8DF] disabled:text-[#74847B] text-white font-black text-sm"
               >
                 متابعة الطلب <ArrowLeft className="inline w-4 h-4 mr-1" />
               </button>

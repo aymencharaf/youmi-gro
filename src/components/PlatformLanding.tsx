@@ -864,10 +864,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({
             </p>
           </div>
           <a
-            href={androidAppUrl || '/downloads/youmi-app.apk'}
+            href={androidAppUrl || '/YOUmi.apk'}
             download="YOUmi.apk"
             type="application/vnd.android.package-archive"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-300 px-5 py-3 text-xs font-black text-emerald-950 transition hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-white"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-300 px-5 py-3 text-xs font-blacktext-emerald-950 transition hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-white"
             aria-label="تحميل تطبيق YOUmi للأندرويد"
           >
             <Download className="h-5 w-5" />
